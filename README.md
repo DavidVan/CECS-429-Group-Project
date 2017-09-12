@@ -2,4 +2,6 @@
 
 Members:
 
+Harold Agnote
+
 David Van
