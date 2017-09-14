@@ -1,1 +1,1 @@
-pub mod porter_stemmer;
+pub mod stemmer;

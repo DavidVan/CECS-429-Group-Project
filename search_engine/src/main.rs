@@ -1,7 +1,7 @@
 extern crate search_engine;
 
-use search_engine::porter_stemmer::{stemmer};
+use search_engine::stemmer::{porter_stemmer};
 
 fn main() {
-    println!("{}", stemmer::hello());
+    println!("{}", porter_stemmer::hello());
 }
