@@ -3,7 +3,5 @@
 Members:
 
 Harold Agnote
-
-David Van
-
 Braulio Flores
+David Van
