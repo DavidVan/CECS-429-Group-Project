@@ -1,38 +1,46 @@
 extern crate search_engine;
+extern crate stemmer;
 
 use std::collections::HashMap;
+use stemmer::Stemmer;
 
-use search_engine::porter_stemmer::{porter_stemmer};
 use search_engine::index::inverted_index::InvertedIndex;
 
 
-use std::io::{stdin,stdout,Write};
+use std::io::{stdin, stdout, Write};
+
 fn main() {
-    let mut inverted_index = InvertedIndex {
-        mIndex : HashMap::new(),
-    };
+
+    let mut stemmer = Stemmer::new("english").unwrap();
+    println!("{}", stemmer.stem("consolingly"));
+
+    let mut inverted_index = InvertedIndex { mIndex: HashMap::new() };
 
     loop {
         let mut term = String::new();
         print!("Please enter some text: ");
-        let _=stdout().flush();
-        stdin().read_line(&mut term).expect("Did not enter a correct string");
-        if let Some('\n')=term.chars().next_back() {
+        let _ = stdout().flush();
+        stdin().read_line(&mut term).expect(
+            "Did not enter a correct string",
+        );
+        if let Some('\n') = term.chars().next_back() {
             term.pop();
         }
-        if let Some('\r')=term.chars().next_back() {
+        if let Some('\r') = term.chars().next_back() {
             term.pop();
         }
 
         let mut docID = String::new();
         print!("Enter doc ID: ");
 
-        let _=stdout().flush();
-        stdin().read_line(&mut docID).expect("Did not enter a correct string");
-        if let Some('\n')=docID.chars().next_back() {
+        let _ = stdout().flush();
+        stdin().read_line(&mut docID).expect(
+            "Did not enter a correct string",
+        );
+        if let Some('\n') = docID.chars().next_back() {
             docID.pop();
         }
-        if let Some('\r')=docID.chars().next_back() {
+        if let Some('\r') = docID.chars().next_back() {
             docID.pop();
         }
         let my_string = docID.to_string();
@@ -48,11 +56,8 @@ fn main() {
         print!("{} : ", term);
 
         for p in postings {
-            print!("{} ", p); 
+            print!("{} ", p);
         }
         println!("\n");
     }
-
-
-
 }
