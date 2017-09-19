@@ -4,3 +4,4 @@ version = "0.0.1"
 authors = ["Harold Agnote <haroldagnote38@hotmail.com>", "Braulio Flores <braulio-flores@hotmail.com>", "David Van <David@DavidVan.net>"]
 
 [dependencies]
+stemmer = "0.3.2"
