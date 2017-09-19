@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use search_engine::porter_stemmer::{porter_stemmer};
 use search_engine::index::inverted_index::InvertedIndex;
 
-
 use std::io::{stdin,stdout,Write};
 fn main() {
     let mut inverted_index = InvertedIndex {
