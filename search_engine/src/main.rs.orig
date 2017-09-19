@@ -6,8 +6,16 @@ use stemmer::Stemmer;
 
 use search_engine::index::inverted_index::InvertedIndex;
 
+<<<<<<< HEAD
+use std::io::{stdin,stdout,Write};
+||||||| merged common ancestors
+
+use std::io::{stdin,stdout,Write};
+=======
 
 use std::io::{stdin, stdout, Write};
+
+>>>>>>> 42bb825305c753e2fca7cd86b3ba618428e1b5ad
 fn main() {
 
     let mut stemmer = Stemmer::new("english").unwrap();
