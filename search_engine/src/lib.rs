@@ -1,2 +1,9 @@
 pub mod index;
-pub mod tests;
+
+#[cfg(test)]
+pub mod tests {
+    #[test]
+    fn hello_world() {
+        println!("Hello World"); 
+    }
+}
