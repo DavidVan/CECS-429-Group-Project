@@ -1,49 +1,65 @@
 use std::collections::HashMap;
 
 pub struct InvertedIndex {
-    pub mIndex: HashMap<String, Vec<i32>>,
+    pub m_index: HashMap<String, Vec<i32>>,
 }
 
 impl InvertedIndex {
     pub fn new(&mut self) {
-        self.mIndex = HashMap::new();
+        self.m_index = HashMap::new();
     }
-    pub fn addTerm(&mut self, term: &str, docID: i32) {
-        println!("Adding term {} to {}", term, docID);
+    pub fn add_term(&mut self, term: &str, doc_id: i32) {
+        println!("Adding term {} to {}", term, doc_id);
 
-        if self.mIndex.contains_key(term) {
-            let mut p = self.mIndex.get_mut(term);
+        if self.m_index.contains_key(term) {
+            let mut p = self.m_index.get_mut(term);
             let mut posting = p.as_mut().unwrap();
-            if posting[posting.len() - 1] != docID {
-                posting.push(docID);
+            if posting[posting.len() - 1] != doc_id {
+                posting.push(doc_id);
             }
-            println!("Term {} added to {}", term, docID);
+            println!("Term {} added to {}", term, doc_id);
         } else {
             let mut posting = Vec::new();
-            posting.push(docID);
-            self.mIndex.insert(term.to_string(), posting);
-            println!("Term {} added to {}", term, docID);
+            posting.push(doc_id);
+            self.m_index.insert(term.to_string(), posting);
+            println!("Term {} added to {}", term, doc_id);
         }
     }
 
-    pub fn getPostings(&self, term: &str) -> &Vec<i32> {
+    pub fn get_postings(&self, term: &str) -> &Vec<i32> {
         println!("Getting postings for term {}", term);
 
-        self.mIndex.get(term).unwrap()
+        self.m_index.get(term).unwrap()
 
     }
 
-    pub fn getTermCount(&self) -> usize {
-        self.mIndex.len()
+    pub fn get_term_count(&self) -> usize {
+        self.m_index.len()
     }
 
-    pub fn getDictionary(&self) -> Vec<&String> {
+    pub fn get_dictionary(&self) -> Vec<&String> {
         let mut dictionary = Vec::new();
 
-        for term in self.mIndex.keys() {
+        for term in self.m_index.keys() {
             dictionary.push(term)
         }
 
         return dictionary;
     }
+}
+
+pub struct PositionalPosting {
+  document_id: u32,
+  document_positions: Vec<u32>,
+}
+
+impl PositionalPosting {
+    pub fn get_document_id(&self) -> u32{
+        return self.document_id;
+    }
+
+    pub fn get_document_position<'a>(&'a self) -> &'a Vec<u32>{
+        return &self.document_positions;
+    }
+
 }
