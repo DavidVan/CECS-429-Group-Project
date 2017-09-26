@@ -79,7 +79,21 @@ impl PositionalInvertedIndex {
         }
     }
 
-    pub fn addPositionalPosting(&mut self, term: &str, new_posting: PositionalPosting) {
-        self.mIndex.get_mut(term).unwrap().push(new_posting);
+    pub fn get_postings(&self, term: &str) -> &Vec<PositionalPosting> {
+        self.mIndex.get(term).unwrap() 
+    }
+
+    pub fn get_term_count(&self) -> usize {
+        self.mIndex.len()
+    }
+
+    pub fn get_dictionary(&self) -> Vec<&String> {
+        let mut dictionary = Vec::new();
+
+        for term in self.mIndex.keys() {
+            dictionary.push(term)
+        }
+
+        return dictionary;
     }
 }
