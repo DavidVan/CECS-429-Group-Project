@@ -5,3 +5,4 @@ authors = ["Harold Agnote <haroldagnote38@hotmail.com>", "Braulio Flores <brauli
 
 [dependencies]
 stemmer = "0.3.2"
+serde_json = "1.0.3"
