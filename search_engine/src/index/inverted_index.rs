@@ -49,17 +49,16 @@ impl InvertedIndex {
 }
 
 pub struct PositionalPosting {
-  document_id: u32,
-  document_positions: Vec<u32>,
+    document_id: u32,
+    document_positions: Vec<u32>,
 }
 
 impl PositionalPosting {
-    pub fn get_document_id(&self) -> u32{
+    pub fn get_document_id(&self) -> u32 {
         return self.document_id;
     }
 
-    pub fn get_document_position<'a>(&'a self) -> &'a Vec<u32>{
+    pub fn get_document_position<'a>(&'a self) -> &'a Vec<u32> {
         return &self.document_positions;
     }
-
 }

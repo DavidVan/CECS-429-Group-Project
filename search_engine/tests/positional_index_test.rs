@@ -6,6 +6,6 @@ use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
 #[test]
 fn positional_inverted_index() {
 
-    let mut positional_inverted_index = PositionalInvertedIndex { mIndex: HashMap::new()};
+    let mut positional_inverted_index = PositionalInvertedIndex { mIndex: HashMap::new() };
 
 }
