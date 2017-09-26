@@ -6,15 +6,15 @@ use search_engine::index::inverted_index::InvertedIndex;
 #[test]
 fn inverted_index() {
 
-    let mut inverted_index = InvertedIndex { mIndex: HashMap::new() };
+    let mut inverted_index = InvertedIndex { m_index: HashMap::new() };
 
     let mut term = "Test";
 
     for id in 1..10 {
-        inverted_index.addTerm(&term, id);
-        println!("There are {} in index", inverted_index.getTermCount());
+        inverted_index.add_term(&term, id);
+        println!("There are {} in index", inverted_index.get_term_count());
 
-        let postings = inverted_index.getPostings(&term);
+        let postings = inverted_index.get_postings(&term);
 
         print!("{} : ", term);
 
