@@ -15,9 +15,10 @@ fn main() {
     println!("{}", stemmer.stem("consolingly"));
 
     let parser = QueryParser::new();
-    let tokens = parser.handle_query("testing 1 2 3 \"hello 世界 world\" and \"hello 世界 world\"");
+    let tokens = parser.tokenize_query("testing 1 2 + 3 \"hello 世界 world\" hi + \"hello 世界 world\"");
 
-    for token in tokens {
-        println!("{}", token);
+    let groups = parser.group_tokens(&tokens);
+    for token_group in groups {
+        println!("Group {:?}", token_group);
     }
 }

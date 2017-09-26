@@ -10,7 +10,22 @@ impl QueryParser {
         QueryParser {}
     }
 
-    pub fn handle_query(&self, input: &str) -> Vec<String> {
+    pub fn group_tokens(&self, input: &Vec<String>) -> Vec<Vec<String>> {
+        let mut query_group = Vec::new();
+        let mut token_group = Vec::new();
+        for token in input {
+            if token.len() == 1 && token.starts_with('+') {
+                query_group.push(token_group);
+                token_group = Vec::new();
+                continue;
+            }
+            token_group.push(token.clone());
+        }
+        query_group.push(token_group);
+        query_group
+    }
+
+    pub fn tokenize_query(&self, input: &str) -> Vec<String> {
         let mut tokens = Vec::new();
         let mut input_iter = input.split_whitespace();
         while let Some(mut token) = input_iter.next() {

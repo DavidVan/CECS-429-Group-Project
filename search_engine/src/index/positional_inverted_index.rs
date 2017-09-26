@@ -28,17 +28,15 @@ impl PositionalPosting {
 }
 
 pub struct PositionalInvertedIndex {
-    pub mIndex: HashMap<String, Vec<PositionalPosting>>,
+    mIndex: HashMap<String, Vec<PositionalPosting>>,
 }
 
 impl PositionalInvertedIndex {
-    pub fn new(&mut self) {
-        self.mIndex = HashMap::new();
+    pub fn new() -> PositionalInvertedIndex {
+        PositionalInvertedIndex {mIndex: HashMap::new()}
     }
 
     pub fn addTerm(&mut self, term: &str, docID: u32, pos: u32) {
-        println!("Adding term {} to doc {} in position {}", term, docID, pos);
-
         if self.mIndex.contains_key(term) {
             let mut mIndex = &mut self.mIndex;
             {
