@@ -51,14 +51,14 @@ fn normalize_token(term:String)-> String {
     let mut start_index = 0;
     let mut end_index = term.len()-1;
     for c in term.chars() {
-        if !c.is_digit(10) || !c.is_alphabetic() {
+        if !c.is_digit(10) && !c.is_alphabetic() {
           start_index += 1;
         } else {
           break;
         }
     }
     for c in term.chars().rev() {
-      if !c.is_digit(10) || !c.is_alphabetic() {
+      if !c.is_digit(10) && !c.is_alphabetic() {
           end_index -= 1;
         } else {
           break;
