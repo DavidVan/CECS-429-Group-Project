@@ -32,17 +32,19 @@ fn build_index(directory: String) {
     for path in paths {
         files.push(path.unwrap().path().display().to_string())
     }
-
+    let mut document: Document;
     for file in files {
         let mut f = File::open(file).expect("file not found");
 
         let mut contents = String::new();
         f.read_to_string(&mut contents)
             .expect("something went wrong reading the file");
+        document =  serde_json::from_str(&contents).unwrap();
+        let mut iter = document.body.split_whitespace();
 
-        let mut iter = contents.split_whitespace();
-
-        while let Some(mut token) = iter.next() {}
+        while let Some(mut token) = iter.next() {
+            
+        }
     }
 }
 
