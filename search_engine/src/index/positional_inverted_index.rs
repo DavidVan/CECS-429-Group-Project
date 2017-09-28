@@ -33,7 +33,7 @@ pub struct PositionalInvertedIndex {
 
 impl PositionalInvertedIndex {
     pub fn new() -> PositionalInvertedIndex {
-        PositionalInvertedIndex {mIndex: HashMap::new()}
+        PositionalInvertedIndex { mIndex: HashMap::new() }
     }
 
     pub fn addTerm(&mut self, term: &str, docID: u32, pos: u32) {
@@ -53,16 +53,17 @@ impl PositionalInvertedIndex {
                         last_posting.addPosition(pos);
                     }
                 }
-            } 
+            }
             {
-                if (mIndex.get(term).unwrap().last().unwrap().getDocID() != docID)
-                {
+                if (mIndex.get(term).unwrap().last().unwrap().getDocID() != docID) {
                     let mut new_posting = PositionalPosting {
                         mDocID: docID,
                         mPositions: Vec::new(),
                     };
                     new_posting.addPosition(pos);
-                    mIndex.get_mut(term).expect("term not found").push(new_posting);
+                    mIndex.get_mut(term).expect("term not found").push(
+                        new_posting,
+                    );
                 }
             }
         } else {
@@ -78,7 +79,7 @@ impl PositionalInvertedIndex {
     }
 
     pub fn get_postings(&self, term: &str) -> &Vec<PositionalPosting> {
-        self.mIndex.get(term).unwrap() 
+        self.mIndex.get(term).unwrap()
     }
 
     pub fn get_term_count(&self) -> usize {

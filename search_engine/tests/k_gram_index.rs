@@ -7,15 +7,35 @@ fn test_castle() {
     let mut k_gram_index = KGramIndex::new();
 
     let castle = "castle";
-    
+
     k_gram_index.checkIndex(castle);
 
-    let test_cases = ["c","a","s","t","l","e","$c","ca","as","st","tl","le","e$","$ca","cas","ast","stl","tle","le$"];
+    let test_cases = [
+        "c",
+        "a",
+        "s",
+        "t",
+        "l",
+        "e",
+        "$c",
+        "ca",
+        "as",
+        "st",
+        "tl",
+        "le",
+        "e$",
+        "$ca",
+        "cas",
+        "ast",
+        "stl",
+        "tle",
+        "le$",
+    ];
 
     let k_grams = k_gram_index.getKGrams();
 
     for gram in k_grams.iter() {
-        println!("{}", gram); 
+        println!("{}", gram);
     }
 
     for test_case in test_cases.iter() {

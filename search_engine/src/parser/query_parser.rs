@@ -1,9 +1,7 @@
 use std::io::{self, Read};
 use std::process::exit;
 
-pub struct QueryParser {
-    
-}
+pub struct QueryParser {}
 
 impl QueryParser {
     pub fn new() -> QueryParser {
@@ -42,8 +40,7 @@ impl QueryParser {
                     phrase_literal.push_str(" ");
                 }
                 tokens.push(phrase_literal);
-            }
-            else {
+            } else {
                 tokens.push(String::from(token));
             }
         }

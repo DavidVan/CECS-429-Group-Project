@@ -14,34 +14,34 @@ fn add_term() {
 
     let sentence_3 = "get over there quick";
 
-    let tokens_1 = sentence_1.split(" "); 
+    let tokens_1 = sentence_1.split(" ");
 
     let tokens_2 = sentence_2.split(" ");
-    
+
     let tokens_3 = sentence_3.split(" ");
 
     for (i, token) in tokens_1.enumerate() {
         let term = token;
         let docID = 1;
-        let pos : u32 = i as u32;
-        positional_inverted_index.addTerm(term, docID, pos); 
+        let pos: u32 = i as u32;
+        positional_inverted_index.addTerm(term, docID, pos);
     }
     println!("Testing term count...\nThere should be 8 terms...");
     assert_eq!(positional_inverted_index.get_term_count(), 8);
-    
+
     for (i, token) in tokens_2.enumerate() {
         let term = token;
         let docID = 2;
-        let pos : u32 = i as u32;
-        positional_inverted_index.addTerm(term, docID, pos); 
+        let pos: u32 = i as u32;
+        positional_inverted_index.addTerm(term, docID, pos);
     }
     println!("Testing term count...\nThere should be 12 terms...");
     assert_eq!(positional_inverted_index.get_term_count(), 12);
     for (i, token) in tokens_3.enumerate() {
         let term = token;
         let docID = 3;
-        let pos : u32 = i as u32;
-        positional_inverted_index.addTerm(term, docID, pos); 
+        let pos: u32 = i as u32;
+        positional_inverted_index.addTerm(term, docID, pos);
     }
     println!("Testing term count...\nThere should be 14 terms...");
     assert_eq!(positional_inverted_index.get_term_count(), 14);
