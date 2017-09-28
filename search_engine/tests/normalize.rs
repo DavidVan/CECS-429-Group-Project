@@ -3,15 +3,32 @@ extern crate stemmer;
 
 use stemmer::Stemmer;
 use search_engine::parser::document_parser;
+use std::collections::HashMap;
 #[test]
-fn test_term() {
-    let term = "Swimming";
+fn test_normalize() {
 
-    println!("{}", term);
+    let mut dictionary = HashMap::new();
 
-    let result = document_parser::normalize_token(term.to_string());
+    // dictionary.insert("swim", vec!["swimming","swimmer","swam"]);
+    dictionary.insert("test", vec!["tested","tests","testing"]);
+    dictionary.insert("needless", vec!["needlessly"]);
+    dictionary.insert("fast", vec!["fasting","faster", "fastest"]);
+    dictionary.insert("seed", vec!["seeding","seeds"]);
 
-    println!("Size of result: {}", result.len());
+    for (term, variants) in dictionary.iter() {
+        println!("Testing term: {}", term);
+        for variant in variants {
+            println!("Testing with variant: {}", variant);
 
-    println!("{:?}\n", result);
+            let results = document_parser::normalize_token(variant.to_string());
+
+            let result = results.get(0).expect("Not a term");
+
+            // println!("Size of result: {}", results.len());
+
+            println!("{}\n", result);
+
+            assert_eq!(term, result, "Result {} does not stem into {}", result, term);
+        }
+    }
 }

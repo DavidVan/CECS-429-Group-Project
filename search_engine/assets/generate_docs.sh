@@ -14,11 +14,14 @@ for doc in *
 do
     numOfWords=$(((RANDOM % 5) + 10))
 
+    words=""
     for j in $(seq 0 $numOfWords)
     do
         index=$((RANDOM % 26))
         word=${wordBank[$index]}
-        echo "$word" >> "$doc"
+        words+= $word
     done
+    echo "$words" >> "$doc"
     
 done
+
