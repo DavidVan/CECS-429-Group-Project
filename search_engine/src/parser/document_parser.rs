@@ -42,7 +42,7 @@ fn build_index(directory: String) {
     }
 }
 
-fn normalize_token(term: String) -> Vec<String> {
+pub fn normalize_token(term: String) -> Vec<String> {
     let mut start_index = 0;
     let mut end_index = term.len() - 1;
     for c in term.chars() {
@@ -61,8 +61,9 @@ fn normalize_token(term: String) -> Vec<String> {
     }
     let mut alphanumeric_string: String = term.chars()
         .skip(start_index)
-        .take(end_index - start_index)
+        .take(end_index - start_index + 1)
         .collect();
+    println!("alphanumeric_string - {}", alphanumeric_string);
     let apostrophe = "'";
     let empty_string = "";
     let mut apostrophe_reduced = alphanumeric_string.replace(apostrophe, empty_string);
