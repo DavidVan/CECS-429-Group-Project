@@ -9,10 +9,17 @@ pub fn path_to_string(file:DirEntry) -> String {
     filePath.to_str().expect("No String").to_string()
 }
 
-pub fn read_text_file(fileName: &str) -> String {
-    let mut file = File::open(fileName).expect("File not Found");
+pub fn read_text_file(file_name: &str) -> String {
+    let mut file = File::open(file_name).expect("File not Found");
     
-    let mut content = String::new();
-    file.read_to_string(&mut content).expect("Failed to retrieve content");
-    return content;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Failed to retrieve contents");
+    return contents;
+}
+
+pub fn read_json_file(file_name: &str) -> String {
+    let mut file = File::open(file_name).expect("File not Found");
+    let mut contents = String::new();
+    file.read_to_string(& mut contents).expect("Error reading contents");
+    ::serde_json::from_str(&contents).expect("Error retrieving JSON document")
 }
