@@ -1,17 +1,11 @@
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_json;
-extern crate stemmer;
-
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Read;
 use std::ops::Add;
-use serde_json::Error;
+use ::serde_json::Error;
 use std::fs::{self, DirEntry};
 use std::path::Path;
-use stemmer::Stemmer;
+use ::stemmer::Stemmer;
 
 #[derive(Serialize, Deserialize)]
 struct Corpus {
@@ -39,7 +33,7 @@ fn build_index(directory: String) {
         let mut contents = String::new();
         f.read_to_string(&mut contents)
             .expect("something went wrong reading the file");
-        document =  serde_json::from_str(&contents).unwrap();
+        document =  ::serde_json::from_str(&contents).unwrap();
         let mut iter = document.body.split_whitespace();
 
         while let Some(mut token) = iter.next() {
