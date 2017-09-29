@@ -4,6 +4,7 @@ extern crate stemmer;
 use search_engine::parser::query_parser::QueryParser;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
+use search_engine::reader::read_file;
 use search_engine::reader::user_input;
 use std::env::current_exe;
 use std::path::PathBuf;
@@ -66,8 +67,27 @@ fn main() {
 
             }
             else if input == ":vocab" {
+                println!("Vocab");
                 // TODO: Build index before this can be used 
+            }
+            else if input.starts_with(":o ") || input.starts_with(":open ") {
+                let mut string = input.split_whitespace();
+                let file = string.nth(1).expect("Not a valid file");
+                let mut filePath = documentPath.clone();
+                println!("Opening {}", file);
+                filePath.push(file);
+                if (filePath.exists()) {
+                    let contents = read_file::read_file(filePath.to_str().expect("Not a valid string"));
+                    println!("{}", contents);
+                }
+                else {
+                    println!("{} does not exist", filePath.display()); 
+                }
             }
         }
     } 
+}
+
+fn build_index() {
+
 }
