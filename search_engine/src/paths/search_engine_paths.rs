@@ -24,7 +24,7 @@ pub fn addToPath(pathbuf:&mut PathBuf, add: &str) -> bool {
     return false;
 }
 
-pub fn setNewPath(pathbuf:&mut PathBuf, new: &str) -> bool {
+pub fn changeDirectory(pathbuf:&mut PathBuf, new: &str) -> bool {
     pathbuf.pop();
     addToPath(pathbuf, new)
 }
