@@ -14,8 +14,14 @@ fn main() {
     print!("Enter a directory to access: ");
     let input = user_input::read_input();
     println!("You typed: {}",input);
-    addToPath(&mut documentPath, input.as_str());
+    let successAdd = addToPath(&mut documentPath, input.as_str());
     println!("{}", documentPath.display());
+    if (successAdd) {
+        println!("{} exists! Yay!", documentPath.display()); 
+    }
+    else {
+        println!("{} does not exist!", documentPath.display());
+    }
 
 }
 
@@ -31,15 +37,20 @@ fn setPath() -> PathBuf {
     return documentPath;
 }
 
-fn addToPath(pathbuf:&mut PathBuf, add: &str) {
+fn addToPath(pathbuf:&mut PathBuf, add: &str) -> bool {
     let mut testPath = pathbuf.clone();
     testPath.push(add);
 
     if (testPath.exists()) {
-        println!("{} exists! Yay!", testPath.display()); 
         pathbuf.push(add);
+        return true;
     }
     else {
-        println!("{} does not exist!", testPath.display());
+        return false;
     }
+}
+
+fn setNewPath(pathbuf:&mut PathBuf, new: &str) -> bool {
+    pathbuf.pop();
+    addToPath(pathbuf, new)
 }
