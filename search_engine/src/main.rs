@@ -42,47 +42,17 @@ fn main() {
                 break; 
             }
             else if input.starts_with(":stem ") {
-                let mut stem = input.split_whitespace();
-                if stem.size_hint().0 > 2 {
-                    println!("Invalid token"); 
-                }
-                else {
-                    let mut string = stem.nth(1).expect("Not a valid token");
-                    let results = document_parser::normalize_token(string.to_string());
-                    let result = results.get(0).expect("Not a valid token");
-                    let result_string = result.to_string();
-                    println!("{}", result);
-                }
+                stem_term(input.as_str());
             }
             else if input.starts_with(":index ") {
-                let mut string = input.split_whitespace();
-                let directory = string.nth(1).expect("Not a valid token");
-                let valid = search_engine_paths::changeDirectory(&mut documentPath, directory); 
-                if !valid {
-                    search_engine_paths::addToPath(&mut documentPath, current.as_str()); 
-                }
-                else {
-                    current = directory.clone().to_string();
-                }
-
+                index_directory(&mut documentPath, input.clone());
             }
             else if input == ":vocab" {
                 println!("Vocab");
                 // TODO: Build index before this can be used 
             }
             else if input.starts_with(":o ") || input.starts_with(":open ") {
-                let mut string = input.split_whitespace();
-                let file = string.nth(1).expect("Not a valid file");
-                let mut filePath = documentPath.clone();
-                println!("Opening {}", file);
-                filePath.push(file);
-                if (filePath.exists()) {
-                    let contents = read_file::read_file(filePath.to_str().expect("Not a valid string"));
-                    println!("{}", contents);
-                }
-                else {
-                    println!("{} does not exist", filePath.display()); 
-                }
+                open_file(&documentPath, input.as_str());
             }
         }
     } 
@@ -90,4 +60,40 @@ fn main() {
 
 fn build_index() {
 
+}
+
+fn stem_term(input: &str) {
+    let mut stem = input.split_whitespace();
+    if stem.size_hint().0 > 2 {
+        println!("Invalid token"); 
+    }
+    else {
+        let mut string = stem.nth(1).expect("Not a valid token");
+        let results = document_parser::normalize_token(string.to_string());
+        let result = results.get(0).expect("Not a valid token");
+        let result_string = result.to_string();
+        println!("{}", result);
+    }
+}
+
+fn index_directory(mut indexPath: &mut PathBuf, input: String) {
+    let input_clone = input.clone();
+    let mut string = input_clone.split_whitespace();
+    let mut directory = string.nth(1).expect("Not a valid token");
+    search_engine_paths::changeDirectory(&mut indexPath, directory); 
+}
+
+fn open_file(indexPath: &PathBuf, input: &str) {
+    let mut string = input.split_whitespace();
+    let file = string.nth(1).expect("Not a valid file");
+    let mut filePath = indexPath.clone();
+    println!("Opening {}", file);
+    filePath.push(file);
+    if (filePath.exists()) {
+        let contents = read_file::read_file(filePath.to_str().expect("Not a valid string"));
+        println!("{}", contents);
+    }
+    else {
+        println!("{} does not exist", filePath.display()); 
+    }
 }
