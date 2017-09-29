@@ -6,4 +6,5 @@ extern crate stemmer;
 
 pub mod index;
 pub mod parser;
+pub mod paths;
 pub mod reader;
