@@ -53,7 +53,7 @@ fn test_file() {
     let mut documentPath = current_exe().expect("Not a valid path");
     println!("{:?}", documentPath);
 
-    for i in 1..5 {
+    while (!documentPath.ends_with("search_engine")) {
         documentPath.pop();
     }
     println!("{:?}", documentPath);

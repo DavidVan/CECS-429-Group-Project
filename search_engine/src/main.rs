@@ -2,39 +2,44 @@ extern crate search_engine;
 extern crate stemmer;
 
 use search_engine::parser::query_parser::QueryParser;
-use std::io::{stdin, stdout, Write};
+use search_engine::reader::user_input;
 use std::env::current_exe;
+use std::path::PathBuf;
 
 fn main() {
     println!("Hello World");    
 
+    let mut documentPath = setPath();
+    
+    print!("Enter a directory to access: ");
+    let input = user_input::read_input();
+    println!("You typed: {}",input);
+    addToPath(&mut documentPath, input.as_str());
+    println!("{}", documentPath.display());
+
+}
+
+fn setPath() -> PathBuf {
     let mut documentPath = current_exe().expect("Not a valid path");
 
-    for i in 1..4 {
+    while (!documentPath.ends_with("CECS-429-Group-Project")) {
         documentPath.pop();
     }
+    documentPath.push("search_engine");
     documentPath.push("assets");
     println!("{}", documentPath.display());
-    
-    let mut s=String::new();
-    print!("Enter a directory to access: ");
-    let _=stdout().flush();
-    stdin().read_line(&mut s).expect("Did not enter a correct string");
-    if let Some('\n')=s.chars().next_back() {
-        s.pop();
-    }
-    if let Some('\r')=s.chars().next_back() {
-        s.pop();
-    }
-    println!("You typed: {}",s);
+    return documentPath;
+}
 
-    documentPath.push(s);
-    println!("{}", documentPath.display());
+fn addToPath(pathbuf:&mut PathBuf, add: &str) {
+    let mut testPath = pathbuf.clone();
+    testPath.push(add);
 
-    if (documentPath.exists()) {
-        println!("{} exists! Yay!", documentPath.display()); 
+    if (testPath.exists()) {
+        println!("{} exists! Yay!", testPath.display()); 
+        pathbuf.push(add);
     }
     else {
-        println!("{} does not exist!", documentPath.display());
+        println!("{} does not exist!", testPath.display());
     }
 }
