@@ -49,8 +49,8 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
 }
 
 pub fn normalize_token(term: String) -> Vec<String> {
-    let mut start_index = 0;
-    let mut end_index = term.len() - 1;
+    let mut start_index:i32 = 0;
+    let mut end_index:i32 = term.len() - 1;
     for c in term.chars() {
         if !c.is_digit(10) && !c.is_alphabetic() {
             start_index += 1;
@@ -64,6 +64,10 @@ pub fn normalize_token(term: String) -> Vec<String> {
         } else {
             break;
         }
+    }
+    if (start_index > end_index) {
+        let empty = "";
+        return vec!{empty};
     }
     let mut alphanumeric_string: String = term.chars()
         .skip(start_index)
