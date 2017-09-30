@@ -42,7 +42,7 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
 
 pub fn normalize_token(term: String) -> Vec<String> {
     let mut start_index:i32 = 0;
-    let mut end_index:i32 = term.len() - 1;
+    let mut end_index:i32 = (term.len() as i32) - 1;
     for c in term.chars() {
         if !c.is_digit(10) && !c.is_alphabetic() && term.len() == 1 {
            let empty = "".to_string(); 
@@ -65,11 +65,11 @@ pub fn normalize_token(term: String) -> Vec<String> {
     }
     if (start_index > end_index) {
         let empty = "";
-        return vec!{empty};
+        return vec!{empty.to_owned()};
     }
     let mut alphanumeric_string: String = term.chars()
-        .skip(start_index)
-        .take(end_index - start_index + 1)
+        .skip(start_index as usize)
+        .take((end_index as usize)- (start_index as usize) + 1)
         .collect();
     println!("alphanumeric_string - {}", alphanumeric_string);
     let apostrophe = "'";
