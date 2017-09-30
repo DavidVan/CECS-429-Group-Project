@@ -1,3 +1,4 @@
+extern crate serde;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Read;
@@ -6,7 +7,8 @@ use ::serde_json::Error;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 use ::stemmer::Stemmer;
-
+use index::positional_inverted_index::PositionalInvertedIndex;
+use index::k_gram_index::KGramIndex;
 #[derive(Serialize, Deserialize)]
 struct Corpus {
     documents: Vec<Document>,
@@ -19,7 +21,7 @@ struct Document {
     url: String,
 }
 
-fn build_index(directory: String) {
+fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
     let paths = fs::read_dir(directory).unwrap();
     let mut files = Vec::new();
 
@@ -27,7 +29,7 @@ fn build_index(directory: String) {
         files.push(path.unwrap().path().display().to_string())
     }
     let mut document: Document;
-    for file in files {
+    for (i,file) in files.iter().enumerate() {
         let mut f = File::open(file).expect("file not found");
 
         let mut contents = String::new();
@@ -35,9 +37,13 @@ fn build_index(directory: String) {
             .expect("something went wrong reading the file");
         document =  ::serde_json::from_str(&contents).unwrap();
         let mut iter = document.body.split_whitespace();
-
-        while let Some(mut token) = iter.next() {
-            
+        
+        for (j,iter) in iter.enumerate() {
+            let mut tokens = normalize_token(iter.to_owned());
+            for term in tokens {
+                index.addTerm(&term,i as u32,j as u32);
+                k_gram_index.checkIndex(&term);
+            }
         }
     }
 }
