@@ -20,8 +20,15 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
         files.push(path.unwrap().path().display().to_string())
     }
     let mut document: Document;
+    let mut percentage = 0;
     for (i,file) in files.iter().enumerate() {
-        println!("file {}", file);
+        // println!("file {}", file);
+        let mut current_percentage = ((i + 1)/files.len()) * 100;
+        if current_percentage > percentage {
+            println!("Current percentage: {}", current_percentage);
+            percentage = current_percentage;
+        }
+         
         let document = read_file::read_file(file);
         let document_body = document.clone().getBody();
         let mut iter = document_body.split_whitespace();
@@ -34,6 +41,7 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
             }
         }
     }
+    println!();
 }
 
 pub fn normalize_token(term: String) -> Vec<String> {
@@ -67,7 +75,7 @@ pub fn normalize_token(term: String) -> Vec<String> {
         .skip(start_index as usize)
         .take((end_index as usize)- (start_index as usize) + 1)
         .collect();
-    println!("alphanumeric_string - {}", alphanumeric_string);
+    // println!("alphanumeric_string - {}", alphanumeric_string);
     let apostrophe = "'";
     let empty_string = "";
     let mut apostrophe_reduced = alphanumeric_string.replace(apostrophe, empty_string);
@@ -76,7 +84,7 @@ pub fn normalize_token(term: String) -> Vec<String> {
     if apostrophe_reduced.contains(hyphen) {
         let mut hyphen_index = 0;
         for c in apostrophe_reduced.chars() {
-            if c == '\'' {
+            if c == '-'{
                 break;
             }
             hyphen_index += 1;
