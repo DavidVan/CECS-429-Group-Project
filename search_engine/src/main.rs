@@ -41,6 +41,9 @@ fn main() {
             if input == ":q" {
                 break; 
             }
+            else if input.starts_with(":o ") || input.starts_with(":open ") {
+                open_file(&documentPath, input.as_str());
+            }
             else if input.starts_with(":stem ") {
                 stem_term(input.as_str());
             }
@@ -50,9 +53,6 @@ fn main() {
             else if input == ":vocab" {
                 println!("Vocab");
                 // TODO: Build index before this can be used 
-            }
-            else if input.starts_with(":o ") || input.starts_with(":open ") {
-                open_file(&documentPath, input.as_str());
             }
         }
     } 
