@@ -90,8 +90,8 @@ fn open_file(indexPath: &PathBuf, input: &str) {
     println!("Opening {}", file);
     filePath.push(file);
     if (filePath.exists()) {
-        let contents = read_file::read_file(filePath.to_str().expect("Not a valid string"));
-        println!("{}", contents);
+        let document = read_file::read_file(filePath.to_str().expect("Not a valid string"));
+        println!("{}", document.getBody());
     }
     else {
         println!("{} does not exist", filePath.display()); 
