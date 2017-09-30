@@ -11,10 +11,6 @@ use index::positional_inverted_index::PositionalInvertedIndex;
 use index::k_gram_index::KGramIndex;
 use reader::read_file;
 use reader::read_file::Document;
-#[derive(Serialize, Deserialize)]
-struct Corpus {
-    documents: Vec<Document>,
-}
 
 pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
     let paths = fs::read_dir(directory).unwrap();

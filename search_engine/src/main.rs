@@ -12,13 +12,12 @@ use std::env::current_exe;
 use std::path::PathBuf;
 
 fn main() {
-    println!("Hello World");    
-
     let mut documentPath = search_engine_paths::initializePath();
     let mut initial = true;
 
     let mut current : String;
     let mut input: String; 
+    let mut change : bool;
 
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
@@ -26,8 +25,8 @@ fn main() {
         print!("Enter a directory to access: ");
         input = user_input::read_input();
         println!("You typed: {}",input);
-        let successAdd = search_engine_paths::addToPath(&mut documentPath, input.as_str());
-        if (successAdd) {
+        change = search_engine_paths::addToPath(&mut documentPath, input.as_str());
+        if change {
             current = input.clone();
             break; 
         }
@@ -36,7 +35,10 @@ fn main() {
     loop {
         println!("{}", documentPath.display());
         // TODO: Build Index after directory input
-        build_index(&documentPath, &mut index, &mut k_gram_index);
+        if change {
+            build_index(&documentPath, &mut index, &mut k_gram_index);
+            change = false;
+        }
 
         print!("Input a Query: ");
         input = user_input::read_input_line();
@@ -54,11 +56,11 @@ fn main() {
                 stem_term(input.as_str());
             }
             else if input.starts_with(":index ") {
-                index_directory(&mut documentPath, input.clone());
+                change = index_directory(&mut documentPath, input.clone());
             }
             else if input == ":vocab" {
-                println!("Vocab");
-                // TODO: Build index before this can be used 
+                println!("Vocabulary");
+                print_vocab(&index); 
             }
         }
     } 
@@ -83,11 +85,11 @@ fn stem_term(input: &str) {
     }
 }
 
-fn index_directory(mut indexPath: &mut PathBuf, input: String) {
+fn index_directory(mut indexPath: &mut PathBuf, input: String) -> bool {
     let input_clone = input.clone();
     let mut string = input_clone.split_whitespace();
     let mut directory = string.nth(1).expect("Not a valid token");
-    search_engine_paths::changeDirectory(&mut indexPath, directory); 
+    search_engine_paths::changeDirectory(&mut indexPath, directory) 
 }
 
 fn open_file(indexPath: &PathBuf, input: &str) {
@@ -102,5 +104,13 @@ fn open_file(indexPath: &PathBuf, input: &str) {
     }
     else {
         println!("{} does not exist", filePath.display()); 
+    }
+}
+
+fn print_vocab(index: &PositionalInvertedIndex) {
+    let dictionary = index.get_dictionary();
+
+    for term in dictionary.iter() {
+        println!("{}", term); 
     }
 }
