@@ -9,16 +9,11 @@ use std::path::Path;
 use ::stemmer::Stemmer;
 use index::positional_inverted_index::PositionalInvertedIndex;
 use index::k_gram_index::KGramIndex;
+use reader::read_file;
+use reader::read_file::Document;
 #[derive(Serialize, Deserialize)]
 struct Corpus {
     documents: Vec<Document>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Document {
-    title: String,
-    body: String,
-    url: String,
 }
 
 pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
@@ -30,13 +25,10 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
     }
     let mut document: Document;
     for (i,file) in files.iter().enumerate() {
-        let mut f = File::open(file).expect("file not found");
-
-        let mut contents = String::new();
-        f.read_to_string(&mut contents)
-            .expect("something went wrong reading the file");
-        document =  ::serde_json::from_str(&contents).unwrap();
-        let mut iter = document.body.split_whitespace();
+        println!("file {}", file);
+        let document = read_file::read_file(file);
+        let document_body = document.clone().getBody();
+        let mut iter = document_body.split_whitespace();
         
         for (j,iter) in iter.enumerate() {
             let mut tokens = normalize_token(iter.to_owned());
@@ -52,6 +44,12 @@ pub fn normalize_token(term: String) -> Vec<String> {
     let mut start_index:i32 = 0;
     let mut end_index:i32 = term.len() - 1;
     for c in term.chars() {
+        if !c.is_digit(10) && !c.is_alphabetic() && term.len() == 1 {
+           let empty = "".to_string(); 
+           let mut empty_vector = Vec::new();
+           empty_vector.push(empty);
+           return empty_vector;
+        }
         if !c.is_digit(10) && !c.is_alphabetic() {
             start_index += 1;
         } else {

@@ -36,6 +36,7 @@ fn main() {
     loop {
         println!("{}", documentPath.display());
         // TODO: Build Index after directory input
+        build_index(&documentPath, &mut index, &mut k_gram_index);
 
         print!("Input a Query: ");
         input = user_input::read_input_line();
@@ -63,8 +64,9 @@ fn main() {
     } 
 }
 
-fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
-    document_parser::build_index(directory,index,k_gram_index);
+fn build_index(indexPath: &PathBuf, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
+    let directory = indexPath.to_str().expect("Not a valid directory");
+    document_parser::build_index(directory.to_string(),index,k_gram_index);
 }
 
 fn stem_term(input: &str) {
