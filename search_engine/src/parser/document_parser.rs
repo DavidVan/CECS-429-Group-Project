@@ -21,7 +21,7 @@ struct Document {
     url: String,
 }
 
-fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
+pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
     let paths = fs::read_dir(directory).unwrap();
     let mut files = Vec::new();
 

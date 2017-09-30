@@ -92,7 +92,7 @@ impl PositionalInvertedIndex {
         for term in self.mIndex.keys() {
             dictionary.push(term)
         }
-
+        dictionary.sort();
         return dictionary;
     }
 }

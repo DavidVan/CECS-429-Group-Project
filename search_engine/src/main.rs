@@ -6,6 +6,8 @@ use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::reader::read_file;
 use search_engine::reader::user_input;
+use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
+use search_engine::index::k_gram_index::KGramIndex;
 use std::env::current_exe;
 use std::path::PathBuf;
 
@@ -17,6 +19,9 @@ fn main() {
 
     let mut current : String;
     let mut input: String; 
+
+    let mut index = PositionalInvertedIndex::new();
+    let mut k_gram_index = KGramIndex::new();
     loop {
         print!("Enter a directory to access: ");
         input = user_input::read_input();
@@ -58,8 +63,8 @@ fn main() {
     } 
 }
 
-fn build_index() {
-
+fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
+    document_parser::build_index(directory,index,k_gram_index);
 }
 
 fn stem_term(input: &str) {
