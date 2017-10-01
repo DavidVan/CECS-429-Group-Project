@@ -8,6 +8,7 @@ use search_engine::reader::read_file;
 use search_engine::reader::user_input;
 use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
 use search_engine::index::k_gram_index::KGramIndex;
+use std::collections::HashMap;
 use std::env::current_exe;
 use std::path::PathBuf;
 
@@ -36,7 +37,7 @@ fn main() {
         println!("{}", documentPath.display());
         // TODO: Build Index after directory input
         if change {
-            build_index(&documentPath, &mut index, &mut k_gram_index);
+            let id_number = build_index(&documentPath, &mut index, &mut k_gram_index);
             change = false;
         }
 
@@ -66,9 +67,9 @@ fn main() {
     } 
 }
 
-fn build_index(indexPath: &PathBuf, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) {
+fn build_index(indexPath: &PathBuf, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) -> HashMap <u32, u32> {
     let directory = indexPath.to_str().expect("Not a valid directory");
-    document_parser::build_index(directory.to_string(),index,k_gram_index);
+    document_parser::build_index(directory.to_string(),index,k_gram_index)
 }
 
 fn stem_term(input: &str) {
