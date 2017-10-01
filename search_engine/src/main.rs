@@ -84,6 +84,39 @@ fn process_query(
     k_gram_index: &KGramIndex,
 ) {
 
+    let parser = QueryParser::new();
+    let processed_query = QueryParser::process_query(&parser, input);
+
+    // let mut postings = Vec::new();
+    
+    for query in processed_query {
+        println!("{}", query); 
+        let and_entries = query.split_whitespace();
+        for (i, entry) in and_entries.enumerate() {
+            let results = document_parser::normalize_token(entry.to_string());
+            let result = results.get(0).expect("Invalid token");
+            let query = result.to_string();
+            if index.contains_term(&query) {
+                let postings_list = index.get_postings(query.as_str());
+                print!("{} : ", query);
+                for posting in postings_list {
+                    let doc_id = posting.getDocID();
+                    let file: &Path = id_file.get(&doc_id).expect("Not a valid thing").as_ref();
+                    let file_name = file.file_name()
+                        .expect("Invalid os string")
+                        .to_str()
+                        .expect("Invalid string");
+                    print!("{} ", file_name);
+                }
+                println!();
+            }
+            if i == 0 {
+                 
+            }
+
+            println!("{}", result);
+        }
+    }
     let results = document_parser::normalize_token(input.to_string());
     let result = results.get(0).expect("not a valid token");
     let query = result.to_string();

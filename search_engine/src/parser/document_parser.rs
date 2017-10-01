@@ -1,4 +1,3 @@
-extern crate serde;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
