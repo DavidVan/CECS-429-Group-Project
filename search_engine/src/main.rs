@@ -98,7 +98,6 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
            print!("{} ", file_name);
         }
         println!();
-
     }
 }
 

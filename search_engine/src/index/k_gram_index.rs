@@ -1,42 +1,48 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 pub struct KGramIndex {
     mIndex: HashMap<String, Vec<String>>,
+    mSet: HashSet<String>,
 }
 
 impl KGramIndex {
     pub fn new() -> KGramIndex {
-        KGramIndex { mIndex: HashMap::new() }
+        KGramIndex { mIndex: HashMap::new(), mSet: HashSet::new() }
     }
 
     pub fn checkIndex(&mut self, term: &str) {
-        let term_copy = format!("${}$", term);
-        let mut buffer = [' '; 3];
-        let mut counter = 0;
-        for c in term_copy.chars() {
-            if buffer[2] != ' ' {
-                buffer[0] = buffer[1].clone();
-                buffer[1] = buffer[2].clone();
-                buffer[2] = c.clone();
-            } else {
-                buffer[counter] = c.clone();
-            }
-            if buffer[2] != ' ' {
-                let k_gram = buffer.iter().cloned().collect::<String>();
-                self.addIndex(k_gram.as_str(), term);
-            }
-            if buffer[1] != ' ' {
-                let first_half = &buffer[0..2].iter().cloned().collect::<String>();
-                let second_half = &buffer[1..3].iter().cloned().collect::<String>();
-                self.addIndex(first_half.trim(), term);
-                self.addIndex(second_half.trim(), term);
-            }
-            if buffer[counter] != ' ' && buffer[counter] != '$' {
-                self.addIndex(buffer[counter].clone().to_string().as_str(), term);
-            }
-            counter = (counter + 1) % buffer.len();
-        }
+        if !self.mSet.contains(term) {
+            self.mSet.insert(term.to_string()); 
+            let term_copy = format!("${}$", term);
+            let mut buffer = [' '; 3];
+            let mut counter = 0;
+            for c in term_copy.chars() {
+                if buffer[2] != ' ' {
+                    buffer[0] = buffer[1].clone();
+                    buffer[1] = buffer[2].clone();
+                    buffer[2] = c.clone();
+                } else {
+                    buffer[counter] = c.clone();
+                }
+                let buffer_string = buffer.iter().cloned().collect::<String>();
+                let buffer_first_half = &buffer[0..2].iter().cloned().collect::<String>();
+                let buffer_second_half = &buffer[1..3].iter().cloned().collect::<String>();
+                let buffer_first_char = buffer[counter].clone().to_string();
 
+                if buffer[2] != ' ' {
+                    self.addIndex(buffer_string.as_str(), term);
+                }
+                if buffer[1] != ' ' {
+                    self.addIndex(buffer_first_half.trim(), term);
+                    self.addIndex(buffer_second_half.trim(), term);
+                }
+                if buffer[counter] != ' ' && buffer[counter] != '$' {
+                    self.addIndex(buffer_first_char.as_str(), term);
+                }
+                counter = (counter + 1) % buffer.len();
+            }
+        }
     }
 
     fn addIndex(&mut self, gram: &str, term: &str) {

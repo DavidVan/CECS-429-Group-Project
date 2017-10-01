@@ -25,18 +25,19 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
     let mut id_number = HashMap::new();
 
     for (i,file) in files.iter().enumerate() {
-        // println!("file {}", file);
+        println!("{}", i);
          
         let document = read_file::read_file(file);
         let document_body = document.clone().getBody();
         let mut iter = document_body.split_whitespace();
 
         id_number.insert(i as u32, file.to_string());
+
         for (j,iter) in iter.enumerate() {
             let mut tokens = normalize_token(iter.to_owned());
             for term in tokens {
                 index.addTerm(&term,i as u32,j as u32);
-                k_gram_index.checkIndex(&term);
+                // k_gram_index.checkIndex(&term);
             }
         }
     }
