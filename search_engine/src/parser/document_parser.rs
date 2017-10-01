@@ -13,7 +13,7 @@ use index::k_gram_index::KGramIndex;
 use reader::read_file;
 use reader::read_file::Document;
 
-pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) -> HashMap<u32, u32> {
+pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) -> HashMap<u32, String> {
     let paths = fs::read_dir(directory).unwrap();
     let mut files = Vec::new();
 
@@ -31,9 +31,7 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
         let document_body = document.clone().getBody();
         let mut iter = document_body.split_whitespace();
 
-        let actual_num = get_actual_number(file);
-        
-        id_number.insert(i as u32, actual_num);
+        id_number.insert(i as u32, file.to_string());
         for (j,iter) in iter.enumerate() {
             let mut tokens = normalize_token(iter.to_owned());
             for term in tokens {
@@ -43,23 +41,6 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
         }
     }
     return id_number;
-}
-
-fn get_actual_number(file_name: &str) -> u32 {
-    let mut index = (file_name.len() - 1);
-    let mut file_name_clone = file_name.clone();
-
-    loop {
-        let c = file_name_clone.to_string().pop().expect("Not a char");
-        if c.is_alphabetic() {
-            break; 
-        }
-        index -= 1;
-    }
-
-    let number_string = file_name_clone.to_string().split_off(index);
-
-    number_string.parse::<u32>().unwrap()
 }
 
 pub fn normalize_token(term: String) -> Vec<String> {

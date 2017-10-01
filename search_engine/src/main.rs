@@ -10,10 +10,10 @@ use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
 use search_engine::index::k_gram_index::KGramIndex;
 use std::collections::HashMap;
 use std::env::current_exe;
-use std::path::PathBuf;
+use std::path::*;
 
 fn main() {
-    let mut documentPath = search_engine_paths::initializePath();
+    let mut index_path = search_engine_paths::initializePath();
     let mut initial = true;
 
     let mut current : String;
@@ -22,11 +22,12 @@ fn main() {
 
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
+    let mut id_number = HashMap::new();
     loop {
         print!("Enter a directory to access: ");
         input = user_input::read_input();
         println!("You typed: {}",input);
-        change = search_engine_paths::addToPath(&mut documentPath, input.as_str());
+        change = search_engine_paths::addToPath(&mut index_path, input.as_str());
         if change {
             current = input.clone();
             break; 
@@ -34,10 +35,10 @@ fn main() {
     }
 
     loop {
-        println!("{}", documentPath.display());
+        println!("{}", index_path.display());
         // TODO: Build Index after directory input
         if change {
-            let id_number = build_index(&documentPath, &mut index, &mut k_gram_index);
+            id_number = build_index(&index_path, &mut index, &mut k_gram_index);
             change = false;
         }
 
@@ -45,31 +46,61 @@ fn main() {
         input = user_input::read_input_line();
 
         // TODO: Process query
-        //
+        
+        process_query(&input, &index_path, &index, &id_number, &k_gram_index);
+
         if input.starts_with(":"){
             if input == ":q" {
                 break; 
             }
             else if input.starts_with(":o ") || input.starts_with(":open ") {
-                open_file(&documentPath, input.as_str());
+                open_file(&index_path, input.as_str());
             }
             else if input.starts_with(":stem ") {
                 stem_term(input.as_str());
             }
             else if input.starts_with(":index ") {
-                change = index_directory(&mut documentPath, input.clone());
+                change = index_directory(&mut index_path, input.clone());
             }
             else if input == ":vocab" {
                 println!("Vocabulary");
                 print_vocab(&index); 
             }
+            else {
+                println!("Invalid command"); 
+            }
         }
     } 
 }
 
-fn build_index(indexPath: &PathBuf, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) -> HashMap <u32, u32> {
-    let directory = indexPath.to_str().expect("Not a valid directory");
+fn build_index(index_path: &PathBuf, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) -> HashMap <u32, String> {
+    let directory = index_path.to_str().expect("Not a valid directory");
     document_parser::build_index(directory.to_string(),index,k_gram_index)
+}
+
+fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIndex, id_number: &HashMap<u32, String>, k_gram_index: &KGramIndex) {
+   
+    let results = document_parser::normalize_token(input.to_string());
+    let result = results.get(0).expect("not a valid token");
+    let query = result.to_string();
+
+    if index.contains_term(query.as_str()) {
+        let postings_list = index.get_postings(query.as_str());
+        print!("{} : ", query);
+        for posting in postings_list {
+            let doc_id = posting.getDocID();
+            let file : &Path = id_number.get(&doc_id)
+                .expect("Not a valid thing")
+                .as_ref();
+            let file_name = file.file_name()
+                .expect("Invalid os string")
+                .to_str()
+                .expect("Invalid string");
+           print!("{} ", file_name);
+        }
+        println!();
+
+    }
 }
 
 fn stem_term(input: &str) {
@@ -86,17 +117,17 @@ fn stem_term(input: &str) {
     }
 }
 
-fn index_directory(mut indexPath: &mut PathBuf, input: String) -> bool {
+fn index_directory(mut index_path: &mut PathBuf, input: String) -> bool {
     let input_clone = input.clone();
     let mut string = input_clone.split_whitespace();
     let mut directory = string.nth(1).expect("Not a valid token");
-    search_engine_paths::changeDirectory(&mut indexPath, directory) 
+    search_engine_paths::changeDirectory(&mut index_path, directory) 
 }
 
-fn open_file(indexPath: &PathBuf, input: &str) {
+fn open_file(index_path: &PathBuf, input: &str) {
     let mut string = input.split_whitespace();
     let file = string.nth(1).expect("Not a valid file");
-    let mut filePath = indexPath.clone();
+    let mut filePath = index_path.clone();
     println!("Opening {}", file);
     filePath.push(file);
     if (filePath.exists()) {

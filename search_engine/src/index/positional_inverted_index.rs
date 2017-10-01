@@ -18,7 +18,7 @@ impl PositionalPosting {
         self.mPositions.push(pos);
     }
 
-    pub fn getLastPosition(&self) -> u32 {
+    fn getLastPosition(&self) -> u32 {
         let pos: u32 = self.mPositions
             .last()
             .expect("Not a valid position")
@@ -76,6 +76,10 @@ impl PositionalInvertedIndex {
             positional_postings.push(new_posting);
             self.mIndex.insert(term.to_string(), positional_postings);
         }
+    }
+
+    pub fn contains_term(&self, term: &str) -> bool {
+        self.mIndex.contains_key(term) 
     }
 
     pub fn get_postings(&self, term: &str) -> &Vec<PositionalPosting> {
