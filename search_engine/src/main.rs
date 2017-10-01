@@ -22,7 +22,7 @@ fn main() {
 
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
-    let mut id_number = HashMap::new();
+    let mut id_file = HashMap::new();
     loop {
         print!("Enter a directory to access: ");
         input = user_input::read_input();
@@ -36,9 +36,8 @@ fn main() {
 
     loop {
         println!("{}", index_path.display());
-        // TODO: Build Index after directory input
         if change {
-            id_number = build_index(&index_path, &mut index, &mut k_gram_index);
+            id_file = build_index(&index_path, &mut index, &mut k_gram_index);
             change = false;
         }
 
@@ -47,7 +46,7 @@ fn main() {
 
         // TODO: Process query
         
-        process_query(&input, &index_path, &index, &id_number, &k_gram_index);
+        process_query(&input, &index_path, &index, &id_file, &k_gram_index);
 
         if input.starts_with(":"){
             if input == ":q" {
@@ -78,7 +77,7 @@ fn build_index(index_path: &PathBuf, index : &mut PositionalInvertedIndex, k_gra
     document_parser::build_index(directory.to_string(),index,k_gram_index)
 }
 
-fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIndex, id_number: &HashMap<u32, String>, k_gram_index: &KGramIndex) {
+fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>, k_gram_index: &KGramIndex) {
    
     let results = document_parser::normalize_token(input.to_string());
     let result = results.get(0).expect("not a valid token");
@@ -89,7 +88,7 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
         print!("{} : ", query);
         for posting in postings_list {
             let doc_id = posting.getDocID();
-            let file : &Path = id_number.get(&doc_id)
+            let file : &Path = id_file.get(&doc_id)
                 .expect("Not a valid thing")
                 .as_ref();
             let file_name = file.file_name()

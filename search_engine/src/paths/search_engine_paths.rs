@@ -28,6 +28,9 @@ pub fn changeDirectory(pathbuf:&mut PathBuf, new: &str) -> bool {
     let pathbuf_clone = pathbuf.clone();
     let mut current = pathbuf_clone.file_name().expect("Not a valid os string");
     let mut current_str = current.to_str().expect("Not a valid string");
+    if new == current {
+        return false; 
+    }
     pathbuf.pop();
     let success : bool = addToPath(pathbuf, new);
     if !success {
