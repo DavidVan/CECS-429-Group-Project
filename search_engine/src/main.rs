@@ -16,9 +16,9 @@ fn main() {
     let mut index_path = search_engine_paths::initializePath();
     let mut initial = true;
 
-    let mut current : String;
-    let mut input: String; 
-    let mut change : bool;
+    let mut current: String;
+    let mut input: String;
+    let mut change: bool;
 
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
@@ -26,11 +26,11 @@ fn main() {
     loop {
         print!("Enter a directory to access: ");
         input = user_input::read_input();
-        println!("You typed: {}",input);
+        println!("You typed: {}", input);
         change = search_engine_paths::addToPath(&mut index_path, input.as_str());
         if change {
             current = input.clone();
-            break; 
+            break;
         }
     }
 
@@ -45,40 +45,45 @@ fn main() {
         input = user_input::read_input_line();
 
         // TODO: Process query
-        
+
         process_query(&input, &index_path, &index, &id_file, &k_gram_index);
 
-        if input.starts_with(":"){
+        if input.starts_with(":") {
             if input == ":q" {
-                break; 
-            }
-            else if input.starts_with(":o ") || input.starts_with(":open ") {
+                break;
+            } else if input.starts_with(":o ") || input.starts_with(":open ") {
                 open_file(&index_path, input.as_str());
-            }
-            else if input.starts_with(":stem ") {
+            } else if input.starts_with(":stem ") {
                 stem_term(input.as_str());
-            }
-            else if input.starts_with(":index ") {
+            } else if input.starts_with(":index ") {
                 change = index_directory(&mut index_path, input.clone());
-            }
-            else if input == ":vocab" {
+            } else if input == ":vocab" {
                 println!("Vocabulary");
-                print_vocab(&index); 
-            }
-            else {
-                println!("Invalid command"); 
+                print_vocab(&index);
+            } else {
+                println!("Invalid command");
             }
         }
-    } 
+    }
 }
 
-fn build_index(index_path: &PathBuf, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) -> HashMap <u32, String> {
+fn build_index(
+    index_path: &PathBuf,
+    index: &mut PositionalInvertedIndex,
+    k_gram_index: &mut KGramIndex,
+) -> HashMap<u32, String> {
     let directory = index_path.to_str().expect("Not a valid directory");
-    document_parser::build_index(directory.to_string(),index,k_gram_index)
+    document_parser::build_index(directory.to_string(), index, k_gram_index)
 }
 
-fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>, k_gram_index: &KGramIndex) {
-   
+fn process_query(
+    input: &str,
+    index_path: &PathBuf,
+    index: &PositionalInvertedIndex,
+    id_file: &HashMap<u32, String>,
+    k_gram_index: &KGramIndex,
+) {
+
     let results = document_parser::normalize_token(input.to_string());
     let result = results.get(0).expect("not a valid token");
     let query = result.to_string();
@@ -88,14 +93,12 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
         print!("{} : ", query);
         for posting in postings_list {
             let doc_id = posting.getDocID();
-            let file : &Path = id_file.get(&doc_id)
-                .expect("Not a valid thing")
-                .as_ref();
+            let file: &Path = id_file.get(&doc_id).expect("Not a valid thing").as_ref();
             let file_name = file.file_name()
                 .expect("Invalid os string")
                 .to_str()
                 .expect("Invalid string");
-           print!("{} ", file_name);
+            print!("{} ", file_name);
         }
         println!();
     }
@@ -104,9 +107,8 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
 fn stem_term(input: &str) {
     let mut stem = input.split_whitespace();
     if stem.size_hint().0 > 2 {
-        println!("Invalid token"); 
-    }
-    else {
+        println!("Invalid token");
+    } else {
         let mut string = stem.nth(1).expect("Not a valid token");
         let results = document_parser::normalize_token(string.to_string());
         let result = results.get(0).expect("Not a valid token");
@@ -119,7 +121,7 @@ fn index_directory(mut index_path: &mut PathBuf, input: String) -> bool {
     let input_clone = input.clone();
     let mut string = input_clone.split_whitespace();
     let mut directory = string.nth(1).expect("Not a valid token");
-    search_engine_paths::changeDirectory(&mut index_path, directory) 
+    search_engine_paths::changeDirectory(&mut index_path, directory)
 }
 
 fn open_file(index_path: &PathBuf, input: &str) {
@@ -131,9 +133,8 @@ fn open_file(index_path: &PathBuf, input: &str) {
     if (filePath.exists()) {
         let document = read_file::read_file(filePath.to_str().expect("Not a valid string"));
         println!("{}", document.getBody());
-    }
-    else {
-        println!("{} does not exist", filePath.display()); 
+    } else {
+        println!("{} does not exist", filePath.display());
     }
 }
 
@@ -141,6 +142,6 @@ fn print_vocab(index: &PositionalInvertedIndex) {
     let dictionary = index.get_dictionary();
 
     for term in dictionary.iter() {
-        println!("{}", term); 
+        println!("{}", term);
     }
 }

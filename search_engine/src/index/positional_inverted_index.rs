@@ -79,7 +79,7 @@ impl PositionalInvertedIndex {
     }
 
     pub fn contains_term(&self, term: &str) -> bool {
-        self.mIndex.contains_key(term) 
+        self.mIndex.contains_key(term)
     }
 
     pub fn get_postings(&self, term: &str) -> &Vec<PositionalPosting> {

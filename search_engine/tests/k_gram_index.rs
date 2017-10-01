@@ -67,7 +67,7 @@ fn test_file() {
         let content = read_file::read_text_file(fileName.as_str());
         let mut iter = content.split_whitespace();
         while let Some(mut token) = iter.next() {
-            println!("{}", token); 
-        } 
+            println!("{}", token);
+        }
     }
 }

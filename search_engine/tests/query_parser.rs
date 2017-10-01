@@ -7,7 +7,15 @@ fn test_parser() {
     let parser = QueryParser::new();
     let query = "testing 1 2 + 3 \"hello1 世界 world\" hi + \"hello2 世界 world\" test (hello3 + \"hello4 world\" (inner + \"hello5 world\" \"(still + in + same + group)\")) + hello (banana + strawberry) + bye";
     println!("Original Query: \n{}", query);
-    let multiply_test = vec![String::from("this"), String::from("that"), String::from("\"(who + am + i)\"")];
+    let new_query = "hey -y + \"this one\"  + \"hello world\" -y (1 + (2 + 3) + 4) + bye";
+    println!("New Query: {}", new_query);
+    let results = parser.process_query(new_query);
+    //parser.multiply_query("\"hello world\" -y (1 + (2 + 3 (4 + 5)) + 6)");
+    println!("Process Query Results: {}", results.join(" + "));
+    let multi = parser.multiply_query("hello (1 + 2)");
+    println!("Process Multi Results: {}", multi.join(" + "));
+    //parser.multiply_query("hello world (what + what2)");
+    /*let multiply_test = vec![String::from("this"), String::from("that"), String::from("\"(who + am + i)\"")];
     let multiply = parser.multiply_token(String::from("hello"), &multiply_test);
     for item in multiply {
         println!("Multiply Item: {}", item);
@@ -24,7 +32,7 @@ fn test_parser() {
     let multiply2 = parser.multiply_token(String::from("hello"), &multiply_test2);
     for item in multiply2 {
         println!("Multiply2 Item: {}", item);
-    }
+    }*/
 
     //let final_query = parser.process_query(query);
     /*println!("Original Query: {}", query);

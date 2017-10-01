@@ -13,7 +13,11 @@ use index::k_gram_index::KGramIndex;
 use reader::read_file;
 use reader::read_file::Document;
 
-pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) -> HashMap<u32, String> {
+pub fn build_index(
+    directory: String,
+    index: &mut PositionalInvertedIndex,
+    k_gram_index: &mut KGramIndex,
+) -> HashMap<u32, String> {
     let paths = fs::read_dir(directory).unwrap();
     let mut files = Vec::new();
 
@@ -45,14 +49,14 @@ pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gr
 }
 
 pub fn normalize_token(term: String) -> Vec<String> {
-    let mut start_index:i32 = 0;
-    let mut end_index:i32 = (term.len() as i32) - 1;
+    let mut start_index: i32 = 0;
+    let mut end_index: i32 = (term.len() as i32) - 1;
     for c in term.chars() {
         if !c.is_digit(10) && !c.is_alphabetic() && term.len() == 1 {
-           let empty = "".to_string(); 
-           let mut empty_vector = Vec::new();
-           empty_vector.push(empty);
-           return empty_vector;
+            let empty = "".to_string();
+            let mut empty_vector = Vec::new();
+            empty_vector.push(empty);
+            return empty_vector;
         }
         if !c.is_digit(10) && !c.is_alphabetic() {
             start_index += 1;
@@ -69,11 +73,11 @@ pub fn normalize_token(term: String) -> Vec<String> {
     }
     if (start_index > end_index) {
         let empty = "";
-        return vec!{empty.to_owned()};
+        return vec![empty.to_owned()];
     }
     let mut alphanumeric_string: String = term.chars()
         .skip(start_index as usize)
-        .take((end_index as usize)- (start_index as usize) + 1)
+        .take((end_index as usize) - (start_index as usize) + 1)
         .collect();
     // println!("alphanumeric_string - {}", alphanumeric_string);
     let apostrophe = "'";
@@ -84,7 +88,7 @@ pub fn normalize_token(term: String) -> Vec<String> {
     if apostrophe_reduced.contains(hyphen) {
         let mut hyphen_index = 0;
         for c in apostrophe_reduced.chars() {
-            if c == '-'{
+            if c == '-' {
                 break;
             }
             hyphen_index += 1;

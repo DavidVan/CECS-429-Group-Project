@@ -13,7 +13,7 @@ pub fn initializePath() -> PathBuf {
     return documentPath;
 }
 
-pub fn addToPath(pathbuf:&mut PathBuf, add: &str) -> bool {
+pub fn addToPath(pathbuf: &mut PathBuf, add: &str) -> bool {
     let mut testPath = pathbuf.clone();
     testPath.push(add);
 
@@ -24,25 +24,25 @@ pub fn addToPath(pathbuf:&mut PathBuf, add: &str) -> bool {
     return false;
 }
 
-pub fn changeDirectory(pathbuf:&mut PathBuf, new: &str) -> bool {
+pub fn changeDirectory(pathbuf: &mut PathBuf, new: &str) -> bool {
     let pathbuf_clone = pathbuf.clone();
     let mut current = pathbuf_clone.file_name().expect("Not a valid os string");
     let mut current_str = current.to_str().expect("Not a valid string");
     if new == current {
-        return false; 
+        return false;
     }
     pathbuf.pop();
-    let success : bool = addToPath(pathbuf, new);
+    let success: bool = addToPath(pathbuf, new);
     if !success {
-        addToPath(pathbuf, current_str); 
+        addToPath(pathbuf, current_str);
     }
     return success;
 }
 
 pub fn verifyPath(pathbuf: PathBuf) -> bool {
     if pathbuf.exists() {
-        return true; 
+        return true;
     }
-    println!("{} does not exist", pathbuf.display()); 
+    println!("{} does not exist", pathbuf.display());
     return false;
 }
