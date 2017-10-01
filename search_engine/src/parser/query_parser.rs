@@ -2,9 +2,7 @@ use std::io::{self, Read};
 use std::process::exit;
 use std::option;
 
-pub struct QueryParser {
-
-}
+pub struct QueryParser {}
 
 impl QueryParser {
     pub fn new() -> QueryParser {
@@ -12,10 +10,10 @@ impl QueryParser {
     }
 
     pub fn process_query(&self, input: &str) -> Vec<String> {
-        let mut results : Vec<String> = Vec::new();
+        let mut results: Vec<String> = Vec::new();
         // Part 1 - Group the token into groups separated by "+"
         let mut tokens = input.split_whitespace();
-        let mut query_builder : Vec<String> = Vec::new();
+        let mut query_builder: Vec<String> = Vec::new();
 
         while let Some(mut token) = tokens.next() {
             if token.len() == 1 && token.starts_with("+") {
@@ -44,15 +42,14 @@ impl QueryParser {
                         while let Some(mut c) = reverse_token_iter.next() {
                             if c == ')' {
                                 left_parenthesis_counter -= 1;
-                            }
-                            else {
+                            } else {
                                 break;
                             }
                         }
                     }
                     match tokens.next() {
                         Some(part) => token = part,
-                        None => break
+                        None => break,
                     }
                 }
                 results.push(parenthesis_query_vec.join(" "));
@@ -65,10 +62,11 @@ impl QueryParser {
         }
 
         // Part 2 - Expand inner queries if any...
-        let mut final_results : Vec<String> = Vec::new();
+        let mut final_results: Vec<String> = Vec::new();
         let mut results_iter = results.iter();
         while let Some(result) = results_iter.next() {
-            if result.ends_with(")") { // I should find a better way of checking if it's nested...
+            if result.ends_with(")") {
+                // I should find a better way of checking if it's nested...
                 // Process the result...
                 println!("Recursive call on: {}", result);
                 let sub_results = self.multiply_query(result);
@@ -85,10 +83,10 @@ impl QueryParser {
     }
 
     pub fn multiply_query(&self, input: &str) -> Vec<String> {
-        let mut results : Vec<String> = Vec::new();
+        let mut results: Vec<String> = Vec::new();
         let mut tokens = input.split_whitespace();
-        let mut multiplier_vec : Vec<String> = Vec::new();
-        let mut multiplicand_vec : Vec<String> = Vec::new();
+        let mut multiplier_vec: Vec<String> = Vec::new();
+        let mut multiplicand_vec: Vec<String> = Vec::new();
 
         while let Some(token) = tokens.next() {
             if token.starts_with("(") {
@@ -98,7 +96,7 @@ impl QueryParser {
             multiplier_vec.push(String::from(token));
         }
 
-        let mut query_builder : Vec<String> = Vec::new();
+        let mut query_builder: Vec<String> = Vec::new();
         while let Some(mut token) = tokens.next() {
             if token.len() == 1 && token.starts_with("+") {
                 if query_builder.len() != 0 {
@@ -121,15 +119,14 @@ impl QueryParser {
                         while let Some(mut c) = reverse_token_iter.next() {
                             if c == ')' {
                                 left_parenthesis_counter -= 1;
-                            }
-                            else {
+                            } else {
                                 break;
                             }
                         }
                     }
                     match tokens.next() {
                         Some(part) => token = part,
-                        None => break
+                        None => break,
                     }
                 }
                 multiplicand_vec.push(query_builder.join(" "));
@@ -142,16 +139,25 @@ impl QueryParser {
         multiplicand_vec[0] = multiplicand_vec[0].chars().skip(1).collect();
         let multiplicand_vec_length = multiplicand_vec.len();
         let multiplicand_last_element_length = multiplicand_vec[multiplicand_vec_length - 1].len();
-        multiplicand_vec[multiplicand_vec_length - 1] = multiplicand_vec[multiplicand_vec_length - 1].chars().take(multiplicand_last_element_length - 1).collect();
+        multiplicand_vec[multiplicand_vec_length - 1] = multiplicand_vec[multiplicand_vec_length -
+                                                                             1]
+            .chars()
+            .take(multiplicand_last_element_length - 1)
+            .collect();
         let multiplicand_precursor = multiplicand_vec.join(" ");
-        let multiplicand : String = multiplicand_precursor.chars().take(multiplicand_precursor.len() - 2).skip(1).collect();
+        let multiplicand: String = multiplicand_precursor
+            .chars()
+            .take(multiplicand_precursor.len() - 2)
+            .skip(1)
+            .collect();
         for multiplicand in multiplicand_vec {
             results.push(multiplier.clone() + " " + multiplicand.as_str());
         }
-        let mut final_results : Vec<String> = Vec::new();
+        let mut final_results: Vec<String> = Vec::new();
         let mut results_iter = results.iter();
         while let Some(result) = results_iter.next() {
-            if result.ends_with(")") { // I should find a better way of checking if it's nested...
+            if result.ends_with(")") {
+                // I should find a better way of checking if it's nested...
                 // Process the result...
                 let sub_results = self.multiply_query(result);
                 // Add sub-results to final results...
