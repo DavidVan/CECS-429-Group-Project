@@ -1,4 +1,6 @@
 extern crate serde;
+extern crate humanesort;
+
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -12,6 +14,7 @@ use index::positional_inverted_index::PositionalInvertedIndex;
 use index::k_gram_index::KGramIndex;
 use reader::read_file;
 use reader::read_file::Document;
+use self::humanesort::prelude::*;
 
 pub fn build_index(
     directory: String,
@@ -24,12 +27,13 @@ pub fn build_index(
     for path in paths {
         files.push(path.unwrap().path().display().to_string())
     }
+    files.humane_sort();
     let mut document: Document;
 
     let mut id_number = HashMap::new();
 
     for (i,file) in files.iter().enumerate() {
-        println!("{}", i);
+        //println!("{}", i);
          
         let document = read_file::read_file(file);
         let document_body = document.clone().getBody();
