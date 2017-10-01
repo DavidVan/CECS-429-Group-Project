@@ -7,12 +7,26 @@ fn test_parser() {
     let parser = QueryParser::new();
     let query = "testing 1 2 + 3 \"hello1 世界 world\" hi + \"hello2 世界 world\" test (hello3 + \"hello4 world\" (inner + \"hello5 world\" \"(still + in + same + group)\")) + hello (banana + strawberry) + bye";
     println!("Original Query: \n{}", query);
-    let multiply_test = vec!["this", "that", "\"(who + am + i)\""];
-    let multiply = parser.multiply_token(String::from("multiply"), &multiply_test);
+    let multiply_test = vec![String::from("this"), String::from("that"), String::from("\"(who + am + i)\"")];
+    let multiply = parser.multiply_token(String::from("hello"), &multiply_test);
     for item in multiply {
         println!("Multiply Item: {}", item);
     }
-    let final_query = parser.process_query(query);
+    
+
+    let parenthesis_remove = parser.parenthesis_query_to_vec(String::from("(hello + world (hello2 + world2))"));
+    println!("Parenthesis remove test: {:?}", parenthesis_remove);
+
+    // hello * this + that + (real + parenthesis + test (hello + world))
+    // hello this + hello that (real + parenthesis + test (hello + world))
+    // hello this + hello that real + hello that parenthesis + hello that test (hello + world)
+    let multiply_test2 = vec![String::from("this"), String::from("that"), String::from("(real + parenthesis + test (hello + world))")];
+    let multiply2 = parser.multiply_token(String::from("hello"), &multiply_test2);
+    for item in multiply2 {
+        println!("Multiply2 Item: {}", item);
+    }
+
+    //let final_query = parser.process_query(query);
     /*println!("Original Query: {}", query);
     let tokens = parser.tokenize_query(query);
     println!("ALL ZE TOKENS: {:?}", tokens);

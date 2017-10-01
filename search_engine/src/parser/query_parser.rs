@@ -11,13 +11,117 @@ impl QueryParser {
         QueryParser {}
     }
 
-    pub fn multiply_token(&self, multiplier: String, multiplicand: &Vec<&str>) -> Vec<String> {
+    pub fn parenthesis_query_to_vec(&self, query: String) -> Vec<String> {
+        if !query.starts_with("(") && !query.ends_with(")") {
+            panic!("Query is not a parenthesis query!");
+        }
+        let mut query_with_no_parenthesis_vec = Vec::new();
+        let mut new_query : String = query.chars().take(query.len() - 1).skip(1).collect();
+        let mut new_query_iter = new_query.split_whitespace();
+        while let Some(mut query_part) = new_query_iter.next() {
+            if query_part.len() == 1 && query_part.starts_with("+") {
+                continue;
+            }
+            if query_part.starts_with("(") {
+                let previous_query = query_with_no_parenthesis_vec.pop().unwrap();
+                let mut new_inner_query_vec = Vec::new();
+                new_inner_query_vec.push(String::from(previous_query) + " " + query_part);
+                let mut left_parenthesis_counter = 1;
+                let mut right_parenthesis_counter = 0;
+                query_part = new_query_iter.next().unwrap(); // skip to next..
+                while left_parenthesis_counter > right_parenthesis_counter {
+                    new_inner_query_vec.push(String::from(query_part)); 
+                    if query_part.starts_with("(") {
+                        left_parenthesis_counter += 1
+                    }
+                    else if query_part.ends_with(")") {
+                        right_parenthesis_counter += 1;
+                        left_parenthesis_counter -= 1;
+                    }
+                    match new_query_iter.next() {
+                        Some(part) => query_part = part,
+                        None => break
+                    }
+                }
+                query_with_no_parenthesis_vec.push(new_inner_query_vec.join(" "));
+                continue;
+            }
+            query_with_no_parenthesis_vec.push(String::from(query_part));
+        }
+        query_with_no_parenthesis_vec
+    }
+
+    pub fn multiply_token(&self, multiplier: String, multiplicand: &Vec<String>) -> Vec<String> {
         let mut results = Vec::new();
+        let mut previous_multiplied = Vec::new();
         for item in multiplicand {
+            if item.starts_with("(") {
+                println!("starts with paren {}", item);
+                println!("previous multiplied: {}", previous_multiplied.join(" "));
+                let mut query_builder = Vec::new();
+                let previous_multiplied_string = previous_multiplied.join(" ");
+                let multiplicand_without_parenthesis : String = item.clone().chars().skip(1).take(item.len() - 2).collect();
+                let mut multiplicand_without_parenthesis_iter = multiplicand_without_parenthesis.split_whitespace();
+                for i in multiplicand_without_parenthesis.split_whitespace() {
+                    println!("multiplicant without paren {}", i);
+                }
+                while let Some(query_part) = multiplicand_without_parenthesis_iter.next() {
+                    println!("Query part: {}", query_part);
+                    if query_part.len() == 1 && query_part.starts_with("+") {
+                        continue;
+                    }
+                    if query_part.starts_with("(") {
+                        let mut inner_query_builder = Vec::new();
+                        inner_query_builder.push(query_part);
+                        println!("query pushed LOL {}", query_part);
+                        let mut left_parenthesis_counter = 1;
+                        let mut right_parenthesis_counter = 0;
+                        let mut next_query_part = multiplicand_without_parenthesis_iter.next().unwrap();
+                        while left_parenthesis_counter > right_parenthesis_counter {
+                            println!("Current State of inner query: {}", inner_query_builder.join(" "));
+                            inner_query_builder.push(next_query_part);
+                            if next_query_part.starts_with("(") {
+                                left_parenthesis_counter += 1
+                            }
+                            else if next_query_part.ends_with(")") {
+                                right_parenthesis_counter += 1;
+                                left_parenthesis_counter -= 1;
+                            }
+                            match multiplicand_without_parenthesis_iter.next() {
+                                Some(part) => next_query_part = part,
+                                None => break
+                            }
+                        }
+                        let combined_term = query_builder.pop().unwrap() + " " + inner_query_builder.join(" ").as_str();
+                        query_builder.push(combined_term);
+                        println!("built query going to multiply again {:?}", query_builder);
+                        let new_query = self.multiply_token(previous_multiplied.join(" "), &query_builder);
+                        println!("FINAL MULTI RESULT: {:?}", new_query);
+                        query_builder.clear();
+                        for query in new_query {
+                            if query.starts_with("(") {
+                                let multipler_token_test = query_builder.pop().unwrap();
+                                query_builder.push(self.multiply_token(multipler_token_test, &self.parenthesis_query_to_vec(query.clone())).join(" "));
+                            }
+                            query_builder.push(query);
+                        }
+                        continue;
+                    }
+                    query_builder.push(String::from(query_part));
+                }
+                println!("paren removed: {}", multiplicand_without_parenthesis);
+                println!("built query: {:?}", query_builder);
+            }
+            println!("multiplying now! {}", item);
+            previous_multiplied.clear();
+            previous_multiplied.push(multiplier.clone());
+            previous_multiplied.push(item.clone());
             results.push(multiplier.clone() + " " + item);
         }
         results // All Results need to be OR'd / Insert '+' between.
     }
+
+    
 
     pub fn process_query(&self, input: &str) -> Vec<Vec<String>> {
         let mut query = input;
@@ -41,7 +145,7 @@ impl QueryParser {
                 let mut right_parenthesis_counter = 0;
                 let mut next_sub_query = query_iter.next().unwrap();
                 while left_parenthesis_counter > right_parenthesis_counter {
-                    query_builder.push(next_sub_query.clone());
+                    query_builder.push(next_sub_query); // should I clone? I removed it just now.
                     if next_sub_query.starts_with("(") {
                         left_parenthesis_counter += 1;
                     }
@@ -49,10 +153,15 @@ impl QueryParser {
                         right_parenthesis_counter += 1;
                         left_parenthesis_counter -= 1;
                     }
-                    next_sub_query = query_iter.next().unwrap();
+                    //next_sub_query = query_iter.next().unwrap();
+                    match query_iter.next() {
+                        Some(part) => next_sub_query = part,
+                        None => break
+                    }
                 }
                 preprocessed_query.push(query_builder.join(" "));
                 println!("Built Query: {}", query_builder.join(" "));
+
                 final_query.push(preprocessed_query);
                 preprocessed_query = Vec::new();
                 continue;
