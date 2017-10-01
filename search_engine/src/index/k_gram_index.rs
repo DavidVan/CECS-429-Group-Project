@@ -13,10 +13,7 @@ impl KGramIndex {
         let term_copy = format!("${}$", term);
         let mut buffer = [' '; 3];
         let mut counter = 0;
-        println!("{:?}", buffer);
         for c in term_copy.chars() {
-            println!("Counter {}", counter);
-            println!("Character {}", c.to_string());
             if buffer[2] != ' ' {
                 buffer[0] = buffer[1].clone();
                 buffer[1] = buffer[2].clone();
@@ -24,7 +21,6 @@ impl KGramIndex {
             } else {
                 buffer[counter] = c.clone();
             }
-            println!("{:?}", buffer);
             if buffer[2] != ' ' {
                 let k_gram = buffer.iter().cloned().collect::<String>();
                 self.addIndex(k_gram.as_str(), term);
@@ -50,7 +46,6 @@ impl KGramIndex {
                 gram_terms.push(term.to_string());
             }
         } else {
-            println!("Inserting {} to k gram", gram);
             let mut terms = Vec::new();
             terms.push(term.to_string());
             self.mIndex.insert(gram.to_string(), terms);

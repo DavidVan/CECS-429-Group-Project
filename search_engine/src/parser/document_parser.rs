@@ -1,3 +1,5 @@
+extern crate serde;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Read;
@@ -6,20 +8,12 @@ use ::serde_json::Error;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 use ::stemmer::Stemmer;
+use index::positional_inverted_index::PositionalInvertedIndex;
+use index::k_gram_index::KGramIndex;
+use reader::read_file;
+use reader::read_file::Document;
 
-#[derive(Serialize, Deserialize)]
-struct Corpus {
-    documents: Vec<Document>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Document {
-    title: String,
-    body: String,
-    url: String,
-}
-
-fn build_index(directory: String) {
+pub fn build_index(directory: String, index : &mut PositionalInvertedIndex, k_gram_index: &mut KGramIndex) -> HashMap<u32, String> {
     let paths = fs::read_dir(directory).unwrap();
     let mut files = Vec::new();
 
@@ -27,25 +21,38 @@ fn build_index(directory: String) {
         files.push(path.unwrap().path().display().to_string())
     }
     let mut document: Document;
-    for file in files {
-        let mut f = File::open(file).expect("file not found");
 
-        let mut contents = String::new();
-        f.read_to_string(&mut contents)
-            .expect("something went wrong reading the file");
-        document =  ::serde_json::from_str(&contents).unwrap();
-        let mut iter = document.body.split_whitespace();
+    let mut id_number = HashMap::new();
 
-        while let Some(mut token) = iter.next() {
-            
+    for (i,file) in files.iter().enumerate() {
+        // println!("file {}", file);
+         
+        let document = read_file::read_file(file);
+        let document_body = document.clone().getBody();
+        let mut iter = document_body.split_whitespace();
+
+        id_number.insert(i as u32, file.to_string());
+        for (j,iter) in iter.enumerate() {
+            let mut tokens = normalize_token(iter.to_owned());
+            for term in tokens {
+                index.addTerm(&term,i as u32,j as u32);
+                k_gram_index.checkIndex(&term);
+            }
         }
     }
+    return id_number;
 }
 
 pub fn normalize_token(term: String) -> Vec<String> {
-    let mut start_index = 0;
-    let mut end_index = term.len() - 1;
+    let mut start_index:i32 = 0;
+    let mut end_index:i32 = (term.len() as i32) - 1;
     for c in term.chars() {
+        if !c.is_digit(10) && !c.is_alphabetic() && term.len() == 1 {
+           let empty = "".to_string(); 
+           let mut empty_vector = Vec::new();
+           empty_vector.push(empty);
+           return empty_vector;
+        }
         if !c.is_digit(10) && !c.is_alphabetic() {
             start_index += 1;
         } else {
@@ -59,11 +66,15 @@ pub fn normalize_token(term: String) -> Vec<String> {
             break;
         }
     }
+    if (start_index > end_index) {
+        let empty = "";
+        return vec!{empty.to_owned()};
+    }
     let mut alphanumeric_string: String = term.chars()
-        .skip(start_index)
-        .take(end_index - start_index + 1)
+        .skip(start_index as usize)
+        .take((end_index as usize)- (start_index as usize) + 1)
         .collect();
-    println!("alphanumeric_string - {}", alphanumeric_string);
+    // println!("alphanumeric_string - {}", alphanumeric_string);
     let apostrophe = "'";
     let empty_string = "";
     let mut apostrophe_reduced = alphanumeric_string.replace(apostrophe, empty_string);
@@ -72,7 +83,7 @@ pub fn normalize_token(term: String) -> Vec<String> {
     if apostrophe_reduced.contains(hyphen) {
         let mut hyphen_index = 0;
         for c in apostrophe_reduced.chars() {
-            if c == '\'' {
+            if c == '-'{
                 break;
             }
             hyphen_index += 1;

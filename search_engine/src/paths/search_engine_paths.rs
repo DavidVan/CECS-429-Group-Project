@@ -24,15 +24,19 @@ pub fn addToPath(pathbuf:&mut PathBuf, add: &str) -> bool {
     return false;
 }
 
-pub fn changeDirectory(pathbuf:&mut PathBuf, new: &str) {
+pub fn changeDirectory(pathbuf:&mut PathBuf, new: &str) -> bool {
     let pathbuf_clone = pathbuf.clone();
     let mut current = pathbuf_clone.file_name().expect("Not a valid os string");
     let mut current_str = current.to_str().expect("Not a valid string");
+    if new == current {
+        return false; 
+    }
     pathbuf.pop();
     let success : bool = addToPath(pathbuf, new);
     if !success {
         addToPath(pathbuf, current_str); 
     }
+    return success;
 }
 
 pub fn verifyPath(pathbuf: PathBuf) -> bool {
