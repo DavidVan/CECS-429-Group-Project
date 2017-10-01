@@ -9,7 +9,7 @@ fn test_parser() {
     println!("Original Query: \n{}", query);
     let new_query = "hey -y + \"this one\"  + \"hello world\" -y (1 + (2 + 3) + 4) + bye";
     println!("New Query: {}", new_query);
-    let results = parser.process_query(query);
+    let results = parser.process_query(new_query);
     //parser.multiply_query("\"hello world\" -y (1 + (2 + 3 (4 + 5)) + 6)");
     println!("Process Query Results: {}", results.join(" + "));
     let multi = parser.multiply_query("hello (1 + 2)");
