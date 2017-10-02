@@ -26,19 +26,27 @@ impl KGramIndex {
                     buffer[counter] = c.clone();
                 }
                 let buffer_string = buffer.iter().cloned().collect::<String>();
-                let buffer_first_half = &buffer[0..2].iter().cloned().collect::<String>();
-                let buffer_second_half = &buffer[1..3].iter().cloned().collect::<String>();
-                let buffer_first_char = buffer[counter].clone().to_string();
+                let mut buffer_first_half = buffer_string.clone();
+                buffer_first_half.pop();
+                let mut buffer_second_half = buffer_string.clone();
+                buffer_second_half.remove(0);
+            
+                if self.mIndex.contains_key(&buffer_string) {
+                    continue;
+                }
 
                 if buffer[2] != ' ' {
                     self.addIndex(buffer_string.as_str(), term);
                 }
                 if buffer[1] != ' ' {
-                    self.addIndex(buffer_first_half.trim(), term);
-                    self.addIndex(buffer_second_half.trim(), term);
+                    self.addIndex(&buffer_first_half, term);
+                    self.addIndex(&buffer_second_half, term);
                 }
                 if buffer[counter] != ' ' && buffer[counter] != '$' {
-                    self.addIndex(buffer_first_char.as_str(), term);
+                    let mut buffer_first_char = buffer_string.clone();
+                    buffer_first_char.pop();
+                    buffer_first_char.pop();
+                    self.addIndex(&buffer_first_char, term);
                 }
                 counter = (counter + 1) % buffer.len();
             }
