@@ -46,9 +46,11 @@ fn main() {
 
         // TODO: Process query
 
-        process_query(&input, &index_path, &index, &id_file, &k_gram_index);
-
-        if input.starts_with(":") {
+        if !input.starts_with(":") {
+            process_query(&input, &index_path, &index, &id_file, &k_gram_index);
+        }
+        
+        else {
             if input == ":q" {
                 break;
             } else if input.starts_with(":o ") || input.starts_with(":open ") {
@@ -177,4 +179,5 @@ fn print_vocab(index: &PositionalInvertedIndex) {
     for term in dictionary.iter() {
         println!("{}", term);
     }
+    println!("Total terms: {}", dictionary.len());
 }
