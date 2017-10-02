@@ -1,20 +1,48 @@
 use std::collections::HashMap;
 
+/*
+ * Structure that will contain the Positional Posting of a term in the 
+ * Positional Inverted Index
+ */
 pub struct PositionalPosting {
+    /*
+     * Document ID of Positional Posting
+     */
     mDocID: u32,
+
+    /*
+     * The list of positions for each posting
+     */
     mPositions: Vec<u32>,
 }
 
+/*
+ * Contains operations for Positional Posting
+ */
 impl PositionalPosting {
-    pub fn new(&mut self) {
-        self.mDocID = 0;
-        self.mPositions = Vec::new();
+
+    /*
+     * Constructor of PositionalPosting
+     */
+    pub fn new(docID: u32) -> PositionalPosting {
+        PositionalPosting {
+            mDocID: docID,
+            mPositions: Vec::new()
+        }
     }
+
+    /*
+     * Returns document ID clone to preserve data integrity
+     */
     pub fn getDocID(&self) -> u32 {
         self.mDocID.clone()
     }
 
-    pub fn addPosition(&mut self, pos: u32) {
+    pub fn getPositions(&self)  -> Vec<u32> {
+        self.mPositions.clone() 
+    }
+
+    fn addPosition(&mut self, pos: u32) {
         self.mPositions.push(pos);
     }
 
@@ -56,10 +84,7 @@ impl PositionalInvertedIndex {
             }
             {
                 if (mIndex.get(term).unwrap().last().unwrap().getDocID() != docID) {
-                    let mut new_posting = PositionalPosting {
-                        mDocID: docID,
-                        mPositions: Vec::new(),
-                    };
+                    let mut new_posting = PositionalPosting::new(docID);
                     new_posting.addPosition(pos);
                     mIndex.get_mut(term).expect("term not found").push(
                         new_posting,
