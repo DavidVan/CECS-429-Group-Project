@@ -9,6 +9,13 @@ impl QueryParser {
         QueryParser {}
     }
 
+    /*
+     * Takes in a query as a string. E.g. "hello (one + two)"
+     * Returns the expanded query as a vector, where each element in the vector is an AND query,
+     * and in between the elements is considered an OR query.
+     * Thus, ["element1", "element2"] is considered element1 OR element2
+     * E.g. ["hello one", "hello two"]
+     */
     pub fn process_query(&self, input: &str) -> Vec<String> {
         let mut results: Vec<String> = Vec::new();
         // Part 1 - Group the token into groups separated by "+"
