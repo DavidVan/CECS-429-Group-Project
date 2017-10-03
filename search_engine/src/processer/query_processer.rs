@@ -8,7 +8,7 @@ use std::path::*;
 pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>) -> HashSet<String> {
     let parser = QueryParser::new();
     let processed_query = QueryParser::process_query(&parser, input);
-    // println!("Processed Query: {:?}", processed_query);
+    println!("Processed Query: {:?}", processed_query);
 
     let mut results : HashSet<String> = HashSet::new();
     let mut or_results = Vec::new();
@@ -40,35 +40,70 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
             }
             and_entries.push(String::from(entry.clone()));
         }
+        // Should check if NEAR/K is in this query... if so, call function to handle... add to and
+        // results....
         let mut and_results = Vec::new();
         let mut not_results = Vec::new();
-        for entry in and_entries {
-            // println!("AND ENTRY DAVID {}", entry);
-            let not_query = entry.starts_with("-");
-            let normalized_tokens = document_parser::normalize_token(entry.to_string());
-            for normalized_token in normalized_tokens {
-                // println!("Normalized Token: {}",  normalized_token);
-                if !index.contains_term(normalized_token.as_str()) {
-                    break;
-                }
-                let postings = index.get_postings(normalized_token.as_str()); 
-                let mut and_inner_results = HashSet::new();
-                for posting in postings {
-                    if not_query {
-                        let file_path = id_file.get(&posting.getDocID()).unwrap().to_string();
+
+        if query.contains("NEAR/") {
+            let mut near_k_results : Vec<u32> = near_query(query.clone(), index);
+            let mut near_k_inner_results = HashSet::new();
+            for result in near_k_results {
+                let file_path = id_file.get(&result).unwrap().to_string();
+                let file : &Path = file_path.as_ref();
+                let file_name = file.file_name();
+                near_k_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
+            }
+            and_results.push(near_k_inner_results);
+        }
+        else {
+            for entry in and_entries {
+                // println!("AND ENTRY DAVID {}", entry);
+                let not_query = entry.starts_with("-");
+                let phrase_literal_vec : Vec<&str> = entry.split_whitespace().collect();
+                let phrase_literal = phrase_literal_vec.len() > 1;
+                println!("Not query? {}", not_query);
+                println!("Phrase literal? {}", phrase_literal);
+                if phrase_literal {
+                    let mut phrase_literal_results : Vec<u32> = Vec::new();
+                    let mut phrase_literal_inner_results = HashSet::new();
+                    for result in phrase_literal_results {
+                        let file_path = id_file.get(&result).unwrap().to_string();
                         let file : &Path = file_path.as_ref();
                         let file_name = file.file_name();
-                        not_results.push(String::from(file_name.unwrap().to_str().unwrap()));
+                        phrase_literal_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
                     }
-                    else {
-                        let file_path = id_file.get(&posting.getDocID()).unwrap().to_string();
-                        let file : &Path = file_path.as_ref();
-                        let file_name = file.file_name();
-                        and_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
-                    }
+                    and_results.push(phrase_literal_inner_results);
+                    // call function to process
+                    // read results into and results vec (might have to get file name)
                 }
-                if !not_query {
-                    and_results.push(and_inner_results);
+                else {
+                    let normalized_tokens = document_parser::normalize_token(entry.to_string());
+                    for normalized_token in normalized_tokens {
+                        // println!("Normalized Token: {}",  normalized_token);
+                        if !index.contains_term(normalized_token.as_str()) {
+                            break;
+                        }
+                        let postings = index.get_postings(normalized_token.as_str()); 
+                        let mut and_inner_results = HashSet::new();
+                        for posting in postings {
+                            if not_query {
+                                let file_path = id_file.get(&posting.getDocID()).unwrap().to_string();
+                                let file : &Path = file_path.as_ref();
+                                let file_name = file.file_name();
+                                not_results.push(String::from(file_name.unwrap().to_str().unwrap()));
+                            }
+                            else {
+                                let file_path = id_file.get(&posting.getDocID()).unwrap().to_string();
+                                let file : &Path = file_path.as_ref();
+                                let file_name = file.file_name();
+                                and_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
+                            }
+                        }
+                        if !not_query {
+                            and_results.push(and_inner_results);
+                        }
+                    }
                 }
             }
         }
@@ -129,7 +164,7 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
  * @return the documents in which a is within x terms of b
  *
  */
-pub fn near_query(query_literal: String, index: &mut PositionalInvertedIndex) -> Vec<u32> {
+pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals:Vec<&str> = query_literal.split(' ').collect();
     let first_term = literals[0].clone();
@@ -140,6 +175,7 @@ pub fn near_query(query_literal: String, index: &mut PositionalInvertedIndex) ->
     //extract the maximum distance
     let max_distance = near.parse::<i32>().unwrap();
 
+    println!("first term: {}", first_term);
     let first_term_postings = index.get_postings(&first_term);
     let second_term_postings = index.get_postings(&second_term);
     let mut i = 0;
