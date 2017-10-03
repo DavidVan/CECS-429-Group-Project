@@ -26,13 +26,14 @@ impl KGramIndex {
                     buffer[counter] = c.clone();
                 }
                 let buffer_string = buffer.iter().cloned().collect::<String>();
+                
                 let mut buffer_first_half = buffer_string.clone();
                 buffer_first_half.pop();
                 let mut buffer_second_half = buffer_string.clone();
                 buffer_second_half.remove(0);
             
                 if self.mIndex.contains_key(&buffer_string) {
-                    continue;
+                    // continue;
                 }
 
                 if buffer[2] != ' ' {

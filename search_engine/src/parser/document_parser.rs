@@ -30,7 +30,7 @@ pub fn build_index(
 
     let now = SystemTime::now();
     for (i,file) in files.iter().enumerate() {
-        println!("Indexing {} out of {}...", i, files.len());
+        // println!("Indexing {} out of {}...", i, files.len());
          
         let document = read_file::read_file(file);
         let document_body = document.clone().getBody();
@@ -41,11 +41,11 @@ pub fn build_index(
         id_number.insert(i as u32, file.to_string());
 
         for (j,iter) in iter.enumerate() {
-            println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
+            // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
             let mut tokens = normalize_token(iter.to_string());
             for term in tokens {
                 index.addTerm(&term,i as u32,j as u32);
-                // k_gram_index.checkIndex(&term);
+                k_gram_index.checkIndex(&term);
             }
         }
     }

@@ -38,14 +38,23 @@ impl PositionalPosting {
         self.mDocID.clone()
     }
 
+    /*
+     * Returns positions of term for the posting. Returns clone to preserve data integrity
+     */
     pub fn getPositions(&self)  -> Vec<u32> {
         self.mPositions.clone() 
     }
 
+    /*
+     * Adds a new position for the posting
+     */
     fn addPosition(&mut self, pos: u32) {
         self.mPositions.push(pos);
     }
 
+    /*
+     * Returns the last position the posting was listed
+     */
     fn getLastPosition(&self) -> u32 {
         let pos: u32 = self.mPositions
             .last()
@@ -55,15 +64,33 @@ impl PositionalPosting {
     }
 }
 
+/*
+ * Representation of a Positional Inverted Index
+ */
 pub struct PositionalInvertedIndex {
+
+    /*
+     * Holds terms processed by index and the positional postings each term is mapped to
+     */
     mIndex: HashMap<String, Vec<PositionalPosting>>,
 }
 
+/*
+ * Contains implemented operations of the Positional Inverted Index
+ */
 impl PositionalInvertedIndex {
+
+    /*
+     * Constructs Positional Inverted Index and returns it
+     */
     pub fn new() -> PositionalInvertedIndex {
         PositionalInvertedIndex { mIndex: HashMap::new() }
     }
 
+    /*
+     * Adds a term to the Positional Inverted Index and an associated Positional Posting to its
+     * list (docID and position).
+     */
     pub fn addTerm(&mut self, term: &str, docID: u32, pos: u32) {
         if self.mIndex.contains_key(term) {
             let mut mIndex = &mut self.mIndex;
@@ -103,10 +130,16 @@ impl PositionalInvertedIndex {
         }
     }
 
+    /*
+     * Checks if the index contains an indexed term
+     */
     pub fn contains_term(&self, term: &str) -> bool {
         self.mIndex.contains_key(term)
     }
 
+    /*
+     * Returns the postings associated with a term
+     */
     pub fn get_postings(&self, term: &str) -> &Vec<PositionalPosting> {
         self.mIndex.get(term).unwrap()
     }
