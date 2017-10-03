@@ -68,11 +68,9 @@ impl QueryParser {
             if result.ends_with(")") {
                 // I should find a better way of checking if it's nested...
                 // Process the result...
-                println!("Recursive call on: {}", result);
                 let sub_results = self.multiply_query(result);
                 // Add sub-results to final results...
                 for sub_result in sub_results {
-                    println!("Sub results: {}", sub_result);
                     final_results.push(sub_result);
                 }
                 continue;
@@ -107,10 +105,8 @@ impl QueryParser {
                 continue;
             }
             if token.starts_with("(") {
-                println!("The token: {}", token);
                 query_builder.push(String::from(token));
                 token = tokens.next().unwrap();
-                println!("The token after: {}", token);
                 let mut left_parenthesis_counter = 1;
                 while left_parenthesis_counter != 0 {
                     query_builder.push(String::from(token));
@@ -136,7 +132,6 @@ impl QueryParser {
                 query_builder.clear();
                 continue;
             }
-            println!("REGG DAV TOKEN: {}", token);
             query_builder.push(String::from(token)); // Finish the job...
         }
         // Final clean up...
@@ -154,7 +149,6 @@ impl QueryParser {
             .take(multiplicand_last_element_length - 1)
             .collect();
         for multiplicand in multiplicand_vec {
-            println!("multiplicand dav {}", multiplicand);
             results.push(multiplier.clone() + " " + multiplicand.as_str());
         }
         let mut final_results: Vec<String> = Vec::new();
