@@ -48,7 +48,8 @@ fn main() {
         // TODO: Process query
 
         if !input.starts_with(":") {
-            process_query(&input, &index_path, &index, &id_file, &k_gram_index);
+            //process_query(&input, &index_path, &index, &id_file, &k_gram_index);
+            process_query(&input, &index, &id_file);
         }
         
         else {
@@ -80,14 +81,17 @@ fn build_index(
 }
 
 
-fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>, k_gram_index: &KGramIndex) {
+//fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>, k_gram_index: &KGramIndex) -> HashSet<String> {
+fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>) -> HashSet<String> {
     let parser = QueryParser::new();
     let processed_query = QueryParser::process_query(&parser, input);
+    println!("Processed Query: {:?}", processed_query);
 
     let mut results : HashSet<String> = HashSet::new();
     let mut or_results = Vec::new();
     let mut and_entries_precursor_string_vec = Vec::new(); // Dirty hack to get around lifetimes...
     for query in processed_query {
+        and_entries_precursor_string_vec.clear(); // Need to clear it here and only here...
         println!("Query For: {}", query);
         let mut and_entries = Vec::new();
         let and_entries_precursor : Vec<&str> = query.split_whitespace().collect();
@@ -114,8 +118,10 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
             and_entries.push(String::from(entry.clone()));
         }
         let mut and_results = Vec::new();
+        let mut not_results = Vec::new();
         for entry in and_entries {
-            println!("AND PART: {}", entry);
+            println!("AND ENTRY DAVID {}", entry);
+            let not_query = entry.starts_with("-");
             let normalized_tokens = document_parser::normalize_token(entry.to_string());
             for normalized_token in normalized_tokens {
                 println!("Normalized Token: {}",  normalized_token);
@@ -125,16 +131,29 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
                 let postings = index.get_postings(normalized_token.as_str()); 
                 let mut and_inner_results = HashSet::new();
                 for posting in postings {
-                    and_inner_results.insert(id_file.get(&posting.getDocID()).unwrap().to_string());
+                    if not_query {
+                        let file_path = id_file.get(&posting.getDocID()).unwrap().to_string();
+                        let file : &Path = file_path.as_ref();
+                        let file_name = file.file_name();
+                        not_results.push(String::from(file_name.unwrap().to_str().unwrap()));
+                    }
+                    else {
+                        let file_path = id_file.get(&posting.getDocID()).unwrap().to_string();
+                        let file : &Path = file_path.as_ref();
+                        let file_name = file.file_name();
+                        and_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
+                    }
                 }
-                and_results.push(and_inner_results);
+                if !not_query {
+                    and_results.push(and_inner_results);
+                }
             }
         }
         // Let's handle the AND logic...
         let mut and_results_iter = and_results.iter();
         let first_and_result = match and_results_iter.next() {
             Some(result) => result,
-            None => break
+            None => continue
         };
         let mut intersection = HashSet::new();
         for item in first_and_result {
@@ -147,6 +166,11 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
                 intersection.insert(item);
             }
         }
+        for not_entry in not_results {
+            if intersection.contains(&not_entry) {
+                intersection.remove(&not_entry);
+            }
+        }
         or_results.push(intersection);
     }
     // Let's handle the OR logic...
@@ -155,7 +179,7 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
         Some(result) => result,
         None => {
             println!("0 Documents");
-            return
+            return HashSet::new();
         }
     };
     let mut union = HashSet::new();
@@ -182,6 +206,7 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
     else {
         println!("{} Document", results.len());
     }
+    results
 }
 
 //fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>, k_gram_index: &KGramIndex) {
