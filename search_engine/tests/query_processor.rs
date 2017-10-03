@@ -5,17 +5,15 @@ use search_engine::index::k_gram_index::KGramIndex;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
-use std::collections::HashMap;
-use std::collections::HashSet;
 
 #[test]
 fn test_queries() {
-    let mut index_path = search_engine_paths::initializePath();
-    search_engine_paths::changeDirectory(&mut index_path, "documents");
+    let mut index_path = search_engine_paths::initialize_path();
+    search_engine_paths::change_directory(&mut index_path, "documents");
     let directory = index_path.to_str().expect("Invalid directory");
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
-    let mut docid_file =
+    let docid_file =
         document_parser::build_index(directory.to_string(), &mut index, &mut k_gram_index);
 
     let test_query_1 = "alpha"; // Tests simple query

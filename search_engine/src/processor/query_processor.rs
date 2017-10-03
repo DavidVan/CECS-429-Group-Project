@@ -5,6 +5,19 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::*;
 
+/*
+ * Processes a query and returns results containing the files fulfilling the query
+ *
+ * # Arguments
+ *
+ * *`input` - The query inputted and will be processed
+ * *`index` - The Positional Inverted Index that will be used
+ * *`id_file` - HashMap containing the associations of the document id and file
+ *
+ * # Returns
+ *
+ * The HashSet containing the files fulfilling the query
+ */
 pub fn process_query(
     input: &str,
     index: &PositionalInvertedIndex,
@@ -50,7 +63,7 @@ pub fn process_query(
         let mut not_results = Vec::new();
 
         if query.contains("NEAR/") {
-            let mut near_k_results: Vec<u32> = near_query(query.clone(), index);
+            let near_k_results: Vec<u32> = near_query(query.clone(), index);
             let mut near_k_inner_results = HashSet::new();
             for result in near_k_results {
                 let file_path = id_file.get(&result).unwrap().to_string();
@@ -66,7 +79,7 @@ pub fn process_query(
                 let phrase_literal_vec: Vec<&str> = entry.split_whitespace().collect();
                 let phrase_literal = phrase_literal_vec.len() > 1;
                 if phrase_literal {
-                    let mut phrase_literal_results: Vec<u32> = Vec::new();
+                    let phrase_literal_results: Vec<u32> = Vec::new();
                     let mut phrase_literal_inner_results = HashSet::new();
                     for result in phrase_literal_results {
                         let file_path = id_file.get(&result).unwrap().to_string();
@@ -94,7 +107,7 @@ pub fn process_query(
                         for posting in postings {
                             if not_query {
                                 let file_path =
-                                    id_file.get(&posting.getDocID()).unwrap().to_string();
+                                    id_file.get(&posting.get_doc_id()).unwrap().to_string();
                                 let file: &Path = file_path.as_ref();
                                 let file_name = file.file_name();
                                 not_results.push(String::from(
@@ -102,7 +115,7 @@ pub fn process_query(
                                 ));
                             } else {
                                 let file_path =
-                                    id_file.get(&posting.getDocID()).unwrap().to_string();
+                                    id_file.get(&posting.get_doc_id()).unwrap().to_string();
                                 let file: &Path = file_path.as_ref();
                                 let file_name = file.file_name();
                                 and_inner_results.insert(String::from(
@@ -128,7 +141,7 @@ pub fn process_query(
             intersection.insert(item.clone());
         }
         while let Some(and_result) = and_results_iter.next() {
-            let mut intersection_result: HashSet<_> =
+            let intersection_result: HashSet<_> =
                 and_result.intersection(&intersection).cloned().collect();
             intersection.clear();
             for item in intersection_result {
@@ -155,7 +168,7 @@ pub fn process_query(
         union.insert(item.clone());
     }
     while let Some(or_result) = or_results_iter.next() {
-        let mut union_result: HashSet<_> = or_result.union(&union).cloned().collect();
+        let union_result: HashSet<_> = or_result.union(&union).cloned().collect();
         union.clear();
         for item in union_result {
             union.insert(item);
@@ -171,9 +184,14 @@ pub fn process_query(
 
 /*
  * Function to process a NEAR/ query 
- * @param query_literal - the query literal in the form "a NEAR/? b"
- * @return the documents in which a is within x terms of b
  *
+ * # Arguments
+ * *`query_literal` - The query literal in the form "a NEAR/? b"
+ * *`index` - The Positional Inverted Index that specifies which a is within x terms of b
+ *
+ * # Returns
+ *
+ * The list of files satisfying the query
  */
 pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
@@ -196,17 +214,17 @@ pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec
     let mut documents: Vec<u32> = Vec::new();
     //iterate through postings lists until a common document ID is found
     while i < first_term_postings.len() && j < second_term_postings.len() {
-        if first_term_postings[i].getDocID() < second_term_postings[j].getDocID() {
+        if first_term_postings[i].get_doc_id() < second_term_postings[j].get_doc_id() {
             i = i + 1;
-        } else if first_term_postings[i].getDocID() > second_term_postings[j].getDocID() {
+        } else if first_term_postings[i].get_doc_id() > second_term_postings[j].get_doc_id() {
             j = j + 1;
-        } else if first_term_postings[i].getDocID() == second_term_postings[j].getDocID() {
+        } else if first_term_postings[i].get_doc_id() == second_term_postings[j].get_doc_id() {
             //if the two terms have a common document, retrieve the positions
-            first_positions = first_term_postings[i].getPositions();
-            second_positions = second_term_postings[j].getPositions();
+            first_positions = first_term_postings[i].get_positions();
+            second_positions = second_term_postings[j].get_positions();
             //check if the two terms are near each other
             if is_near(first_positions, second_positions, max_distance) {
-                documents.push(first_term_postings[i].getDocID());
+                documents.push(first_term_postings[i].get_doc_id());
             }
             i = i + 1;
             j = j + 1;
@@ -217,14 +235,22 @@ pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec
 
 /*
  * Function to determine if two terms are within a distance of each other
- * @param first_positions - the positions of the first term within a document
- * @param second_positions - the positions of the second term within a document
- * @param max_distance - the maximum distance allowed between the two terms
+ *
+ * # Arguments
+ *
+ * *`first_positions` - The positions of the first term within a document
+ * *`second_positions` - The positions of the second term within a document
+ * *`max_distance` - The maximum distance allowed between the two terms
+ *
+ * # Returns
+ *
+ * True if the positions of the first term are within distance of the positions of the second term
+ * False otherwise
  */
 pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distance: i32) -> bool {
     let mut i = 0;
     let mut j = 0;
-    let mut difference: i32 = 0;
+    let mut difference: i32;
     //iterate through the positions
     while i < first_positions.len() && j < second_positions.len() {
         difference = (second_positions[j] - first_positions[i]) as i32;

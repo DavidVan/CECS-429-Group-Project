@@ -1,7 +1,3 @@
-use std::io::{self, Read};
-use std::process::exit;
-use std::option;
-
 pub struct QueryParser {}
 
 impl QueryParser {
@@ -46,7 +42,7 @@ impl QueryParser {
                     }
                     if token.ends_with(")") {
                         let mut reverse_token_iter = token.chars().rev();
-                        while let Some(mut c) = reverse_token_iter.next() {
+                        while let Some(c) = reverse_token_iter.next() {
                             if c == ')' {
                                 left_parenthesis_counter -= 1;
                             } else {
@@ -128,7 +124,7 @@ impl QueryParser {
                     }
                     if token.ends_with(")") {
                         let mut reverse_token_iter = token.chars().rev();
-                        while let Some(mut c) = reverse_token_iter.next() {
+                        while let Some(c) = reverse_token_iter.next() {
                             if c == ')' {
                                 left_parenthesis_counter -= 1;
                             } else {

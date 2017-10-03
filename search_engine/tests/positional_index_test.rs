@@ -1,8 +1,6 @@
 extern crate search_engine;
 
-use std::collections::HashMap;
 use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
-use search_engine::index::positional_inverted_index::PositionalPosting;
 use search_engine::index::k_gram_index::KGramIndex;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
@@ -27,9 +25,9 @@ fn add_term() {
     for (i, token) in tokens_1.enumerate() {
         let normalize_term = document_parser::normalize_token(token.to_string());
         let term = normalize_term.get(0).unwrap();
-        let docID = 1;
+        let doc_id = 1;
         let pos: u32 = i as u32;
-        positional_inverted_index.addTerm(term, docID, pos);
+        positional_inverted_index.add_term(term, doc_id, pos);
     }
     println!("Testing term count...\nThere should be 8 terms...");
     assert_eq!(positional_inverted_index.get_term_count(), 8);
@@ -37,18 +35,18 @@ fn add_term() {
     for (i, token) in tokens_2.enumerate() {
         let normalize_term = document_parser::normalize_token(token.to_string());
         let term = normalize_term.get(0).unwrap();
-        let docID = 2;
+        let doc_id = 2;
         let pos: u32 = i as u32;
-        positional_inverted_index.addTerm(term, docID, pos);
+        positional_inverted_index.add_term(term, doc_id, pos);
     }
     println!("Testing term count...\nThere should be 12 terms...");
     assert_eq!(positional_inverted_index.get_term_count(), 12);
     for (i, token) in tokens_3.enumerate() {
         let normalize_term = document_parser::normalize_token(token.to_string());
         let term = normalize_term.get(0).unwrap();
-        let docID = 3;
+        let doc_id = 3;
         let pos: u32 = i as u32;
-        positional_inverted_index.addTerm(term, docID, pos);
+        positional_inverted_index.add_term(term, doc_id, pos);
     }
     println!("Testing term count...\nThere should be 14 terms...");
     assert_eq!(positional_inverted_index.get_term_count(), 14);
@@ -56,12 +54,12 @@ fn add_term() {
 
 #[test]
 fn read_documents() {
-    let mut index_path = search_engine_paths::initializePath();
+    let mut index_path = search_engine_paths::initialize_path();
     index_path.push("documents");
     let directory = index_path.to_str().expect("Invalid directory");
     let mut positional_inverted_index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
-    let docid_file = document_parser::build_index(
+    document_parser::build_index(
         directory.to_string(),
         &mut positional_inverted_index,
         &mut k_gram_index,
@@ -74,19 +72,19 @@ fn read_documents() {
     let alpha_test_case_3: Vec<u32> = vec![12]; // Positions for doc id 4
     {
         for posting in alpha_postings_list.iter() {
-            println!("{} - {:?}", posting.getDocID(), posting.getPositions());
-            if posting.getDocID() == 0 {
-                for (i, position) in posting.getPositions().iter().enumerate() {
+            println!("{} - {:?}", posting.get_doc_id(), posting.get_positions());
+            if posting.get_doc_id() == 0 {
+                for (i, position) in posting.get_positions().iter().enumerate() {
                     assert_eq!(position, &alpha_test_case_1[i]);
                 }
             }
-            if posting.getDocID() == 3 {
-                for (i, position) in posting.getPositions().iter().enumerate() {
+            if posting.get_doc_id() == 3 {
+                for (i, position) in posting.get_positions().iter().enumerate() {
                     assert_eq!(position, &alpha_test_case_2[i]);
                 }
             }
-            if posting.getDocID() == 4 {
-                for (i, position) in posting.getPositions().iter().enumerate() {
+            if posting.get_doc_id() == 4 {
+                for (i, position) in posting.get_positions().iter().enumerate() {
                     assert_eq!(position, &alpha_test_case_3[i]);
                 }
             }
@@ -101,19 +99,19 @@ fn read_documents() {
 
 
     for posting in november_postings_list.iter() {
-        println!("{} - {:?}", posting.getDocID(), posting.getPositions());
-        if posting.getDocID() == 0 {
-            for (i, position) in posting.getPositions().iter().enumerate() {
+        println!("{} - {:?}", posting.get_doc_id(), posting.get_positions());
+        if posting.get_doc_id() == 0 {
+            for (i, position) in posting.get_positions().iter().enumerate() {
                 assert_eq!(position, &november_test_case_1[i]);
             }
         }
-        if posting.getDocID() == 3 {
-            for (i, position) in posting.getPositions().iter().enumerate() {
+        if posting.get_doc_id() == 3 {
+            for (i, position) in posting.get_positions().iter().enumerate() {
                 assert_eq!(position, &november_test_case_2[i]);
             }
         }
-        if posting.getDocID() == 4 {
-            for (i, position) in posting.getPositions().iter().enumerate() {
+        if posting.get_doc_id() == 4 {
+            for (i, position) in posting.get_positions().iter().enumerate() {
                 assert_eq!(position, &november_test_case_3[i]);
             }
         }

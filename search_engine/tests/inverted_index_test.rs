@@ -8,7 +8,7 @@ fn inverted_index() {
 
     let mut inverted_index = InvertedIndex { m_index: HashMap::new() };
 
-    let mut term = "Test";
+    let term = "Test";
 
     for id in 1..10 {
         inverted_index.add_term(&term, id);

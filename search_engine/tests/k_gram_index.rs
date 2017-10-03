@@ -1,19 +1,17 @@
 extern crate search_engine;
-use std::fs::File;
-use std::io::Read;
-use std::env::current_exe;
-use std::path::Path;
 use search_engine::index::k_gram_index::KGramIndex;
-use search_engine::reader::read_file;
 
 #[test]
 fn test_castle() {
     let mut k_gram_index = KGramIndex::new();
 
+    // Term that will be tested
     let castle = "castle";
 
-    k_gram_index.checkIndex(castle);
+    // Builds index according to term
+    k_gram_index.check_term(castle);
 
+    // Expected values in test cases
     let test_cases = [
         "c",
         "a",
@@ -36,7 +34,7 @@ fn test_castle() {
         "le$",
     ];
 
-    let k_grams = k_gram_index.getKGrams();
+    let k_grams = k_gram_index.get_k_grams();
 
     for gram in k_grams.iter() {
         println!("{}", gram);
