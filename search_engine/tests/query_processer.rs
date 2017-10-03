@@ -50,5 +50,5 @@ fn test_queries() {
 
 #[test]
 fn near_operator {
-
+    
 }

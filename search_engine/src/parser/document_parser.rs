@@ -56,7 +56,7 @@ pub fn build_index(
             let mut tokens = normalize_token(iter.to_string());
             for term in tokens {
                 index.addTerm(&term,i as u32,j as u32);
-                // k_gram_index.checkIndex(&term);
+                k_gram_index.checkIndex(&term);
             }
         }
     }
@@ -130,7 +130,6 @@ pub fn normalize_token(term: String) -> Vec<String> {
     for mut word in strings_to_stem.iter_mut() {
         *word = stemmer.stem(word);
     }
-
 
     return strings_to_stem;
 }

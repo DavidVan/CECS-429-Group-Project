@@ -1,6 +1,9 @@
 use std::env::current_exe;
 use std::path::PathBuf;
 
+/*
+ * Constructs a project path that will begin at the assets folder of the project
+ */
 pub fn initializePath() -> PathBuf {
     let mut documentPath = current_exe().expect("Not a valid path");
 
@@ -13,6 +16,11 @@ pub fn initializePath() -> PathBuf {
     return documentPath;
 }
 
+/*
+ * Attempts to append a file/directory to the path buffer. If the file/directory
+ * does not exist, return false without altering the pathbuffer, otherwise proceed
+ * with adding and return true
+ */
 fn addToPath(pathbuf: &mut PathBuf, add: &str) -> bool {
     let mut testPath = pathbuf.clone();
     testPath.push(add);
@@ -24,6 +32,11 @@ fn addToPath(pathbuf: &mut PathBuf, add: &str) -> bool {
     return false;
 }
 
+/*
+ * Attempts to change the directory of the path buffer to specified directory
+ * Retains the current directory of the path buffer if it fails to change
+ * Returns false if change was not successful, other returns true
+ */
 pub fn changeDirectory(pathbuf: &mut PathBuf, new: &str) -> bool {
     let pathbuf_clone = pathbuf.clone();
     let mut current = pathbuf_clone.file_name().expect("Not a valid os string");
@@ -42,6 +55,9 @@ pub fn changeDirectory(pathbuf: &mut PathBuf, new: &str) -> bool {
     return success;
 }
 
+/*
+ * Verifies if a path buffer exists
+ */
 pub fn verifyPath(pathbuf: PathBuf) -> bool {
     if pathbuf.exists() {
         return true;

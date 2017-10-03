@@ -13,7 +13,7 @@ impl KGramIndex {
 
     pub fn checkIndex(&mut self, term: &str) {
         if !self.mSet.contains(term) {
-            self.mSet.insert(term.to_string()); 
+            self.mSet.insert(term.to_string());
             let term_copy = format!("${}$", term);
             let mut buffer = [' '; 3];
             let mut counter = 0;
@@ -25,7 +25,7 @@ impl KGramIndex {
                 } else {
                     buffer[counter] = c.clone();
                 }
-                println!("{:?}", buffer);
+                // println!("{:?}", buffer);
                 let buffer_string = buffer.iter().cloned().collect::<String>();
                 
                 let mut buffer_first_half = buffer_string.clone();

@@ -28,7 +28,9 @@ fn main() {
     loop {
         print!("Enter a directory to access: ");
         input = user_input::read_input();
-        println!("You typed: {}", input);
+        if input == ":q" {
+            return (); // Prematurely ends program
+        }
         change = search_engine_paths::changeDirectory(&mut index_path, input.as_str());
         if change {
             current = input.clone();
@@ -119,7 +121,10 @@ fn open_file(index_path: &PathBuf, input: &str) {
     filePath.push(file);
     if filePath.exists() {
         let document = read_file::read_file(filePath.to_str().expect("Not a valid string"));
-        println!("{}", document.getBody());
+        println!("\n{}", document.getTitle());
+        println!("\n{}", document.getBody());
+        println!("\n{}", document.getURL());
+        println!();
     } else {
         println!("{} does not exist", filePath.display());
     }
