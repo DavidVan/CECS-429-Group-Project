@@ -82,7 +82,6 @@ fn build_index(
 }
 
 fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>) {
-    
     let results = query_processer::process_query(input, index, id_file);
     for result in results.clone() {
         println!("Result: {}", result);
