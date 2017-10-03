@@ -24,8 +24,19 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
         let mut and_entries_precursor_iter = and_entries_precursor_string_vec.iter();
         let mut entry_builder : Vec<String> = Vec::new();
         while let Some(entry) = and_entries_precursor_iter.next() {
-            if entry.starts_with("\"") {
-                let mut modified_entry : String = entry.chars().skip(1).collect();
+            if entry.starts_with("\"") || entry.starts_with("-\"") {
+                let mut modified_entry : String = match entry.starts_with("\"") {
+                    true => {
+                        let new_query = entry.chars().skip(1).collect();
+                        new_query
+                    },
+                    false => {
+                        let mut prefix = String::from("-");
+                        let rest_of_query : String = entry.chars().skip(2).collect();
+                        prefix.push_str(rest_of_query.as_str());
+                        prefix
+                    }
+                };
                 entry_builder.push(modified_entry);
                 while let Some(next_entry) = and_entries_precursor_iter.next() {
                     if next_entry.ends_with("\"") {
@@ -58,11 +69,21 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
         }
         else {
             for entry in and_entries {
-                // println!("AND ENTRY DAVID {}", entry);
+                println!("AND ENTRY DAVID {}", entry);
                 let not_query = entry.starts_with("-");
                 let phrase_literal_vec : Vec<&str> = entry.split_whitespace().collect();
                 let phrase_literal = phrase_literal_vec.len() > 1;
-                if phrase_literal {
+                println!("Phrase literal for {}? {}", entry, phrase_literal);
+                println!("Not query for {}? {}", entry, not_query);
+                if phrase_literal && not_query {
+                    println!("Handling phrase literal and not query");
+                    // strip out "-" letter... then split whitespace maybe... or not if function
+                    // takes a string
+                    // call function to get doc id. get file name, add to not list...
+                }
+                else if phrase_literal && !not_query {
+                    // call function to process
+                    // read results into and results vec (might have to get file name)
                     let mut phrase_literal_results : Vec<u32> = Vec::new();
                     let mut phrase_literal_inner_results = HashSet::new();
                     for result in phrase_literal_results {
@@ -72,13 +93,10 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
                         phrase_literal_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
                     }
                     and_results.push(phrase_literal_inner_results);
-                    // call function to process
-                    // read results into and results vec (might have to get file name)
                 }
                 else {
                     let normalized_tokens = document_parser::normalize_token(entry.to_string());
                     for normalized_token in normalized_tokens {
-                        // println!("Normalized Token: {}",  normalized_token);
                         if !index.contains_term(normalized_token.as_str()) {
                             break;
                         }
