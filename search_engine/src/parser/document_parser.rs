@@ -29,9 +29,9 @@ pub fn build_index(
     let mut id_number = HashMap::new();
 
     let now = SystemTime::now();
-    for (i,file) in files.iter().enumerate() {
+    for (i, file) in files.iter().enumerate() {
         // println!("Indexing {} out of {}...", i, files.len());
-         
+
         let document = read_file::read_file(file);
         let document_body = document.clone().getBody();
         let mut iter = document_body.split_whitespace();
@@ -40,16 +40,22 @@ pub fn build_index(
 
         id_number.insert(i as u32, file.to_string());
 
-        for (j,iter) in iter.enumerate() {
-            println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
+        for (j, iter) in iter.enumerate() {
+            println!(
+                "File {} / {} - Indexing token {} out of {}...",
+                i,
+                files.len(),
+                j,
+                iter_length
+            );
             let mut tokens = normalize_token(iter.to_string());
             for term in tokens {
-                index.addTerm(&term,i as u32,j as u32);
+                index.addTerm(&term, i as u32, j as u32);
                 // k_gram_index.checkIndex(&term);
             }
         }
     }
-    println!("{:?}", now.elapsed()); 
+    println!("{:?}", now.elapsed());
 
     return id_number;
 }
@@ -62,7 +68,7 @@ pub fn build_index(
 //         }
 //     }
 //     println!("{:?}", now.elapsed());
-// 
+//
 //     return id_number;
 // }
 pub fn normalize_token(term: String) -> Vec<String> {
@@ -103,27 +109,31 @@ pub fn normalize_token(term: String) -> Vec<String> {
     let hyphen = "-";
     let mut strings_to_stem: Vec<String> = Vec::new();
     if apostrophe_reduced.contains(hyphen) {
-        let mut hyphen_index = 0;
-        for c in apostrophe_reduced.chars() {
-            if c == '-' {
-                break;
-            }
-            hyphen_index += 1;
+        let sub_words: Vec<&str> = apostrophe_reduced.split(hyphen).collect();
+        // let mut hyphen_index = 0;
+        // for c in apostrophe_reduced.chars() {
+        //     if c == '-' {
+        //         break;
+        //     }
+        //     hyphen_index += 1;
+        // }
+        // strings_to_stem.push(
+        //     apostrophe_reduced
+        //         .chars()
+        //         .skip(0)
+        //         .take(hyphen_index)
+        //         .collect(),
+        // );
+        // strings_to_stem.push(
+        //     apostrophe_reduced
+        //         .chars()
+        //         .skip(hyphen_index + 1)
+        //         .take(apostrophe_reduced.len() - 1 - (hyphen_index+ 1))
+        //         .collect(),
+        // );
+        for i in sub_words {
+            strings_to_stem.push(i.to_string());
         }
-        strings_to_stem.push(
-            apostrophe_reduced
-                .chars()
-                .skip(0)
-                .take(hyphen_index)
-                .collect(),
-        );
-        strings_to_stem.push(
-            apostrophe_reduced
-                .chars()
-                .skip(hyphen_index + 1)
-                .take(apostrophe_reduced.len() - 1 - (hyphen_index+ 1))
-                .collect(),
-        );
         strings_to_stem.push(apostrophe_reduced.replace(hyphen, empty_string));
     } else {
         strings_to_stem.push(apostrophe_reduced);
@@ -179,14 +189,64 @@ pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distan
     let mut j = 0;
     let mut difference: i32 = 0;
     while i < first_positions.len() && j < second_positions.len() {
-        difference = (first_positions[i] - second_positions[j]) as i32;
-        if difference.abs() <= max_distance {
+        difference = (second_positions[j] - first_positions[i]) as i32;
+        if difference <= max_distance && difference > 0 {
             return true;
         } else if difference < 0 {
-            i = i + 1;
-        } else if difference > 0 {
             j = j + 1;
+        } else if difference > 0 {
+            i = i + 1;
         }
     }
     false
 }
+
+// pub fn phrase_query(query_literal: String, index: &mut PositionalInvertedIndex) -> Vec<u32> {
+//     let literals: Vec<&str> = query_literal.split(' ').collect();
+
+//     let mut documents: Vec<u32> = Vec::new();
+
+//     for i in 0..(literals.len() - 2) {
+//         let first_postings = index.get_postings(literals[i]);
+//         let second_postings = index.get_postings(literals[i + 1]);
+//         let mut i = 0;
+//         let mut j = 0;
+//         let mut first_positions;
+//         let mut second_positions;
+//         while i < first_postings.len() && j < second_postings.len() {
+//             if first_postings[i].getDocID() < second_postings[j].getDocID() {
+//                 i = i + 1;
+//             } else if first_postings[i].getDocID() > second_postings[j].getDocID() {
+//                 j = j + 1;
+//             } else if first_postings[i].getDocID() == second_postings[j].getDocID() {
+//                 first_positions = first_postings[i].getPositions();
+//                 second_positions = second_postings[j].getPositions();
+//                 if is_adjacent(first_positions, second_positions) {
+//                     documents.push(first_postings[i].getDocID());
+//                 }
+//                 i = i + 1;
+//                 j = j + 1;
+//             }
+//         }
+//     }
+
+
+//     return Vec::new();
+// }
+
+// pub fn is_adjacent(first_positions: Vec<u32>, second_positions: Vec<u32>) -> bool {
+//     let mut i = 0;
+//     let mut j = 0;
+//     let mut difference: i32 = 0;
+//     while i < first_positions.len() && j < second_positions.len() {
+//         difference = (second_positions[j] - first_positions[i]) as i32;
+//         if difference == 1 {
+//             return true;
+//         } else if difference < 0 {
+//             j = j + 1;
+//         } else if difference > 0 {
+//             i = i + 1;
+//         }
+//     }
+//     false
+// }
