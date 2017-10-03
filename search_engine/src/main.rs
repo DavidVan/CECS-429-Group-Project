@@ -46,10 +46,7 @@ fn main() {
         print!("Input a Query: ");
         input = user_input::read_input_line();
 
-        // TODO: Process query
-
         if !input.starts_with(":") {
-            //process_query(&input, &index_path, &index, &id_file, &k_gram_index);
             process_query(&input, &index, &id_file);
         }
         

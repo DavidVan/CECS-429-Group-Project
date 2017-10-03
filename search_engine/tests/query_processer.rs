@@ -47,3 +47,8 @@ fn test_queries() {
         assert!(result_query_4.contains(result));
     }
 }
+
+#[test]
+fn near_operator {
+
+}

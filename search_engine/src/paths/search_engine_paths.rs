@@ -32,8 +32,7 @@ pub fn changeDirectory(pathbuf: &mut PathBuf, new: &str) -> bool {
         return false;
     }
     if current == "assets" {
-        addToPath(pathbuf, new);
-        return true;
+        return addToPath(pathbuf, new);
     }
     pathbuf.pop();
     let success: bool = addToPath(pathbuf, new);
