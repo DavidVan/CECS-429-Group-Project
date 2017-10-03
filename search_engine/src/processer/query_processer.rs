@@ -123,12 +123,20 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
     results
 }
 
+/**
+ * Function to process a NEAR/ query 
+ * @param query_literal - the query literal in the form "a NEAR/? b"
+ * @return the documents in which a is within x terms of b
+ *
+ */
 pub fn near_query(query_literal: Vec<String>, index: &mut PositionalInvertedIndex) -> Vec<u32> {
+    //extract the terms from the literal
     let first_term = query_literal[0].clone();
     let mut near = query_literal[1].clone();
     let second_term = query_literal[2].clone();
 
-    near = near.replace("NEAR\\", "");
+    near = near.replace("NEAR/", "");
+    //extract the maximum distance
     let max_distance = near.parse::<i32>().unwrap();
 
     let first_term_postings = index.get_postings(&first_term);
@@ -138,14 +146,17 @@ pub fn near_query(query_literal: Vec<String>, index: &mut PositionalInvertedInde
     let mut first_positions;
     let mut second_positions;
     let mut documents: Vec<u32> = Vec::new();
+    //iterate through postings lists until a common document ID is found
     while i < first_term_postings.len() && j < second_term_postings.len() {
         if first_term_postings[i].getDocID() < second_term_postings[j].getDocID() {
             i = i + 1;
         } else if first_term_postings[i].getDocID() > second_term_postings[j].getDocID() {
             j = j + 1;
         } else if first_term_postings[i].getDocID() == second_term_postings[j].getDocID() {
+            //if the two terms have a common document, retrieve the positions
             first_positions = first_term_postings[i].getPositions();
             second_positions = second_term_postings[j].getPositions();
+            //check if the two terms are near each other
             if is_near(first_positions, second_positions, max_distance) {
                 documents.push(first_term_postings[i].getDocID());
             }
@@ -156,18 +167,28 @@ pub fn near_query(query_literal: Vec<String>, index: &mut PositionalInvertedInde
     documents
 }
 
+/**
+ * Function to determine if two terms are within a distance of each other
+ * @param first_positions - the positions of the first term within a document
+ * @param second_positions - the positions of the second term within a document
+ * @param max_distance - the maximum distance allowed between the two terms
+ */
 pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distance: i32) -> bool {
     let mut i = 0;
     let mut j = 0;
     let mut difference: i32 = 0;
+    //iterate through the positions
     while i < first_positions.len() && j < second_positions.len() {
-        difference = (first_positions[i] - second_positions[j]) as i32;
-        if difference.abs() <= max_distance {
+        difference = (second_positions[j] - first_positions[i]) as i32;
+        //if the distance is within the max_distance then we return true
+        if difference <= max_distance && difference > 0 {
             return true;
+            // if the first position comes before the second then we increment the second position vector
         } else if difference < 0 {
-            i = i + 1;
-        } else if difference > 0 {
             j = j + 1;
+            // if the second position comes more than the threshold after the first one, increment the first position vector
+        } else if difference > 0 {
+            i = i + 1;
         }
     }
     false
