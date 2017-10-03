@@ -12,7 +12,7 @@ fn test_parser() {
     let results = parser.process_query(new_query);
     //parser.multiply_query("\"hello world\" -y (1 + (2 + 3 (4 + 5)) + 6)");
     println!("Process Query Results: {}", results.join(" + "));
-    let multi = parser.multiply_query("hello (1 + 2)");
+    let multi = parser.multiply_query("hello NEAR\\2 david -y (1 world + 2 world)");
     println!("Process Multi Results: {}", multi.join(" + "));
     //parser.multiply_query("hello world (what + what2)");
     /*let multiply_test = vec![String::from("this"), String::from("that"), String::from("\"(who + am + i)\"")];
