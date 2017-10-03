@@ -7,7 +7,7 @@ fn test_parser() {
     let parser = QueryParser::new();
     let query = "testing 1 2 + 3 \"hello1 世界 world\" hi + \"hello2 世界 world\" test (hello3 + \"hello4 world\" (inner + \"hello5 world\" \"(still + in + same + group)\")) + hello (banana + strawberry) + bye";
     println!("Original Query: \n{}", query);
-    let new_query = "hey -y + \"this one\"  + \"hello world\" -y (1 + (2 + 3) + 4) + bye";
+    let new_query = "hey -y + \"this one\"  + \"hello world\" -y (hello world + (hello2 world2 + hello3 world3) + hello4 world4) + bye";
     println!("New Query: {}", new_query);
     let results = parser.process_query(new_query);
     //parser.multiply_query("\"hello world\" -y (1 + (2 + 3 (4 + 5)) + 6)");

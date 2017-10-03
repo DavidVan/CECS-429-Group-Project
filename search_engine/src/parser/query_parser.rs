@@ -68,11 +68,9 @@ impl QueryParser {
             if result.ends_with(")") {
                 // I should find a better way of checking if it's nested...
                 // Process the result...
-                println!("Recursive call on: {}", result);
                 let sub_results = self.multiply_query(result);
                 // Add sub-results to final results...
                 for sub_result in sub_results {
-                    println!("Sub results: {}", sub_result);
                     final_results.push(sub_result);
                 }
                 continue;
@@ -88,15 +86,16 @@ impl QueryParser {
         let mut multiplier_vec: Vec<String> = Vec::new();
         let mut multiplicand_vec: Vec<String> = Vec::new();
 
+        let mut query_builder: Vec<String> = Vec::new();
+
         while let Some(token) = tokens.next() {
             if token.starts_with("(") {
-                multiplicand_vec.push(String::from(token));
+                query_builder.push(String::from(token));
                 break;
             }
             multiplier_vec.push(String::from(token));
         }
 
-        let mut query_builder: Vec<String> = Vec::new();
         while let Some(mut token) = tokens.next() {
             if token.len() == 1 && token.starts_with("+") {
                 if query_builder.len() != 0 {
@@ -133,22 +132,21 @@ impl QueryParser {
                 query_builder.clear();
                 continue;
             }
-            multiplicand_vec.push(String::from(token)); // Finish the job...
+            query_builder.push(String::from(token)); // Finish the job...
         }
+        // Final clean up...
+        if query_builder.len() != 0 {
+            multiplicand_vec.push(query_builder.join(" "));
+            query_builder.clear();
+        }
+
         let multiplier = multiplier_vec.join(" ");
         multiplicand_vec[0] = multiplicand_vec[0].chars().skip(1).collect();
         let multiplicand_vec_length = multiplicand_vec.len();
         let multiplicand_last_element_length = multiplicand_vec[multiplicand_vec_length - 1].len();
-        multiplicand_vec[multiplicand_vec_length - 1] = multiplicand_vec[multiplicand_vec_length -
-                                                                             1]
+        multiplicand_vec[multiplicand_vec_length - 1] = multiplicand_vec[multiplicand_vec_length - 1]
             .chars()
             .take(multiplicand_last_element_length - 1)
-            .collect();
-        let multiplicand_precursor = multiplicand_vec.join(" ");
-        let multiplicand: String = multiplicand_precursor
-            .chars()
-            .take(multiplicand_precursor.len() - 2)
-            .skip(1)
             .collect();
         for multiplicand in multiplicand_vec {
             results.push(multiplier.clone() + " " + multiplicand.as_str());
