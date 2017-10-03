@@ -29,7 +29,7 @@ fn main() {
         print!("Enter a directory to access: ");
         input = user_input::read_input();
         println!("You typed: {}", input);
-        change = search_engine_paths::addToPath(&mut index_path, input.as_str());
+        change = search_engine_paths::changeDirectory(&mut index_path, input.as_str());
         if change {
             current = input.clone();
             break;

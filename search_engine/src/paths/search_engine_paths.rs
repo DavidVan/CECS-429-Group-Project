@@ -13,7 +13,7 @@ pub fn initializePath() -> PathBuf {
     return documentPath;
 }
 
-pub fn addToPath(pathbuf: &mut PathBuf, add: &str) -> bool {
+fn addToPath(pathbuf: &mut PathBuf, add: &str) -> bool {
     let mut testPath = pathbuf.clone();
     testPath.push(add);
 
@@ -30,6 +30,10 @@ pub fn changeDirectory(pathbuf: &mut PathBuf, new: &str) -> bool {
     let mut current_str = current.to_str().expect("Not a valid string");
     if new == current {
         return false;
+    }
+    if current == "assets" {
+        addToPath(pathbuf, new);
+        return true;
     }
     pathbuf.pop();
     let success: bool = addToPath(pathbuf, new);

@@ -11,4 +11,3 @@ bravo
 mike
 lima
 hotel
-Hewlett-Packard

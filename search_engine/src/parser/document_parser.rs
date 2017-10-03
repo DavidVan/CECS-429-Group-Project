@@ -100,27 +100,6 @@ pub fn normalize_token(term: String) -> Vec<String> {
     let mut strings_to_stem: Vec<String> = Vec::new();
     if apostrophe_reduced.contains(hyphen) {
         let sub_words: Vec<&str> = apostrophe_reduced.split(hyphen).collect();
-        // let mut hyphen_index = 0;
-        // for c in apostrophe_reduced.chars() {
-        //     if c == '-' {
-        //         break;
-        //     }
-        //     hyphen_index += 1;
-        // }
-        // strings_to_stem.push(
-        //     apostrophe_reduced
-        //         .chars()
-        //         .skip(0)
-        //         .take(hyphen_index)
-        //         .collect(),
-        // );
-        // strings_to_stem.push(
-        //     apostrophe_reduced
-        //         .chars()
-        //         .skip(hyphen_index + 1)
-        //         .take(apostrophe_reduced.len() - 1 - (hyphen_index+ 1))
-        //         .collect(),
-        // );
         for i in sub_words {
             strings_to_stem.push(i.to_string());
         }
