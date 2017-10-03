@@ -53,18 +53,18 @@ pub fn build_index(
 
     return id_number;
 }
-    pub fn normalize_token(term: String) -> Vec<String> {
-            let mut tokens = normalize_token(iter.to_string());
-            for term in tokens {
-                index.addTerm(&term,i as u32,j as u32);
-                // k_gram_index.checkIndex(&term);
-            }
-        }
-    }
-    println!("{:?}", now.elapsed());
-
-    return id_number;
-}
+//     pub fn normalize_token(term: String) -> Vec<String> {
+//             let mut tokens = normalize_token(iter.to_string());
+//             for term in tokens {
+//                 index.addTerm(&term,i as u32,j as u32);
+//                 // k_gram_index.checkIndex(&term);
+//             }
+//         }
+//     }
+//     println!("{:?}", now.elapsed());
+// 
+//     return id_number;
+// }
 pub fn normalize_token(term: String) -> Vec<String> {
     let mut start_index: i32 = 0;
     let mut end_index: i32 = (term.len() as i32) - 1;
