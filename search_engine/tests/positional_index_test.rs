@@ -61,13 +61,17 @@ fn read_documents() {
     let directory = index_path.to_str().expect("Invalid directory");
     let mut positional_inverted_index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
-    let docid_file = document_parser::build_index(directory.to_string(), &mut positional_inverted_index, &mut k_gram_index); 
-    
+    let docid_file = document_parser::build_index(
+        directory.to_string(),
+        &mut positional_inverted_index,
+        &mut k_gram_index,
+    );
+
     let alpha_postings_list = positional_inverted_index.get_postings("alpha");
 
-    let alpha_test_case_1 : Vec<u32> = vec![5]; // Positions for doc id 0
-    let alpha_test_case_2 : Vec<u32> = vec![8]; // Positions for doc id 3
-    let alpha_test_case_3 : Vec<u32> = vec![12]; // Positions for doc id 4
+    let alpha_test_case_1: Vec<u32> = vec![5]; // Positions for doc id 0
+    let alpha_test_case_2: Vec<u32> = vec![8]; // Positions for doc id 3
+    let alpha_test_case_3: Vec<u32> = vec![12]; // Positions for doc id 4
     {
         for posting in alpha_postings_list.iter() {
             println!("{} - {:?}", posting.getDocID(), posting.getPositions());
@@ -91,10 +95,10 @@ fn read_documents() {
     let results = document_parser::normalize_token("november".to_string());
     let november_term = results.get(0).expect("Improper term");
     let november_postings_list = positional_inverted_index.get_postings(november_term);
-    let november_test_case_1 : Vec<u32> = vec![0, 8]; 
-    let november_test_case_2 : Vec<u32> = vec![2, 3];
-    let november_test_case_3 : Vec<u32> = vec![5]; 
-    
+    let november_test_case_1: Vec<u32> = vec![0, 8];
+    let november_test_case_2: Vec<u32> = vec![2, 3];
+    let november_test_case_3: Vec<u32> = vec![5];
+
 
     for posting in november_postings_list.iter() {
         println!("{} - {:?}", posting.getDocID(), posting.getPositions());

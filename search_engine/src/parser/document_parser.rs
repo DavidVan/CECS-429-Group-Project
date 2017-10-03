@@ -10,8 +10,8 @@ use index::k_gram_index::KGramIndex;
 use index::positional_inverted_index::PositionalInvertedIndex;
 use reader::read_file;
 use reader::read_file::Document;
-use ::serde_json::Error;
-use ::stemmer::Stemmer;
+use serde_json::Error;
+use stemmer::Stemmer;
 
 /*
  * Function used to build a positional inverted index and KGram index.
@@ -39,9 +39,9 @@ pub fn build_index(
     let now = SystemTime::now();
     println!("Indexing...Please Wait.");
     //iterate through all files in directory
-    for (i,file) in files.iter().enumerate() {
+    for (i, file) in files.iter().enumerate() {
         // println!("Indexing {} out of {}...", i, files.len());
-         
+
         //read the file and split it into each word
         let document = read_file::read_file(file);
         let document_body = document.clone().getBody();
@@ -51,16 +51,16 @@ pub fn build_index(
 
         id_number.insert(i as u32, file.to_string());
         //normalize each token in the file and add it to the index with its document id and position
-        for (j,iter) in iter.enumerate() {
+        for (j, iter) in iter.enumerate() {
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
             let mut tokens = normalize_token(iter.to_string());
             for term in tokens {
-                index.addTerm(&term,i as u32,j as u32);
+                index.addTerm(&term, i as u32, j as u32);
                 k_gram_index.checkIndex(&term);
             }
         }
     }
-    println!("{:?}", now.elapsed()); 
+    println!("{:?}", now.elapsed());
 
     return id_number;
 }

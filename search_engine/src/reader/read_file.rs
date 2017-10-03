@@ -29,13 +29,12 @@ pub struct Document {
  * Contains operations of the Document
  */
 impl Document {
-
     /*
      * Retrieves the title of the Document
      * Cloned to preserve data integrity
      */
     pub fn getTitle(&self) -> String {
-        self.title.clone() 
+        self.title.clone()
     }
 
     /*
@@ -51,7 +50,7 @@ impl Document {
      * cloned to preserve data integrity
      */
     pub fn getURL(&self) -> String {
-        self.url.clone() 
+        self.url.clone()
     }
 
     /*

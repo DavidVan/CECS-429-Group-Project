@@ -8,7 +8,10 @@ pub struct KGramIndex {
 
 impl KGramIndex {
     pub fn new() -> KGramIndex {
-        KGramIndex { mIndex: HashMap::new(), mSet: HashSet::new() }
+        KGramIndex {
+            mIndex: HashMap::new(),
+            mSet: HashSet::new(),
+        }
     }
 
     pub fn checkIndex(&mut self, term: &str) {
@@ -27,12 +30,12 @@ impl KGramIndex {
                 }
                 // println!("{:?}", buffer);
                 let buffer_string = buffer.iter().cloned().collect::<String>();
-                
+
                 let mut buffer_first_half = buffer_string.clone();
                 buffer_first_half.pop();
                 let mut buffer_second_half = buffer_string.clone();
                 buffer_second_half.remove(0);
-            
+
                 if self.mIndex.contains_key(&buffer_string) {
                     // continue;
                 }
