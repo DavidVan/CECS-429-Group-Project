@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 /*
- * Structure that will contain the Positional Posting of a term in the 
+ * Structure that will contain the Positional Posting of a term in the
  * Positional Inverted Index
  */
 pub struct PositionalPosting {
@@ -20,14 +20,13 @@ pub struct PositionalPosting {
  * Contains operations for Positional Posting
  */
 impl PositionalPosting {
-
     /*
      * Constructor of PositionalPosting
      */
     pub fn new(docID: u32) -> PositionalPosting {
         PositionalPosting {
             mDocID: docID,
-            mPositions: Vec::new()
+            mPositions: Vec::new(),
         }
     }
 
@@ -41,8 +40,8 @@ impl PositionalPosting {
     /*
      * Returns positions of term for the posting. Returns clone to preserve data integrity
      */
-    pub fn getPositions(&self)  -> Vec<u32> {
-        self.mPositions.clone() 
+    pub fn getPositions(&self) -> Vec<u32> {
+        self.mPositions.clone()
     }
 
     /*
@@ -68,7 +67,6 @@ impl PositionalPosting {
  * Representation of a Positional Inverted Index
  */
 pub struct PositionalInvertedIndex {
-
     /*
      * Holds terms processed by index and the positional postings each term is mapped to
      */
@@ -79,7 +77,6 @@ pub struct PositionalInvertedIndex {
  * Contains implemented operations of the Positional Inverted Index
  */
 impl PositionalInvertedIndex {
-
     /*
      * Constructs Positional Inverted Index and returns it
      */

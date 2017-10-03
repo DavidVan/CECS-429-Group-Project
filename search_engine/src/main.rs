@@ -4,7 +4,7 @@ extern crate stemmer;
 use search_engine::parser::query_parser::QueryParser;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
-use search_engine::processer::query_processer;
+use search_engine::processor::query_processor;
 use search_engine::reader::read_file;
 use search_engine::reader::user_input;
 use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
@@ -50,9 +50,7 @@ fn main() {
 
         if !input.starts_with(":") {
             process_query(&input, &index, &id_file);
-        }
-        
-        else {
+        } else {
             if input == ":q" {
                 break;
             } else if input.starts_with(":o ") || input.starts_with(":open ") {
@@ -74,26 +72,31 @@ fn main() {
 fn build_index(
     index_path: &PathBuf,
     index: &mut PositionalInvertedIndex,
-    k_gram_index: &mut KGramIndex,
-) -> HashMap<u32, String> {
+    k_gram_index: &mut KGramIndex,) -> HashMap<u32, String> {
+
     let directory = index_path.to_str().expect("Not a valid directory");
     document_parser::build_index(directory.to_string(), index, k_gram_index)
 }
 
-fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>) {
-    let results = query_processer::process_query(input, index, id_file);
+fn process_query(
+    input: &str,
+    index: &PositionalInvertedIndex,
+    id_file: &HashMap<u32, String>) {
+
+    let results = query_processor::process_query(input, index, id_file);
     for result in results.clone() {
         println!("Result: {}", result);
     }
     if results.len() != 1 {
         println!("{} Documents", results.len());
-    }
-    else {
+    } else {
         println!("{} Document", results.len());
     }
 }
 
-fn stem_term(input: &str) {
+fn stem_term(
+    input: &str) {
+
     let mut stem = input.split_whitespace();
     if stem.size_hint().0 > 2 {
         println!("Invalid token");
@@ -106,14 +109,19 @@ fn stem_term(input: &str) {
     }
 }
 
-fn index_directory(mut index_path: &mut PathBuf, input: String) -> bool {
+fn index_directory(
+    mut index_path: &mut PathBuf,
+    input: String) -> bool {
     let input_clone = input.clone();
     let mut string = input_clone.split_whitespace();
     let mut directory = string.nth(1).expect("Not a valid token");
     search_engine_paths::changeDirectory(&mut index_path, directory)
 }
 
-fn open_file(index_path: &PathBuf, input: &str) {
+fn open_file(
+    index_path: &PathBuf,
+    input: &str) {
+
     let mut string = input.split_whitespace();
     let file = string.nth(1).expect("Not a valid file");
     let mut filePath = index_path.clone();
@@ -130,7 +138,9 @@ fn open_file(index_path: &PathBuf, input: &str) {
     }
 }
 
-fn print_vocab(index: &PositionalInvertedIndex) {
+fn print_vocab(
+    index: &PositionalInvertedIndex) {
+    
     let dictionary = index.get_dictionary();
 
     for term in dictionary.iter() {

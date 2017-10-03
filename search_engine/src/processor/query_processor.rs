@@ -5,27 +5,31 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::*;
 
-pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &HashMap<u32, String>) -> HashSet<String> {
+pub fn process_query(
+    input: &str,
+    index: &PositionalInvertedIndex,
+    id_file: &HashMap<u32, String>,
+) -> HashSet<String> {
     let parser = QueryParser::new();
     let processed_query = QueryParser::process_query(&parser, input);
     println!("Processed Query: {:?}", processed_query);
 
-    let mut results : HashSet<String> = HashSet::new();
+    let mut results: HashSet<String> = HashSet::new();
     let mut or_results = Vec::new();
     let mut and_entries_precursor_string_vec = Vec::new(); // Dirty hack to get around lifetimes...
     for query in processed_query {
         and_entries_precursor_string_vec.clear(); // Need to clear it here and only here...
         // println!("Query For: {}", query);
         let mut and_entries = Vec::new();
-        let and_entries_precursor : Vec<&str> = query.split_whitespace().collect();
+        let and_entries_precursor: Vec<&str> = query.split_whitespace().collect();
         for item in and_entries_precursor {
             and_entries_precursor_string_vec.push(String::from(item));
         }
         let mut and_entries_precursor_iter = and_entries_precursor_string_vec.iter();
-        let mut entry_builder : Vec<String> = Vec::new();
+        let mut entry_builder: Vec<String> = Vec::new();
         while let Some(entry) = and_entries_precursor_iter.next() {
             if entry.starts_with("\"") {
-                let mut modified_entry : String = entry.chars().skip(1).collect();
+                let mut modified_entry: String = entry.chars().skip(1).collect();
                 entry_builder.push(modified_entry);
                 while let Some(next_entry) = and_entries_precursor_iter.next() {
                     if next_entry.ends_with("\"") {
@@ -46,56 +50,64 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
         let mut not_results = Vec::new();
 
         if query.contains("NEAR/") {
-            let mut near_k_results : Vec<u32> = near_query(query.clone(), index);
+            let mut near_k_results: Vec<u32> = near_query(query.clone(), index);
             let mut near_k_inner_results = HashSet::new();
             for result in near_k_results {
                 let file_path = id_file.get(&result).unwrap().to_string();
-                let file : &Path = file_path.as_ref();
+                let file: &Path = file_path.as_ref();
                 let file_name = file.file_name();
                 near_k_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
             }
             and_results.push(near_k_inner_results);
-        }
-        else {
+        } else {
             for entry in and_entries {
                 // println!("AND ENTRY DAVID {}", entry);
                 let not_query = entry.starts_with("-");
-                let phrase_literal_vec : Vec<&str> = entry.split_whitespace().collect();
+                let phrase_literal_vec: Vec<&str> = entry.split_whitespace().collect();
                 let phrase_literal = phrase_literal_vec.len() > 1;
                 if phrase_literal {
-                    let mut phrase_literal_results : Vec<u32> = Vec::new();
+                    let mut phrase_literal_results: Vec<u32> = Vec::new();
                     let mut phrase_literal_inner_results = HashSet::new();
                     for result in phrase_literal_results {
                         let file_path = id_file.get(&result).unwrap().to_string();
-                        let file : &Path = file_path.as_ref();
+                        let file: &Path = file_path.as_ref();
                         let file_name = file.file_name();
-                        phrase_literal_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
+                        phrase_literal_inner_results.insert(String::from(
+                            file_name
+                                .unwrap()
+                                .to_str()
+                                .unwrap(),
+                        ));
                     }
                     and_results.push(phrase_literal_inner_results);
-                    // call function to process
-                    // read results into and results vec (might have to get file name)
-                }
-                else {
+                // call function to process
+                // read results into and results vec (might have to get file name)
+                } else {
                     let normalized_tokens = document_parser::normalize_token(entry.to_string());
                     for normalized_token in normalized_tokens {
                         // println!("Normalized Token: {}",  normalized_token);
                         if !index.contains_term(normalized_token.as_str()) {
                             break;
                         }
-                        let postings = index.get_postings(normalized_token.as_str()); 
+                        let postings = index.get_postings(normalized_token.as_str());
                         let mut and_inner_results = HashSet::new();
                         for posting in postings {
                             if not_query {
-                                let file_path = id_file.get(&posting.getDocID()).unwrap().to_string();
-                                let file : &Path = file_path.as_ref();
+                                let file_path =
+                                    id_file.get(&posting.getDocID()).unwrap().to_string();
+                                let file: &Path = file_path.as_ref();
                                 let file_name = file.file_name();
-                                not_results.push(String::from(file_name.unwrap().to_str().unwrap()));
-                            }
-                            else {
-                                let file_path = id_file.get(&posting.getDocID()).unwrap().to_string();
-                                let file : &Path = file_path.as_ref();
+                                not_results.push(String::from(
+                                    file_name.unwrap().to_str().unwrap(),
+                                ));
+                            } else {
+                                let file_path =
+                                    id_file.get(&posting.getDocID()).unwrap().to_string();
+                                let file: &Path = file_path.as_ref();
                                 let file_name = file.file_name();
-                                and_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
+                                and_inner_results.insert(String::from(
+                                    file_name.unwrap().to_str().unwrap(),
+                                ));
                             }
                         }
                         if !not_query {
@@ -109,14 +121,15 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
         let mut and_results_iter = and_results.iter();
         let first_and_result = match and_results_iter.next() {
             Some(result) => result,
-            None => continue
+            None => continue,
         };
         let mut intersection = HashSet::new();
         for item in first_and_result {
             intersection.insert(item.clone());
         }
         while let Some(and_result) = and_results_iter.next() {
-            let mut intersection_result : HashSet<_> = and_result.intersection(&intersection).cloned().collect();
+            let mut intersection_result: HashSet<_> =
+                and_result.intersection(&intersection).cloned().collect();
             intersection.clear();
             for item in intersection_result {
                 intersection.insert(item);
@@ -142,7 +155,7 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
         union.insert(item.clone());
     }
     while let Some(or_result) = or_results_iter.next() {
-        let mut union_result : HashSet<_> = or_result.union(&union).cloned().collect();
+        let mut union_result: HashSet<_> = or_result.union(&union).cloned().collect();
         union.clear();
         for item in union_result {
             union.insert(item);
@@ -156,7 +169,7 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
     results
 }
 
-/**
+/*
  * Function to process a NEAR/ query 
  * @param query_literal - the query literal in the form "a NEAR/? b"
  * @return the documents in which a is within x terms of b
@@ -164,7 +177,7 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
  */
 pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
-    let literals:Vec<&str> = query_literal.split(' ').collect();
+    let literals: Vec<&str> = query_literal.split(' ').collect();
     let first_term = literals[0].clone();
     let mut near = literals[1].clone().to_string();
     let second_term = literals[2].clone();
@@ -202,7 +215,7 @@ pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec
     documents
 }
 
-/**
+/*
  * Function to determine if two terms are within a distance of each other
  * @param first_positions - the positions of the first term within a document
  * @param second_positions - the positions of the second term within a document
@@ -218,10 +231,10 @@ pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distan
         //if the distance is within the max_distance then we return true
         if difference <= max_distance && difference > 0 {
             return true;
-            // if the first position comes before the second then we increment the second position vector
+        // if the first position comes before the second then we increment the second position vector
         } else if difference < 0 {
             j = j + 1;
-            // if the second position comes more than the threshold after the first one, increment the first position vector
+        // if the second position comes more than the threshold after the first one, increment the first position vector
         } else if difference > 0 {
             i = i + 1;
         }

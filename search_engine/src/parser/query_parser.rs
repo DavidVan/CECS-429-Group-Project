@@ -30,7 +30,8 @@ impl QueryParser {
                 }
                 continue;
             }
-            if token.starts_with("(") { // Start processing inner queries...
+            if token.starts_with("(") {
+                // Start processing inner queries...
                 let mut parenthesis_query_vec = Vec::new();
                 let previous_token = query_builder.join(" ");
                 query_builder.clear();
@@ -106,7 +107,7 @@ impl QueryParser {
             }
             multiplier_vec.push(String::from(token));
         }
-        
+
         // Extract the multiplicand
         while let Some(mut token) = tokens.next() {
             if token.len() == 1 && token.starts_with("+") {
@@ -156,7 +157,8 @@ impl QueryParser {
         multiplicand_vec[0] = multiplicand_vec[0].chars().skip(1).collect();
         let multiplicand_vec_length = multiplicand_vec.len();
         let multiplicand_last_element_length = multiplicand_vec[multiplicand_vec_length - 1].len();
-        multiplicand_vec[multiplicand_vec_length - 1] = multiplicand_vec[multiplicand_vec_length - 1]
+        multiplicand_vec[multiplicand_vec_length - 1] = multiplicand_vec[multiplicand_vec_length -
+                                                                             1]
             .chars()
             .take(multiplicand_last_element_length - 1)
             .collect();
