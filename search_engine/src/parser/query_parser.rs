@@ -88,15 +88,16 @@ impl QueryParser {
         let mut multiplier_vec: Vec<String> = Vec::new();
         let mut multiplicand_vec: Vec<String> = Vec::new();
 
+        let mut query_builder: Vec<String> = Vec::new();
+
         while let Some(token) = tokens.next() {
             if token.starts_with("(") {
-                multiplicand_vec.push(String::from(token));
+                query_builder.push(String::from(token));
                 break;
             }
             multiplier_vec.push(String::from(token));
         }
 
-        let mut query_builder: Vec<String> = Vec::new();
         while let Some(mut token) = tokens.next() {
             if token.len() == 1 && token.starts_with("+") {
                 if query_builder.len() != 0 {
@@ -106,8 +107,10 @@ impl QueryParser {
                 continue;
             }
             if token.starts_with("(") {
+                println!("The token: {}", token);
                 query_builder.push(String::from(token));
                 token = tokens.next().unwrap();
+                println!("The token after: {}", token);
                 let mut left_parenthesis_counter = 1;
                 while left_parenthesis_counter != 0 {
                     query_builder.push(String::from(token));
@@ -133,24 +136,25 @@ impl QueryParser {
                 query_builder.clear();
                 continue;
             }
-            multiplicand_vec.push(String::from(token)); // Finish the job...
+            println!("REGG DAV TOKEN: {}", token);
+            query_builder.push(String::from(token)); // Finish the job...
         }
+        // Final clean up...
+        if query_builder.len() != 0 {
+            multiplicand_vec.push(query_builder.join(" "));
+            query_builder.clear();
+        }
+
         let multiplier = multiplier_vec.join(" ");
         multiplicand_vec[0] = multiplicand_vec[0].chars().skip(1).collect();
         let multiplicand_vec_length = multiplicand_vec.len();
         let multiplicand_last_element_length = multiplicand_vec[multiplicand_vec_length - 1].len();
-        multiplicand_vec[multiplicand_vec_length - 1] = multiplicand_vec[multiplicand_vec_length -
-                                                                             1]
+        multiplicand_vec[multiplicand_vec_length - 1] = multiplicand_vec[multiplicand_vec_length - 1]
             .chars()
             .take(multiplicand_last_element_length - 1)
             .collect();
-        let multiplicand_precursor = multiplicand_vec.join(" ");
-        let multiplicand: String = multiplicand_precursor
-            .chars()
-            .take(multiplicand_precursor.len() - 2)
-            .skip(1)
-            .collect();
         for multiplicand in multiplicand_vec {
+            println!("multiplicand dav {}", multiplicand);
             results.push(multiplier.clone() + " " + multiplicand.as_str());
         }
         let mut final_results: Vec<String> = Vec::new();
