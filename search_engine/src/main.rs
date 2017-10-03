@@ -86,9 +86,33 @@ fn process_query(input: &str, index_path: &PathBuf, index: &PositionalInvertedIn
 
     let mut results : HashSet<String> = HashSet::new();
     let mut or_results = Vec::new();
+    let mut and_entries_precursor_string_vec = Vec::new(); // Dirty hack to get around lifetimes...
     for query in processed_query {
         println!("Query For: {}", query);
-        let and_entries : Vec<&str> = query.split_whitespace().collect();
+        let mut and_entries = Vec::new();
+        let and_entries_precursor : Vec<&str> = query.split_whitespace().collect();
+        for item in and_entries_precursor {
+            and_entries_precursor_string_vec.push(String::from(item));
+        }
+        let mut and_entries_precursor_iter = and_entries_precursor_string_vec.iter();
+        let mut entry_builder : Vec<String> = Vec::new();
+        while let Some(entry) = and_entries_precursor_iter.next() {
+            if entry.starts_with("\"") {
+                let mut modified_entry : String = entry.chars().skip(1).collect();
+                entry_builder.push(modified_entry);
+                while let Some(next_entry) = and_entries_precursor_iter.next() {
+                    if next_entry.ends_with("\"") {
+                        modified_entry = next_entry.chars().take(next_entry.len() - 1).collect();
+                        entry_builder.push(modified_entry);
+                        and_entries.push(entry_builder.join(" "));
+                        entry_builder.clear();
+                        break;
+                    }
+                }
+                continue;
+            }
+            and_entries.push(String::from(entry.clone()));
+        }
         let mut and_results = Vec::new();
         for entry in and_entries {
             println!("AND PART: {}", entry);
@@ -240,7 +264,7 @@ fn open_file(index_path: &PathBuf, input: &str) {
     let mut filePath = index_path.clone();
     println!("Opening {}", file);
     filePath.push(file);
-    if (filePath.exists()) {
+    if filePath.exists() {
         let document = read_file::read_file(filePath.to_str().expect("Not a valid string"));
         println!("{}", document.getBody());
     } else {
