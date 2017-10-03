@@ -1,7 +1,6 @@
 extern crate search_engine;
 extern crate stemmer;
 
-use stemmer::Stemmer;
 use search_engine::parser::document_parser;
 use std::collections::HashMap;
 #[test]
@@ -9,14 +8,17 @@ fn test_normalize() {
 
     let mut dictionary = HashMap::new();
 
-    // dictionary.insert("swim", vec!["swimming","swimmer","swam"]);
-    dictionary.insert("test", vec!["tested", "tests", "testing"]);
-    dictionary.insert("needless", vec!["needlessly"]);
-    dictionary.insert("fast", vec!["fasting", "faster", "fastest"]);
+    dictionary.insert("swim", vec!["swimming"]);
+    dictionary.insert("swam", vec!["swam"]);
+    dictionary.insert("swimmer", vec!["Swimmer"]);
+    dictionary.insert("test", vec!["Tested", "tEsts", "Testing"]);
+    dictionary.insert("needless", vec!["Needlessly"]);
+    dictionary.insert("fast", vec!["Fasting"]);
+    dictionary.insert("faster", vec!["Faster"]);
     dictionary.insert("seed", vec!["seeding", "seeds"]);
 
     for (term, variants) in dictionary.iter() {
-        println!("Testing term: {}", term);
+        println!("Testing term: {}\n", term);
         for variant in variants {
             println!("Testing with variant: {}", variant);
 
@@ -26,7 +28,7 @@ fn test_normalize() {
 
             // println!("Size of result: {}", results.len());
 
-            println!("{}\n", result);
+            println!("Result - {}\n", result);
 
             assert_eq!(
                 term,

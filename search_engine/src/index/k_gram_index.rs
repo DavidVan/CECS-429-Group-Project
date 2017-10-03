@@ -25,6 +25,7 @@ impl KGramIndex {
                 } else {
                     buffer[counter] = c.clone();
                 }
+                println!("{:?}", buffer);
                 let buffer_string = buffer.iter().cloned().collect::<String>();
                 
                 let mut buffer_first_half = buffer_string.clone();
@@ -38,12 +39,16 @@ impl KGramIndex {
 
                 if buffer[2] != ' ' {
                     self.addIndex(buffer_string.as_str(), term);
+                    let mut buffer_last_char = buffer_string.clone();
+                    buffer_last_char.remove(0);
+                    buffer_last_char.remove(0);
+                    self.addIndex(&buffer_last_char, term);
                 }
                 if buffer[1] != ' ' {
                     self.addIndex(&buffer_first_half, term);
                     self.addIndex(&buffer_second_half, term);
                 }
-                if buffer[counter] != ' ' && buffer[counter] != '$' {
+                if buffer[0] != ' ' && buffer[0] != '$' {
                     let mut buffer_first_char = buffer_string.clone();
                     buffer_first_char.pop();
                     buffer_first_char.pop();

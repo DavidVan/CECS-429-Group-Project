@@ -48,7 +48,7 @@ impl PositionalPosting {
     /*
      * Adds a new position for the posting
      */
-    fn addPosition(&mut self, pos: u32) {
+    pub fn addPosition(&mut self, pos: u32) {
         self.mPositions.push(pos);
     }
 
@@ -110,7 +110,7 @@ impl PositionalInvertedIndex {
                 }
             }
             {
-                if (mIndex.get(term).unwrap().last().unwrap().getDocID() != docID) {
+                if mIndex.get(term).unwrap().last().unwrap().getDocID() != docID {
                     let mut new_posting = PositionalPosting::new(docID);
                     new_posting.addPosition(pos);
                     mIndex.get_mut(term).expect("term not found").push(
@@ -141,7 +141,7 @@ impl PositionalInvertedIndex {
      * Returns the postings associated with a term
      */
     pub fn get_postings(&self, term: &str) -> &Vec<PositionalPosting> {
-        self.mIndex.get(term).unwrap()
+        self.mIndex.get(term).expect("Improper postings")
     }
 
     /*

@@ -84,7 +84,7 @@ pub fn normalize_token(term: String) -> Vec<String> {
             break;
         }
     }
-    if (start_index > end_index) {
+    if start_index > end_index {
         let empty = "";
         return vec![empty.to_owned()];
     }

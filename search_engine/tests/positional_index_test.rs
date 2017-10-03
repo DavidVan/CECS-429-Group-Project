@@ -65,21 +65,53 @@ fn read_documents() {
     
     let alpha_postings_list = positional_inverted_index.get_postings("alpha");
 
-    let mut test_postings_list = Vec::new();
-    let test_case_1 = PositionalPosting {
-        mDocID: 0,
-        mPositions: vec![2]
-    };
-    let test_case_2 = PositionalPosting {
-        mDocID: 1,
-        mPositions: vec![5]
-    };
-    let test_case_3 = PositionalPosting {
-        mDocID: 2,
-        mPositions: vec![8]
-    };
-    test_postings_list.push(test_case_1);
-    test_postings_list.push(test_case_2);
-    test_postings_list.push(test_case_3);
+    let alpha_test_case_1 : Vec<u32> = vec![5]; // Positions for doc id 0
+    let alpha_test_case_2 : Vec<u32> = vec![8]; // Positions for doc id 3
+    let alpha_test_case_3 : Vec<u32> = vec![12]; // Positions for doc id 4
+    {
+        for posting in alpha_postings_list.iter() {
+            println!("{} - {:?}", posting.getDocID(), posting.getPositions());
+            if posting.getDocID() == 0 {
+                for (i, position) in posting.getPositions().iter().enumerate() {
+                    assert_eq!(position, &alpha_test_case_1[i]);
+                }
+            }
+            if posting.getDocID() == 3 {
+                for (i, position) in posting.getPositions().iter().enumerate() {
+                    assert_eq!(position, &alpha_test_case_2[i]);
+                }
+            }
+            if posting.getDocID() == 4 {
+                for (i, position) in posting.getPositions().iter().enumerate() {
+                    assert_eq!(position, &alpha_test_case_3[i]);
+                }
+            }
+        }
+    }
+    let results = document_parser::normalize_token("november".to_string());
+    let november_term = results.get(0).expect("Improper term");
+    let november_postings_list = positional_inverted_index.get_postings(november_term);
+    let november_test_case_1 : Vec<u32> = vec![0, 8]; 
+    let november_test_case_2 : Vec<u32> = vec![2, 3];
+    let november_test_case_3 : Vec<u32> = vec![5]; 
+    
 
+    for posting in november_postings_list.iter() {
+        println!("{} - {:?}", posting.getDocID(), posting.getPositions());
+        if posting.getDocID() == 0 {
+            for (i, position) in posting.getPositions().iter().enumerate() {
+                assert_eq!(position, &november_test_case_1[i]);
+            }
+        }
+        if posting.getDocID() == 3 {
+            for (i, position) in posting.getPositions().iter().enumerate() {
+                assert_eq!(position, &november_test_case_2[i]);
+            }
+        }
+        if posting.getDocID() == 4 {
+            for (i, position) in posting.getPositions().iter().enumerate() {
+                assert_eq!(position, &november_test_case_3[i]);
+            }
+        }
+    }
 }

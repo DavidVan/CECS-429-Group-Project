@@ -47,27 +47,3 @@ fn test_castle() {
         assert!(contain, "{} not in k_gram", test_case);
     }
 }
-
-#[test]
-fn test_file() {
-    let mut documentPath = current_exe().expect("Not a valid path");
-    println!("{:?}", documentPath);
-
-    while (!documentPath.ends_with("search_engine")) {
-        documentPath.pop();
-    }
-    println!("{:?}", documentPath);
-
-    documentPath.push("assets");
-    documentPath.push("documents");
-    println!("{:?}", documentPath);
-
-    for file in documentPath.read_dir().expect("Failed") {
-        let fileName = read_file::path_to_string(file.expect("Failed to unwrap"));
-        let content = read_file::read_text_file(fileName.as_str());
-        let mut iter = content.split_whitespace();
-        while let Some(mut token) = iter.next() {
-            println!("{}", token);
-        }
-    }
-}
