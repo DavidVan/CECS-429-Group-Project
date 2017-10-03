@@ -62,8 +62,6 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
                 let not_query = entry.starts_with("-");
                 let phrase_literal_vec : Vec<&str> = entry.split_whitespace().collect();
                 let phrase_literal = phrase_literal_vec.len() > 1;
-                println!("Not query? {}", not_query);
-                println!("Phrase literal? {}", phrase_literal);
                 if phrase_literal {
                     let mut phrase_literal_results : Vec<u32> = Vec::new();
                     let mut phrase_literal_inner_results = HashSet::new();
