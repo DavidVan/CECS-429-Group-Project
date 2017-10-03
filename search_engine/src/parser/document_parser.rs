@@ -1,18 +1,21 @@
 use std::collections::HashMap;
 use std::fs::File;
+use std::fs::{self, DirEntry};
 use std::io::prelude::*;
 use std::io::Read;
 use std::ops::Add;
-use serde_json::Error;
-use std::fs::{self, DirEntry};
 use std::path::Path;
 use std::time::SystemTime;
-use stemmer::Stemmer;
-use index::positional_inverted_index::PositionalInvertedIndex;
 use index::k_gram_index::KGramIndex;
+use index::positional_inverted_index::PositionalInvertedIndex;
 use reader::read_file;
 use reader::read_file::Document;
+use ::serde_json::Error;
+use ::stemmer::Stemmer;
 
+/*
+ * 
+ */
 pub fn build_index(
     directory: String,
     index: &mut PositionalInvertedIndex,
@@ -29,6 +32,7 @@ pub fn build_index(
     let mut id_number = HashMap::new();
 
     let now = SystemTime::now();
+    println!("Indexing...Please Wait.");
     for (i,file) in files.iter().enumerate() {
         // println!("Indexing {} out of {}...", i, files.len());
          
@@ -41,7 +45,7 @@ pub fn build_index(
         id_number.insert(i as u32, file.to_string());
 
         for (j,iter) in iter.enumerate() {
-            println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
+            // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
             let mut tokens = normalize_token(iter.to_string());
             for term in tokens {
                 index.addTerm(&term,i as u32,j as u32);
@@ -53,18 +57,10 @@ pub fn build_index(
 
     return id_number;
 }
-    pub fn normalize_token(term: String) -> Vec<String> {
-            let mut tokens = normalize_token(iter.to_string());
-            for term in tokens {
-                index.addTerm(&term,i as u32,j as u32);
-                // k_gram_index.checkIndex(&term);
-            }
-        }
-    }
-    println!("{:?}", now.elapsed());
 
-    return id_number;
-}
+/*
+ *
+ */
 pub fn normalize_token(term: String) -> Vec<String> {
     let mut start_index: i32 = 0;
     let mut end_index: i32 = (term.len() as i32) - 1;

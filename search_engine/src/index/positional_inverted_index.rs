@@ -144,10 +144,16 @@ impl PositionalInvertedIndex {
         self.mIndex.get(term).unwrap()
     }
 
+    /*
+     * Returns the number of terms in the index
+     */
     pub fn get_term_count(&self) -> usize {
         self.mIndex.len()
     }
 
+    /*
+     * Returns a sorted dictionary of the terms existing in the index
+     */
     pub fn get_dictionary(&self) -> Vec<&String> {
         let mut dictionary = Vec::new();
 
