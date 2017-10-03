@@ -30,8 +30,7 @@ impl QueryParser {
                 }
                 continue;
             }
-            if token.starts_with("(") {
-                // Replace this block with multiply...
+            if token.starts_with("(") { // Start processing inner queries...
                 let mut parenthesis_query_vec = Vec::new();
                 let previous_token = query_builder.join(" ");
                 query_builder.clear();
@@ -87,6 +86,10 @@ impl QueryParser {
         final_results
     }
 
+    /*
+     * Given a string query, multiplies them out, recursively.
+     * E.g. hello (one + two) -> ["hello one", "hello two"]
+     */
     pub fn multiply_query(&self, input: &str) -> Vec<String> {
         let mut results: Vec<String> = Vec::new();
         let mut tokens = input.split_whitespace();
@@ -95,6 +98,7 @@ impl QueryParser {
 
         let mut query_builder: Vec<String> = Vec::new();
 
+        // Extract the multiplier
         while let Some(token) = tokens.next() {
             if token.starts_with("(") {
                 query_builder.push(String::from(token));
@@ -102,7 +106,8 @@ impl QueryParser {
             }
             multiplier_vec.push(String::from(token));
         }
-
+        
+        // Extract the multiplicand
         while let Some(mut token) = tokens.next() {
             if token.len() == 1 && token.starts_with("+") {
                 if query_builder.len() != 0 {
