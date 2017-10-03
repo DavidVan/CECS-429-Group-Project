@@ -114,14 +114,14 @@ pub fn normalize_token(term: String) -> Vec<String> {
             apostrophe_reduced
                 .chars()
                 .skip(0)
-                .take(hyphen_index - 1)
+                .take(hyphen_index)
                 .collect(),
         );
         strings_to_stem.push(
             apostrophe_reduced
                 .chars()
-                .skip(hyphen_index)
-                .take(apostrophe_reduced.len() - 1 - hyphen_index)
+                .skip(hyphen_index + 1)
+                .take(apostrophe_reduced.len() - 1 - (hyphen_index+ 1))
                 .collect(),
         );
         strings_to_stem.push(apostrophe_reduced.replace(hyphen, empty_string));
@@ -146,7 +146,7 @@ pub fn near_query(query_literal: Vec<String>, index: &mut PositionalInvertedInde
     let mut near = query_literal[1].clone();
     let second_term = query_literal[2].clone();
 
-    near = near.replace("NEAR\\", "");
+    near = near.replace("NEAR/", "");
     let max_distance = near.parse::<i32>().unwrap();
 
     let first_term_postings = index.get_postings(&first_term);
