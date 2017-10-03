@@ -129,11 +129,12 @@ pub fn process_query(input: &str, index: &PositionalInvertedIndex, id_file: &Has
  * @return the documents in which a is within x terms of b
  *
  */
-pub fn near_query(query_literal: Vec<String>, index: &mut PositionalInvertedIndex) -> Vec<u32> {
+pub fn near_query(query_literal: String, index: &mut PositionalInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
-    let first_term = query_literal[0].clone();
-    let mut near = query_literal[1].clone();
-    let second_term = query_literal[2].clone();
+    let literals:Vec<&str> = query_literal.split(' ').collect();
+    let first_term = literals[0].clone();
+    let mut near = literals[1].clone().to_string();
+    let second_term = literals[2].clone();
 
     near = near.replace("NEAR/", "");
     //extract the maximum distance
