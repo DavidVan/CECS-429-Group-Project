@@ -41,7 +41,7 @@ working directory
 before printing its result
 
 **:i** *DIRECTORY* or **:index** *DIRECTORY* - Changes working directory to
-specified directory and indexes files in new working directory
+specified directory and indexes files in new directory
 
 **:v** or **:vocab** - Views vocabulary in index in sorted order
 
