@@ -10,6 +10,8 @@ pub struct KGramIndex {
      * containing that gram
      */
     m_index: HashMap<String, Vec<String>>,
+
+    m_enable: bool,
 }
 
 /*
@@ -26,6 +28,7 @@ impl KGramIndex {
     pub fn new() -> KGramIndex {
         KGramIndex {
             m_index: HashMap::new(),
+            m_enable: false,
         }
     }
 
@@ -38,12 +41,6 @@ impl KGramIndex {
      */
     pub fn check_term(&mut self, term: &str) {
 
-        // Set enable to true to enable K Gram Index
-        let enable : bool = false;
-        if !enable {
-            return (); 
-        }
-        
         // Appends '$' to beginning and end of term
         let term_copy = format!("${}$", term);
         let mut buffer = [' '; 3];
@@ -133,5 +130,30 @@ impl KGramIndex {
         }
 
         return k_grams;
+    }
+
+    /*
+     * Returns the status of the k_gram_index
+     *
+     * # Returns
+     * 
+     * True if K_Gram index is enabled, false otherwise
+     */
+    pub fn is_enabled(&self) -> bool {
+        self.m_enable
+    }
+
+    /*
+     * Toggles the KGram Index such that it is enabled
+     */
+    pub fn enable_k_gram(&mut self)  {
+        self.m_enable = true; 
+    }
+
+    /*
+     * Toggles the KGram Index such that it is disabled 
+     */
+    pub fn disable_k_gram(&mut self)  {
+        self.m_enable = false; 
     }
 }

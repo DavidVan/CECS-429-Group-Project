@@ -23,10 +23,15 @@ fn main() {
     
     // Loops lets user select first directory to access
     loop {
-        print!("Enter a directory to access: ");
+        println!("Select directory to  access");
+        print!(":index ");
         input = user_input::read_input();
         if input == ":q" {
             return (); // Prematurely ends program
+        }
+        if input.is_empty() {
+            println!("Please input valid directory");
+            continue;
         }
         change = search_engine_paths::change_directory(&mut index_path, input.as_str());
         
@@ -62,12 +67,15 @@ fn main() {
             } else if input.starts_with(":i ") || input.starts_with(":index ") {
                 change = index_directory(&mut index_path, input.clone());
             } else if input == ":v" || input == ":vocab" {
-                println!("Vocabulary");
                 print_vocab(&index);
+            } else if input == ":enable k" || input == ":enable kgram" {
+                toggle_k_gram(&mut k_gram_index, true);
+            } else if input == ":disable k" || input == ":disable kgram" {
+                toggle_k_gram(&mut k_gram_index, false);
             } else if input == ":h" || input == ":help" {
                 print_help(); 
             } else {
-                println!("Invalid command");
+                println!("Invalid command - Use ':help' to view commands");
             }
         }
     }
@@ -204,12 +212,37 @@ fn open_file(
 fn print_vocab(
     index: &PositionalInvertedIndex) {
     
+    println!("Vocabulary");
+
     let dictionary = index.get_dictionary();
 
     for term in dictionary.iter() {
         println!("{}", term);
     }
     println!("Total terms: {}", dictionary.len());
+}
+
+/*
+ * Toggled the  K_gram index on/off
+ *
+ * # Arguments
+ *
+ * *`k_gram` - The KGramIndex that will be enabled/disabled
+ * *`enable` - The toggle value of the KGramIndex
+ */
+fn toggle_k_gram(
+    k_gram_index: &mut KGramIndex, enable: bool) {
+
+    println!();
+    if enable {
+        println!("K Gram Index Enabled\n");
+        k_gram_index.enable_k_gram();
+    } else {
+        println!("K Gram Index Disabled\n");
+        k_gram_index.disable_k_gram();
+    }   
+    println!();
+
 }
 
 /*

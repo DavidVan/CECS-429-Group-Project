@@ -52,7 +52,9 @@ pub fn build_index(
             let tokens = normalize_token(iter.to_string());
             for term in tokens {
                 if !index.contains_term(&term) {
-                    k_gram_index.check_term(&term);
+                    if k_gram_index.is_enabled() {
+                        k_gram_index.check_term(&term);
+                    }
                 }
                 index.add_term(&term, i as u32, j as u32);
             }

@@ -29,3 +29,28 @@ $ cargo install
 $ cargo build --release
 $ cargo run --release
 ```
+
+#### Commands
+
+```
+**:q** or **:quit** - Quits Program
+
+**:o** *FILE* or **:open** *FILE* - Opens a specified file in the current
+working directory
+
+**:s** *TERM* or **:stem** *TERM* - Normalizes and applies a stemmer on a term
+before printing its result
+
+**:i** *DIRECTORY* or **:index** *DIRECTORY* - Changes working directory to
+specified directory and indexes files in new working directory
+
+**:v** or **:vocab** - Views vocabulary in index in sorted order
+
+**:enable k** or **:enable kgram** - Enables K Gram Index when indexing
+directories
+
+**:disable k** or **:disable kgram** - Disables K Gram Index when indexing
+directories
+
+**:h** or **:help** - Displays list of commands
+```
