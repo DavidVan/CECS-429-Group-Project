@@ -32,7 +32,6 @@ $ cargo run --release
 
 #### Commands
 
-```
 **:q** or **:quit** - Quits Program
 
 **:o** *FILE* or **:open** *FILE* - Opens a specified file in the current
@@ -53,4 +52,3 @@ directories
 directories
 
 **:h** or **:help** - Displays list of commands
-```
