@@ -17,6 +17,7 @@ fn main() {
     let mut input: String;
     let mut change: bool;
 
+    let mut id_file : HashMap<u32, String> = HashMap::new();
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
     
@@ -39,7 +40,6 @@ fn main() {
     loop {
         println!("{}", index_path.display());
         // Links document ID's to file names
-        let mut id_file : HashMap<u32, String> = HashMap::new();
 
         // Builds new index if directory was changed
         if change {
