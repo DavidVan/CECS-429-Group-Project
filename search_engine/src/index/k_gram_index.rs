@@ -37,6 +37,13 @@ impl KGramIndex {
      * *`term` - The term to be checked
      */
     pub fn check_term(&mut self, term: &str) {
+
+        // Set enable to true to enable K Gram Index
+        let enable : bool = false;
+        if !enable {
+            return (); 
+        }
+        
         // Appends '$' to beginning and end of term
         let term_copy = format!("${}$", term);
         let mut buffer = [' '; 3];

@@ -35,7 +35,7 @@ pub fn build_index(
     let mut id_number = HashMap::new();
 
     let now = SystemTime::now();
-    println!("Indexing...Please Wait.");
+    println!("Indexing...");
     //iterate through all files in directory
     for (i, file) in files.iter().enumerate() {
         // println!("Indexing {} out of {}...", i, files.len());
@@ -52,13 +52,27 @@ pub fn build_index(
             let tokens = normalize_token(iter.to_string());
             for term in tokens {
                 if !index.contains_term(&term) {
-                    // k_gram_index.check_term(&term);
+                    k_gram_index.check_term(&term);
                 }
                 index.add_term(&term, i as u32, j as u32);
             }
         }
     }
-    println!("{:?}", now.elapsed());
+
+    println!("Indexing complete!\n");
+
+    let time_elapsed = now.elapsed().expect("Invalid time");
+    let time_elapsed_seconds = time_elapsed.as_secs();
+    let time_elapsed_nano = time_elapsed.subsec_nanos();
+    
+    print!("Directory indexed in: ");
+
+    if time_elapsed_seconds > 1 {
+        println!("{} Seconds", time_elapsed_seconds);
+    } else {
+        println!("{} Nanoseconds", time_elapsed_nano);
+    }
+    println!();
 
     return id_number;
 }

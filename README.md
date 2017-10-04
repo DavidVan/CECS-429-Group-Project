@@ -8,13 +8,13 @@
 
 #### Usage
 
+Install Rust: https://www.rust-lang.org/en-US/install.html
+
 Download Project using:
 
 ```
 $ git clone https://github.com/DavidVan/CECS-429-Group-Project
 ```
-
-Install Rust: https://www.rust-lang.org/en-US/install.html
 
 Navigate to **CECS-429-Group-Project/search_engine/**
 
