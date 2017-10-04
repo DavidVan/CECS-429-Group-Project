@@ -82,7 +82,9 @@ pub fn process_query(
                 let file_name = file.file_name();
                 near_k_inner_results.insert(String::from(file_name.unwrap().to_str().unwrap()));
             }
-            and_results.push(near_k_inner_results);
+            if near_k_inner_results.len() != 0 {
+                and_results.push(near_k_inner_results);
+            }
         } else {
             for entry in and_entries {
                 // println!("AND ENTRY DAVID {}", entry);
@@ -275,7 +277,7 @@ pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distan
     while i < first_positions.len() && j < second_positions.len() {
         difference = (second_positions[j] - first_positions[i]) as i32;
         //if the distance is within the max_distance then we return true
-        if difference <= max_distance && difference > 0 {
+        if difference <= max_distance && difference >= 0 {
             return true;
         // if the first position comes before the second then we increment the second position vector
         } else if difference < 0 {
