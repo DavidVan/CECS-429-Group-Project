@@ -4,6 +4,7 @@ use std::collections::HashMap;
  * Structure that will contain the Positional Posting of a term in the
  * Positional Inverted Index
  */
+ #[derive(Clone)]
 pub struct PositionalPosting {
     /*
      * Document ID of Positional Posting

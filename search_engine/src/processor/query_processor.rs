@@ -1,4 +1,4 @@
-use index::positional_inverted_index::PositionalInvertedIndex;
+use index::positional_inverted_index::{PositionalInvertedIndex,PositionalPosting};
 use parser::document_parser;
 use parser::query_parser::QueryParser;
 use std::collections::HashMap;
@@ -218,9 +218,9 @@ pub fn process_query(
 pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
-    let first_term = literals[0].clone();
+    let first_term = document_parser::normalize_token(literals[0].to_string())[0].to_string();
     let mut near = literals[1].clone().to_string();
-    let second_term = literals[2].clone();
+    let second_term = document_parser::normalize_token(literals[2].to_string())[0].to_string();
 
     near = near.replace("NEAR/", "");
     //extract the maximum distance
@@ -275,7 +275,7 @@ pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distan
     let mut difference: i32;
     //iterate through the positions
     while i < first_positions.len() && j < second_positions.len() {
-        difference = (second_positions[j] - first_positions[i]) as i32;
+        difference = (second_positions[j] as i32) - (first_positions[i] as i32);
         //if the distance is within the max_distance then we return true
         if difference <= max_distance && difference >= 0 {
             return true;
@@ -288,4 +288,103 @@ pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distan
         }
     }
     false
+}
+
+
+pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
+    //extract the terms from the literal
+    let literals: Vec<&str> = query_literal.split(' ').collect();
+    let mut normalized_literals:Vec<String> = Vec::new();
+    //normalize the literals
+    for word in literals.iter() {
+        normalized_literals.push(document_parser::normalize_token(word.to_string())[0].to_string());
+    }
+
+    let mut current_postings:Vec<PositionalPosting> = index.get_postings(&normalized_literals[0]).to_vec();
+
+    for ind in 1..normalized_literals.len()-1 {
+        let next = index.get_postings(&normalized_literals[ind]);
+        let mut i = 0;
+        let mut j = 0;
+        // list of postings containing document ids that terms share in common and positions
+        let mut merged:Vec<PositionalPosting> = Vec::new();
+        //iterate through postings lists until a common document ID is found
+        while i < current_postings.len() && j < next.len() {
+            if current_postings[i].get_doc_id() == next[j].get_doc_id() {
+                 //if the two terms have a common document, retrieve the positions
+                let positions_of_current = current_postings[i].get_positions();
+                let positions_of_next = next[j].get_positions();
+                //return all positions of the second term where the terms are adjacent to each other
+                let merged_positions = adjacent_positions(positions_of_next, positions_of_current);
+                //if none exist we can return
+                if merged_positions.is_empty() {
+                    return Vec::new();
+                }
+                //create new positional posting to push to merged list of postings
+                let mut temp_posting = PositionalPosting::new(current_postings[i].get_doc_id());
+                for i in merged_positions {
+                    temp_posting.add_position(i);
+                }
+                merged.push(temp_posting);
+                // if positions.is_empty() {
+                //     return Vec::new();
+                // } else {
+
+                // }
+                i = i + 1;
+                j = j + 1;
+            }
+            else if current_postings[i].get_doc_id() < next[j].get_doc_id() {
+                i = i + 1;
+            } else if current_postings[i].get_doc_id() > next[j].get_doc_id() {
+                j = j + 1;
+            } 
+        }
+        current_postings = merged;
+    }
+
+    let mut documents:Vec<u32> = Vec::new();
+    
+    for i in current_postings {
+        documents.push(i.get_doc_id());
+    }
+
+    return documents;
+}
+
+pub fn adjacent_positions(term_positions: Vec<u32>, positions: Vec<u32>) -> Vec<u32> {
+    let mut i = 0;
+    let mut j = 0;
+    let mut off_by_one_positions: Vec<u32> = Vec::new();
+    //iterate through the positions
+
+    while i < term_positions.len() && j < positions.len() {
+        let difference = (term_positions[j]as i32) - (positions[i] as i32);
+        //if the distance is within the max_distance then we return true
+        if difference == 1 {
+            off_by_one_positions.push(term_positions[j]);
+        // if the first position comes before the second then we increment the second position vector
+        } else if difference <= 0 {
+            j = j + 1;
+        // if the second position comes more than the threshold after the first one, increment the first position vector
+        } else if difference > 0 {
+            i = i + 1;
+        }
+    }
+    off_by_one_positions
+}
+
+pub fn intersection(first: Vec<u32>, second: Vec<u32>) -> Vec<u32> {
+
+    let mut intersect: Vec<u32> = Vec::new();
+    for i in 0..first.len() {
+        if i==0 || (i>0 && first[i]!=first[i-1]) { 
+            let r = second.binary_search(&first[i]);
+            match r { Ok(_) => intersect.push(first[i]),
+                     Err(_) => (), 
+            
+            }
+        }
+    }
+    return intersect;
 }
