@@ -102,7 +102,7 @@ pub fn process_query(
                 else if phrase_literal && !not_query {
                     // call function to process
                     // read results into and results vec (might have to get file name)
-                    let phrase_literal_results : Vec<u32> = Vec::new();
+                    let phrase_literal_results : Vec<u32> = phrase_query(entry.clone(), &index);
                     let mut phrase_literal_inner_results = HashSet::new();
                     for result in phrase_literal_results {
                         let file_path = id_file.get(&result).unwrap().to_string();
@@ -118,7 +118,8 @@ pub fn process_query(
                     and_results.push(phrase_literal_inner_results);
                 // call function to process
                 // read results into and results vec (might have to get file name)
-                } else {
+                }
+                else {
                     let normalized_tokens = document_parser::normalize_token(entry.to_string());
                     for normalized_token in normalized_tokens {
                         if !index.contains_term(normalized_token.as_str()) {
