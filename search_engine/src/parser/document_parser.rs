@@ -51,8 +51,8 @@ pub fn build_index(
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
             let tokens = normalize_token(iter.to_string());
             for term in tokens {
-                if !index.contains_term(&term) {
-                    if k_gram_index.is_enabled() {
+                if k_gram_index.is_enabled() {
+                    if !index.contains_term(&term) {
                         k_gram_index.check_term(&term);
                     }
                 }
