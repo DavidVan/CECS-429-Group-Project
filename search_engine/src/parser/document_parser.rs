@@ -47,15 +47,15 @@ pub fn build_index(
 
         id_number.insert(i as u32, file.to_string());
         //normalize each token in the file and add it to the index with its document id and position
-        for (j, iter) in iter.enumerate() {
+        for (j, word) in iter.enumerate() {
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
-            let tokens = normalize_token(iter.to_string());
-            for term in tokens {
-                if k_gram_index.is_enabled() {
-                    if !index.contains_term(&term) {
-                        k_gram_index.check_term(&term);
-                    }
+            if k_gram_index.is_enabled() {
+                if !index.contains_term(&word) {
+                    k_gram_index.check_term(&word);
                 }
+            }
+            let tokens = normalize_token(word.to_string());
+            for term in tokens {
                 index.add_term(&term, i as u32, j as u32);
             }
         }

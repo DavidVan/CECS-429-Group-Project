@@ -63,6 +63,7 @@ pub fn process_query(
                         entry_builder.clear();
                         break;
                     }
+                    entry_builder.push(next_entry.to_string());
                 }
                 continue;
             }

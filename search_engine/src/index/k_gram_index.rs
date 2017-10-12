@@ -43,57 +43,24 @@ impl KGramIndex {
 
         // Appends '$' to beginning and end of term
         let term_copy = format!("${}$", term);
-        let mut buffer = [' '; 3];
-        let mut counter = 0;
         // TODO: iterate i = 0 to length - 3
-        for c in term_copy.chars() {
+        for i in 0..(term_copy.len() - 3) {
 
-            /*
-             * Adds new character to buffer and shift all characters
-             * to the left, thereby removing existing first character
-             */
-            if buffer[2] != ' ' {
-                buffer[0] = buffer[1].clone();
-                buffer[1] = buffer[2].clone();
-                buffer[2] = c.clone();
-            } else {
-                buffer[counter] = c.clone();
-            }
-            // println!("{:?}", buffer);
+            let buffer_string : String = term_copy.to_string().chars().skip(i).take(3).collect();
             
-            // TODO: FIX THIS 
-            let buffer_string = buffer.iter().cloned().collect::<String>();
+            let buffer_first_half : String = buffer_string.to_string().chars().skip(0).take(2).collect();
+            let buffer_second_half : String = buffer_string.to_string().chars().skip(1).take(2).collect();
+            let buffer_last_char : String = buffer_string.to_string().chars().skip(2).take(1).collect();
+            let buffer_mid_char : String = buffer_string.to_string().chars().skip(1).take(1).collect();
+            let buffer_first_char : String = buffer_string.to_string().chars().skip(0).take(1).collect();
 
-            let mut buffer_first_half = buffer_string.clone();
-            buffer_first_half.pop();
+            self.add_index(&buffer_string, term);
+            self.add_index(&buffer_last_char, term);
+            self.add_index(&buffer_first_half, term);
+            self.add_index(&buffer_second_half, term);
+            self.add_index(&buffer_first_char, term);
+            self.add_index(&buffer_mid_char, term);
 
-            let mut buffer_second_half = buffer_string.clone();
-            buffer_second_half.remove(0);
-            
-            let mut buffer_last_char = buffer_string.clone();
-            buffer_last_char.remove(0);
-            buffer_last_char.remove(0);
-            
-            let mut buffer_first_char = buffer_string.clone();
-            buffer_first_char.pop();
-            buffer_first_char.pop();
-
-            if self.m_index.contains_key(&buffer_string) {
-                // continue;
-            }
-
-            if buffer[2] != ' ' {
-                self.add_index(buffer_string.as_str(), term);
-                self.add_index(&buffer_last_char, term);
-            }
-            if buffer[1] != ' ' {
-                self.add_index(&buffer_first_half, term);
-                self.add_index(&buffer_second_half, term);
-            }
-            if buffer[0] != ' ' && buffer[0] != '$' {
-                self.add_index(&buffer_first_char, term);
-            }
-            counter = (counter + 1) % buffer.len();
         }
     }
 
