@@ -278,7 +278,7 @@ pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distan
     while i < first_positions.len() && j < second_positions.len() {
         difference = (second_positions[j] as i32) - (first_positions[i] as i32);
         //if the distance is within the max_distance then we return true
-        if difference <= max_distance && difference >= 0 {
+        if difference <= max_distance && difference > 0 {
             return true;
         // if the first position comes before the second then we increment the second position vector
         } else if difference < 0 {
@@ -303,7 +303,7 @@ pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> V
 
     let mut current_postings:Vec<PositionalPosting> = index.get_postings(&normalized_literals[0]).to_vec();
 
-    for ind in 1..normalized_literals.len()-1 {
+    for ind in 1..normalized_literals.len() {
         let next = index.get_postings(&normalized_literals[ind]);
         let mut i = 0;
         let mut j = 0;
@@ -312,10 +312,11 @@ pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> V
         //iterate through postings lists until a common document ID is found
         while i < current_postings.len() && j < next.len() {
             if current_postings[i].get_doc_id() == next[j].get_doc_id() {
-                 //if the two terms have a common document, retrieve the positions
+                //if the two terms have a common document, retrieve the positions
                 let positions_of_current = current_postings[i].get_positions();
                 let positions_of_next = next[j].get_positions();
                 //return all positions of the second term where the terms are adjacent to each other
+                
                 let merged_positions = adjacent_positions(positions_of_next, positions_of_current);
                 //if none exist we can return
                 if merged_positions.is_empty() {
@@ -359,19 +360,22 @@ pub fn adjacent_positions(term_positions: Vec<u32>, positions: Vec<u32>) -> Vec<
     let mut off_by_one_positions: Vec<u32> = Vec::new();
     //iterate through the positions
 
-    while i < term_positions.len() && j < positions.len() {
+    while j < term_positions.len() && i < positions.len() {
         let difference = (term_positions[j]as i32) - (positions[i] as i32);
         //if the distance is within the max_distance then we return true
         if difference == 1 {
             off_by_one_positions.push(term_positions[j]);
+            i = i + 1;
+            j = j + 1;
         // if the first position comes before the second then we increment the second position vector
         } else if difference <= 0 {
             j = j + 1;
         // if the second position comes more than the threshold after the first one, increment the first position vector
-        } else if difference > 0 {
+        } else if difference > 1 {
             i = i + 1;
         }
     }
+    println!("{:?}", off_by_one_positions);
     off_by_one_positions
 }
 
