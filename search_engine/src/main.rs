@@ -23,8 +23,7 @@ fn main() {
     
     // Loops lets user select first directory to access
     loop {
-        println!("Select directory to  access");
-        print!(":index ");
+        print!("Select directory to access: ");
         input = user_input::read_input();
         if input == ":q" {
             return (); // Prematurely ends program
@@ -43,7 +42,6 @@ fn main() {
 
     // Loop that drives program after initial setup
     loop {
-        println!("{}", index_path.display());
         // Links document ID's to file names
 
         // Builds new index if directory was changed
@@ -52,6 +50,7 @@ fn main() {
             change = false;
         }
 
+        println!("{}", index_path.display());
         print!("Input a Query: ");
         input = user_input::read_input_line();
 

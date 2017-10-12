@@ -45,6 +45,7 @@ impl KGramIndex {
         let term_copy = format!("${}$", term);
         let mut buffer = [' '; 3];
         let mut counter = 0;
+        // TODO: iterate i = 0 to length - 3
         for c in term_copy.chars() {
 
             /*
@@ -59,6 +60,8 @@ impl KGramIndex {
                 buffer[counter] = c.clone();
             }
             // println!("{:?}", buffer);
+            
+            // TODO: FIX THIS 
             let buffer_string = buffer.iter().cloned().collect::<String>();
 
             let mut buffer_first_half = buffer_string.clone();
