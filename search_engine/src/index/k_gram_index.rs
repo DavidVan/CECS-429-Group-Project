@@ -39,27 +39,29 @@ impl KGramIndex {
      * 
      * *`term` - The term to be checked
      */
-    pub fn check_term(&mut self, term: &str) {
+    pub fn check_term<S: Into<String>>(&mut self, term: S) {
 
         // Appends '$' to beginning and end of term
-        let term_copy = format!("${}$", term);
+        let term_copy : String = format!("${}$", term.into());
         // TODO: iterate i = 0 to length - 3
-        for i in 0..(term_copy.len() - 3) {
+        for i in 0..(term_copy.len() - 2) {
 
-            let buffer_string : String = term_copy.to_string().chars().skip(i).take(3).collect();
+            let buffer_string : S = term_copy[i..(i+3)];
+
             
-            let buffer_first_half : String = buffer_string.to_string().chars().skip(0).take(2).collect();
-            let buffer_second_half : String = buffer_string.to_string().chars().skip(1).take(2).collect();
-            let buffer_last_char : String = buffer_string.to_string().chars().skip(2).take(1).collect();
-            let buffer_mid_char : String = buffer_string.to_string().chars().skip(1).take(1).collect();
-            let buffer_first_char : String = buffer_string.to_string().chars().skip(0).take(1).collect();
+            let buffer_first_half : S = &term_copy[..2];
+            let buffer_second_half : S = &term_copy[1..];
+            let buffer_first_char : S = &term_copy[0];
+            let buffer_mid_char : S = &term_copy[1];
+            let buffer_last_char : S = &term_copy[2];
 
             self.add_index(&buffer_string, term);
-            self.add_index(&buffer_last_char, term);
             self.add_index(&buffer_first_half, term);
             self.add_index(&buffer_second_half, term);
-            self.add_index(&buffer_first_char, term);
             self.add_index(&buffer_mid_char, term);
+
+            self.add_index(&buffer_first_char, term);
+            self.add_index(&buffer_last_char, term);
 
         }
     }
@@ -72,7 +74,7 @@ impl KGramIndex {
      * *`gram` - The gram to be added
      * *`term` - The term to be associated with the gram
      */
-    fn add_index(&mut self, gram: &str, term: &str) {
+    fn add_index<S: Into<String>>(&mut self, gram: &str, term: S) {
         if self.m_index.contains_key(gram) {
             let mut gram_terms = self.m_index.get_mut(gram).expect("Error retrieving gram");
             if !gram_terms.contains(&term.to_string()) {
