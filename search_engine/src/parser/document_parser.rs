@@ -9,14 +9,14 @@ use stemmer::Stemmer;
 /*
  * Function used to build a positional inverted index and KGram index.
  *
- * # Arguments 
+ * # Arguments
  *
  * *`directory` - directory to index
  * *`index` - a blank inverted index
  * *`k_gram_index` - a blank k-gram-index
  *
  * # Returns
- * 
+ *
  * A hashmap mapping document IDs to their actual file names
  */
 pub fn build_index(
@@ -66,7 +66,7 @@ pub fn build_index(
     let time_elapsed = now.elapsed().expect("Invalid time");
     let time_elapsed_seconds = time_elapsed.as_secs();
     let time_elapsed_nano = time_elapsed.subsec_nanos();
-    
+
     print!("Directory indexed in: ");
 
     if time_elapsed_seconds > 1 {

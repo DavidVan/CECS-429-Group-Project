@@ -44,15 +44,15 @@ impl KGramIndex {
         // Appends '$' to beginning and end of term
         let term_copy = format!("${}$", term);
         // TODO: iterate i = 0 to length - 3
-        for i in 0..(term_copy.len() - 3) {
+        for i in 0..(term_copy.len() - 2) {
 
-            let buffer_string : String = term_copy.to_string().chars().skip(i).take(3).collect();
+            let buffer_string = &term_copy[i..(i + 3)];
             
-            let buffer_first_half : String = buffer_string.to_string().chars().skip(0).take(2).collect();
-            let buffer_second_half : String = buffer_string.to_string().chars().skip(1).take(2).collect();
-            let buffer_last_char : String = buffer_string.to_string().chars().skip(2).take(1).collect();
-            let buffer_mid_char : String = buffer_string.to_string().chars().skip(1).take(1).collect();
-            let buffer_first_char : String = buffer_string.to_string().chars().skip(0).take(1).collect();
+            let buffer_first_half = &buffer_string[0..2];
+            let buffer_second_half = &buffer_string[1..3];
+            let buffer_last_char : String = buffer_string.chars().skip(2).take(1).collect();
+            let buffer_mid_char : String = buffer_string.chars().skip(0).take(1).collect();
+            let buffer_first_char : String = buffer_string.chars().skip(1).take(1).collect();
 
             self.add_index(&buffer_string, term);
             self.add_index(&buffer_last_char, term);

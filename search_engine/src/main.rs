@@ -254,5 +254,7 @@ fn print_help(){
     println!(":q || :quit - Quits the Program");
     println!(":index DIRECTORY - Changes directory to specified directory and build index under that directory");
     println!(":stem TERM - Normalizes and applies the stemmer on a specified term");
+    println!(":enable kgram - Enables K Gram Index when indexing");
+    println!(":disable kgram - Disables K Gram Index when indexing");
     println!();
 }
