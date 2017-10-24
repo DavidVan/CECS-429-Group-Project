@@ -1,24 +1,23 @@
 use std::collections::HashMap;
-use std::fs::File;
-use std::fs::{self, DirEntry};
-use std::io::prelude::*;
-use std::io::Read;
-use std::ops::Add;
-use std::path::Path;
+use std::fs::{self};
 use std::time::SystemTime;
 use index::k_gram_index::KGramIndex;
 use index::positional_inverted_index::PositionalInvertedIndex;
 use reader::read_file;
-use reader::read_file::Document;
-use ::serde_json::Error;
-use ::stemmer::Stemmer;
+use stemmer::Stemmer;
 
 /*
  * Function used to build a positional inverted index and KGram index.
- * @param directory - directory to index
- * @param index - a blank inverted index
- * @param k_gram_index - a blank k-gram-index
- * @return a hashmap mapping document IDs to their actual file names
+ *
+ * # Arguments 
+ *
+ * *`directory` - directory to index
+ * *`index` - a blank inverted index
+ * *`k_gram_index` - a blank k-gram-index
+ *
+ * # Returns
+ * 
+ * A hashmap mapping document IDs to their actual file names
  */
 pub fn build_index(
     directory: String,
@@ -32,43 +31,63 @@ pub fn build_index(
     for path in paths {
         files.push(path.unwrap().path().display().to_string())
     }
-    let mut document: Document;
 
     let mut id_number = HashMap::new();
 
     let now = SystemTime::now();
-    println!("Indexing...Please Wait.");
+    println!("Indexing...");
     //iterate through all files in directory
-    for (i,file) in files.iter().enumerate() {
+    for (i, file) in files.iter().enumerate() {
         // println!("Indexing {} out of {}...", i, files.len());
-         
+
         //read the file and split it into each word
         let document = read_file::read_file(file);
-        let document_body = document.clone().getBody();
-        let mut iter = document_body.split_whitespace();
-
-        let iter_length = iter.clone().count();
+        let document_body = document.clone().get_body();
+        let iter = document_body.split_whitespace();
 
         id_number.insert(i as u32, file.to_string());
         //normalize each token in the file and add it to the index with its document id and position
-        for (j,iter) in iter.enumerate() {
+        for (j, word) in iter.enumerate() {
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
-            let mut tokens = normalize_token(iter.to_string());
+            if k_gram_index.is_enabled() {
+                if !index.contains_term(&word) {
+                    k_gram_index.check_term(&word);
+                }
+            }
+            let tokens = normalize_token(word.to_string());
             for term in tokens {
-                index.addTerm(&term,i as u32,j as u32);
-                k_gram_index.checkIndex(&term);
+                index.add_term(&term, i as u32, j as u32);
             }
         }
     }
-    println!("{:?}", now.elapsed()); 
+
+    println!("Indexing complete!\n");
+
+    let time_elapsed = now.elapsed().expect("Invalid time");
+    let time_elapsed_seconds = time_elapsed.as_secs();
+    let time_elapsed_nano = time_elapsed.subsec_nanos();
+    
+    print!("Directory indexed in: ");
+
+    if time_elapsed_seconds > 1 {
+        println!("{} Seconds", time_elapsed_seconds);
+    } else {
+        println!("{} Nanoseconds", time_elapsed_nano);
+    }
+    println!();
 
     return id_number;
 }
 
 /*
  * Function to perform token normalization to obtain the stem of a word
- * @param term: the term to normalize
- * @return a vector containing the normalized token and any other forms of it
+ *
+ * # Arguments
+ * *`term` the term to normalize
+ *
+ * # Returns
+ *
+ * A vector containing the normalized token and any other forms of it
  * ex// if it contains a hyphen
  */
 pub fn normalize_token(term: String) -> Vec<String> {
@@ -100,14 +119,14 @@ pub fn normalize_token(term: String) -> Vec<String> {
         let empty = "";
         return vec![empty.to_owned()];
     }
-    let mut alphanumeric_string: String = term.chars()
+    let alphanumeric_string: String = term.chars()
         .skip(start_index as usize)
         .take((end_index as usize) - (start_index as usize) + 1)
         .collect();
     // println!("alphanumeric_string - {}", alphanumeric_string);
     let apostrophe = "'";
     let empty_string = "";
-    let mut apostrophe_reduced = alphanumeric_string.replace(apostrophe, empty_string);
+    let apostrophe_reduced = alphanumeric_string.replace(apostrophe, empty_string);
     let hyphen = "-";
     let mut strings_to_stem: Vec<String> = Vec::new();
     //check if string contains a hyphen and remove the hyphen and normalize the two separated words

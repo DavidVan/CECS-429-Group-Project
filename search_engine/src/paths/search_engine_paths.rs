@@ -3,30 +3,42 @@ use std::path::PathBuf;
 
 /*
  * Constructs a project path that will begin at the assets folder of the project
+ *
+ * # Returns
+ *
+ * The initialized PathBuf set at CECS-429-Group-Project/search_engine/assets
  */
-pub fn initializePath() -> PathBuf {
-    let mut documentPath = current_exe().expect("Not a valid path");
+pub fn initialize_path() -> PathBuf {
+    let mut index_path = current_exe().expect("Not a valid path");
 
-    while !documentPath.ends_with("CECS-429-Group-Project") {
-        documentPath.pop();
+    while !index_path.ends_with("CECS-429-Group-Project") {
+        index_path.pop();
     }
-    documentPath.push("search_engine");
-    documentPath.push("assets");
-    println!("{}", documentPath.display());
-    return documentPath;
+    index_path.push("search_engine");
+    index_path.push("assets");
+    println!("{}", index_path.display());
+    return index_path;
 }
 
 /*
- * Attempts to append a file/directory to the path buffer. If the file/directory
- * does not exist, return false without altering the pathbuffer, otherwise proceed
- * with adding and return true
+ * Attempts to append a directory to the path buffer.
+ *
+ *
+ * # Arguments
+ *
+ * *`path_buf` - The Path Buffer currently set at the directory
+ * *`add` - The directory that will be added to the path
+ *
+ * # Returns
+ * 
+ * True if the add was successful, false otherwise
  */
-fn addToPath(pathbuf: &mut PathBuf, add: &str) -> bool {
-    let mut testPath = pathbuf.clone();
-    testPath.push(add);
+fn add_to_path(path_buf: &mut PathBuf, add: &str) -> bool {
+    let mut test_path = path_buf.clone();
+    test_path.push(add);
 
-    if verifyPath(testPath) {
-        pathbuf.push(add);
+    if verify_path(test_path) {
+        path_buf.push(add);
         return true;
     }
     return false;
@@ -34,34 +46,50 @@ fn addToPath(pathbuf: &mut PathBuf, add: &str) -> bool {
 
 /*
  * Attempts to change the directory of the path buffer to specified directory
- * Retains the current directory of the path buffer if it fails to change
- * Returns false if change was not successful, other returns true
+ *
+ * # Arguments
+ *
+ * *`path_buf` - The Path Buffer currently set at the directory
+ * *`new` - The new directory that the Path Buffer will be set to
+ *
+ * # Returns
+ *
+ * True if the change was successful, false otherwise
  */
-pub fn changeDirectory(pathbuf: &mut PathBuf, new: &str) -> bool {
-    let pathbuf_clone = pathbuf.clone();
-    let mut current = pathbuf_clone.file_name().expect("Not a valid os string");
-    let mut current_str = current.to_str().expect("Not a valid string");
+pub fn change_directory(path_buf: &mut PathBuf, new: &str) -> bool {
+    let pathbuf_clone = path_buf.clone();
+    let current = pathbuf_clone.file_name().expect("Not a valid os string");
+    let current_str = current.to_str().expect("Not a valid string");
     if new == current {
         return false;
     }
     if current == "assets" {
-        return addToPath(pathbuf, new);
+        return add_to_path(path_buf, new);
     }
-    pathbuf.pop();
-    let success: bool = addToPath(pathbuf, new);
+    path_buf.pop();
+    let success: bool = add_to_path(path_buf, new);
     if !success {
-        addToPath(pathbuf, current_str);
+        add_to_path(path_buf, current_str);
     }
     return success;
 }
 
 /*
- * Verifies if a path buffer exists
+ * Verifies if a path buffer exists and is a directory
+ *
+ * # Arguments
+ *
+ * *`path_buf` - The Path Buffer set at a directory and will be tested if valid
+ *
+ * # Returns
+ *
+ * True if the Path Buffer is set at a valid and existing directory
+ * False otherwise
  */
-pub fn verifyPath(pathbuf: PathBuf) -> bool {
-    if pathbuf.exists() {
+pub fn verify_path(path_buf: PathBuf) -> bool {
+    if path_buf.exists() && path_buf.is_dir() {
         return true;
     }
-    println!("{} does not exist", pathbuf.display());
+    println!("{} does not exist", path_buf.display());
     return false;
 }

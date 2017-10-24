@@ -1,5 +1,13 @@
 use std::io::{stdin, stdout, Write};
 
+/*
+ * Reads an input from the user (No whitespace)
+ *
+ * # Returns
+ *
+ * String representation of User Input
+ *
+ */
 pub fn read_input() -> String {
 
     let mut s = String::new();
@@ -18,6 +26,14 @@ pub fn read_input() -> String {
     first.to_string()
 }
 
+/*
+ * Reads an input from the user 
+ *
+ * # Returns
+ *
+ * String representation of User Input
+ *
+ */
 pub fn read_input_line() -> String {
 
     let mut input = String::new();
