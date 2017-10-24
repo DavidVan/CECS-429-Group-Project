@@ -52,4 +52,3 @@ directories
 directories
 
 **:h** or **:help** - Displays list of commands
->>>>>>> 25d7968f3ece36b31819bc2e2052c7a5f64a581f
