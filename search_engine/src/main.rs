@@ -1,6 +1,7 @@
 extern crate search_engine;
 extern crate stemmer;
 
+use search_engine::index::index_writer;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
