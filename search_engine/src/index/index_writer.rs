@@ -34,11 +34,11 @@ impl<'a> DiskIndex for IndexWriter<'a> {
         self.build_postings_file(folder, index, &dictionary, &vocab_positions);
     }
     
-    fn build_vocab_file(&self, folder: &str, dictionary: Vec<&String>, vocab_positions: Vec<u32>) {
+    fn build_vocab_file(&self, folder: &str, dictionary: &Vec<&String>, vocab_positions: &Vec<u32>) {
 
     }
 
-    fn build_postings_file(&self, folder: &str, index: PositionalInvertedIndex, dictionary: Vec<&String>, vocab_positions: &Vec<u32>) {
+    fn build_postings_file(&self, folder: &str, index: &PositionalInvertedIndex, dictionary: &Vec<&String>, vocab_positions: &Vec<u32>) {
 
     }
 
