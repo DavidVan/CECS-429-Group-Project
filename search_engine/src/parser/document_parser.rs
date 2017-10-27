@@ -49,13 +49,12 @@ pub fn build_index(
         //normalize each token in the file and add it to the index with its document id and position
         for (j, word) in iter.enumerate() {
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
-            if k_gram_index.is_enabled() {
-                if !index.contains_term(&word) {
-                    k_gram_index.check_term(&word);
-                }
-            }
             let tokens = normalize_token(word.to_string());
-            for term in tokens {
+            if k_gram_index.is_enabled() {
+                k_gram_index.check_terms(&tokens);
+            }
+            let terms = stem_terms(tokens);
+            for term in terms {
                 index.add_term(&term, i as u32, j as u32);
             }
         }
@@ -94,6 +93,7 @@ pub fn normalize_token(term: String) -> Vec<String> {
     let mut start_index: i32 = 0;
     let mut end_index: i32 = (term.len() as i32) - 1;
     //scan the term forwards and backwards to remove all leading and trailing non-alphanumeric characters
+    // println!("Original - {}", term);
     for c in term.chars() {
         if !c.is_digit(10) && !c.is_alphabetic() && term.len() == 1 {
             let empty = "".to_string();
@@ -119,31 +119,44 @@ pub fn normalize_token(term: String) -> Vec<String> {
         let empty = "";
         return vec![empty.to_owned()];
     }
-    let alphanumeric_string: String = term.chars()
+    let mut alphanumeric_string: String = term.chars()
         .skip(start_index as usize)
         .take((end_index as usize) - (start_index as usize) + 1)
         .collect();
-    // println!("alphanumeric_string - {}", alphanumeric_string);
+    // println!("Alphanumeric - {}", alphanumeric_string);
     let apostrophe = "'";
     let empty_string = "";
-    let apostrophe_reduced = alphanumeric_string.replace(apostrophe, empty_string);
+
+    // Replace UTF 8 Apostrophes
+    alphanumeric_string = alphanumeric_string.replace("\\u{{2018}}", apostrophe);
+    alphanumeric_string = alphanumeric_string.replace("\\u{{2019}}", apostrophe);
+
+    let mut reduced_string = alphanumeric_string.replace(apostrophe, empty_string);
+    reduced_string = reduced_string.replace("(", "-");
+    reduced_string = reduced_string.replace(")", "-");
+    // println!("Reduced - {}", reduced_string);
+    // println!("is ASCII: {}", reduced_string.is_ascii());
     let hyphen = "-";
-    let mut strings_to_stem: Vec<String> = Vec::new();
+    let mut normalized_strings: Vec<String> = Vec::new();
     //check if string contains a hyphen and remove the hyphen and normalize the two separated words
-    if apostrophe_reduced.contains(hyphen) {
-        let sub_words: Vec<&str> = apostrophe_reduced.split(hyphen).collect();
+    if reduced_string.contains(hyphen) {
+        let sub_words: Vec<&str> = reduced_string.split(hyphen).collect();
         for i in sub_words {
-            strings_to_stem.push(i.to_string());
+            normalized_strings.push(i.to_string());
         }
-        strings_to_stem.push(apostrophe_reduced.replace(hyphen, empty_string));
+        normalized_strings.push(reduced_string.replace(hyphen, empty_string));
     } else {
-        strings_to_stem.push(apostrophe_reduced);
+        normalized_strings.push(reduced_string);
     }
     //lowercase the remaining word(s)
-    for mut word in strings_to_stem.iter_mut() {
+    for mut word in normalized_strings.iter_mut() {
         *word = word.to_lowercase();
     }
 
+    return normalized_strings;
+}
+
+pub fn stem_terms(mut strings_to_stem: Vec <String> ) -> Vec <String>{
     //stem the remaining word(s)
     let mut stemmer = Stemmer::new("english").unwrap();
     for mut word in strings_to_stem.iter_mut() {
