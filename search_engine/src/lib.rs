@@ -3,6 +3,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate stemmer;
+extern crate byteorder;
 
 pub mod index;
 pub mod parser;

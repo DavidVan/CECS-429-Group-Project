@@ -23,7 +23,7 @@ pub fn build_index(
     directory: String,
     index: &mut PositionalInvertedIndex,
     k_gram_index: &mut KGramIndex,
-) -> HashMap<u32, String> {
+) -> HashMap<u64, String> {
     let paths = fs::read_dir(directory).unwrap();
     let mut files = Vec::new();
 
@@ -45,7 +45,7 @@ pub fn build_index(
         let document_body = document.clone().get_body();
         let iter = document_body.split_whitespace();
 
-        id_number.insert(i as u32, file.to_string());
+        id_number.insert(i as u64, file.to_string());
         //normalize each token in the file and add it to the index with its document id and position
         for (j, word) in iter.enumerate() {
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
@@ -56,7 +56,7 @@ pub fn build_index(
             }
             let tokens = normalize_token(word.to_string());
             for term in tokens {
-                index.add_term(&term, i as u32, j as u32);
+                index.add_term(&term, i as u64, j as u64);
             }
         }
     }

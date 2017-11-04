@@ -26,7 +26,7 @@ fn add_term() {
         let normalize_term = document_parser::normalize_token(token.to_string());
         let term = normalize_term.get(0).unwrap();
         let doc_id = 1;
-        let pos: u32 = i as u32;
+        let pos: u64 = i as u64;
         positional_inverted_index.add_term(term, doc_id, pos);
     }
     println!("Testing term count...\nThere should be 8 terms...");
@@ -36,7 +36,7 @@ fn add_term() {
         let normalize_term = document_parser::normalize_token(token.to_string());
         let term = normalize_term.get(0).unwrap();
         let doc_id = 2;
-        let pos: u32 = i as u32;
+        let pos: u64 = i as u64;
         positional_inverted_index.add_term(term, doc_id, pos);
     }
     println!("Testing term count...\nThere should be 12 terms...");
@@ -45,7 +45,7 @@ fn add_term() {
         let normalize_term = document_parser::normalize_token(token.to_string());
         let term = normalize_term.get(0).unwrap();
         let doc_id = 3;
-        let pos: u32 = i as u32;
+        let pos: u64 = i as u64;
         positional_inverted_index.add_term(term, doc_id, pos);
     }
     println!("Testing term count...\nThere should be 14 terms...");
@@ -67,9 +67,9 @@ fn read_documents() {
 
     let alpha_postings_list = positional_inverted_index.get_postings("alpha");
 
-    let alpha_test_case_1: Vec<u32> = vec![5]; // Positions for doc id 0
-    let alpha_test_case_2: Vec<u32> = vec![8]; // Positions for doc id 3
-    let alpha_test_case_3: Vec<u32> = vec![12]; // Positions for doc id 4
+    let alpha_test_case_1: Vec<u64> = vec![5]; // Positions for doc id 0
+    let alpha_test_case_2: Vec<u64> = vec![8]; // Positions for doc id 3
+    let alpha_test_case_3: Vec<u64> = vec![12]; // Positions for doc id 4
     {
         for posting in alpha_postings_list.iter() {
             println!("{} - {:?}", posting.get_doc_id(), posting.get_positions());
@@ -93,9 +93,9 @@ fn read_documents() {
     let results = document_parser::normalize_token("november".to_string());
     let november_term = results.get(0).expect("Improper term");
     let november_postings_list = positional_inverted_index.get_postings(november_term);
-    let november_test_case_1: Vec<u32> = vec![0, 8];
-    let november_test_case_2: Vec<u32> = vec![2, 3];
-    let november_test_case_3: Vec<u32> = vec![5];
+    let november_test_case_1: Vec<u64> = vec![0, 8];
+    let november_test_case_2: Vec<u64> = vec![2, 3];
+    let november_test_case_3: Vec<u64> = vec![5];
 
 
     for posting in november_postings_list.iter() {

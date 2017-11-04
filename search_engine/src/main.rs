@@ -18,7 +18,7 @@ fn main() {
     let mut input: String;
     let mut change: bool;
 
-    let mut id_file : HashMap<u32, String> = HashMap::new();
+    let mut id_file : HashMap<u64, String> = HashMap::new();
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
     
@@ -98,7 +98,7 @@ fn main() {
 fn build_index(
     index_path: &PathBuf,
     index: &mut PositionalInvertedIndex,
-    k_gram_index: &mut KGramIndex,) -> HashMap<u32, String> {
+    k_gram_index: &mut KGramIndex,) -> HashMap<u64, String> {
 
     let directory = index_path.to_str().expect("Not a valid directory");
     document_parser::build_index(directory.to_string(), index, k_gram_index)
@@ -116,7 +116,7 @@ fn build_index(
 fn process_query(
     input: &str,
     index: &PositionalInvertedIndex,
-    id_file: &HashMap<u32, String>) {
+    id_file: &HashMap<u64, String>) {
 
     println!();
     let results = query_processor::process_query(input, index, id_file);

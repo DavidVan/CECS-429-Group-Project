@@ -9,12 +9,12 @@ pub struct PositionalPosting {
     /*
      * Document ID of Positional Posting
      */
-    m_doc_id: u32,
+    m_doc_id: u64,
 
     /*
      * The list of positions for each posting
      */
-    m_positions: Vec<u32>,
+    m_positions: Vec<u64>,
 }
 
 /*
@@ -33,7 +33,7 @@ impl PositionalPosting {
      * The newly constructed PositionalPosting
      *
      */
-    pub fn new(doc_id: u32) -> PositionalPosting {
+    pub fn new(doc_id: u64) -> PositionalPosting {
         PositionalPosting {
             m_doc_id: doc_id,
             m_positions: Vec::new(),
@@ -47,7 +47,7 @@ impl PositionalPosting {
      *
      * The document id of the posting
      */
-    pub fn get_doc_id(&self) -> u32 {
+    pub fn get_doc_id(&self) -> u64 {
         self.m_doc_id.clone()
     }
 
@@ -58,7 +58,7 @@ impl PositionalPosting {
      *
      * Clone of posting's positions to preserve data integrity
      */
-    pub fn get_positions(&self) -> Vec<u32> {
+    pub fn get_positions(&self) -> Vec<u64> {
         self.m_positions.clone()
     }
 
@@ -69,7 +69,7 @@ impl PositionalPosting {
      *
      * *`pos` - The position to be added to the Posting
      */
-    pub fn add_position(&mut self, pos: u32) {
+    pub fn add_position(&mut self, pos: u64) {
         self.m_positions.push(pos);
     }
 
@@ -80,8 +80,8 @@ impl PositionalPosting {
      *
      * The last position added to the posting
      */
-    fn get_last_position(&self) -> u32 {
-        let pos: u32 = self.m_positions
+    fn get_last_position(&self) -> u64 {
+        let pos: u64 = self.m_positions
             .last()
             .expect("Not a valid position")
             .clone();
@@ -127,7 +127,7 @@ impl PositionalInvertedIndex {
      * *`pos` - The marked position of the term in the document
      *
      */
-    pub fn add_term(&mut self, term: &str, doc_id: u32, pos: u32) {
+    pub fn add_term(&mut self, term: &str, doc_id: u64, pos: u64) {
         if self.m_index.contains_key(term) {
             let mut m_index = &mut self.m_index;
             {
