@@ -20,7 +20,7 @@ fn main() {
     let mut id_file : HashMap<u32, String> = HashMap::new();
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
-    
+
     // Loops lets user select first directory to access
     loop {
         print!("Select directory to access: ");
