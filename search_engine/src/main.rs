@@ -68,8 +68,14 @@ fn main() {
             } else if input == ":v" || input == ":vocab" {
                 print_vocab(&index);
             } else if input == ":enable k" || input == ":enable kgram" {
+                if !k_gram_index.is_enabled() {
+                   change = true;  
+                }
                 toggle_k_gram(&mut k_gram_index, true);
             } else if input == ":disable k" || input == ":disable kgram" {
+                if k_gram_index.is_enabled() {
+                   change = true;  
+                }
                 toggle_k_gram(&mut k_gram_index, false);
             } else if input == ":h" || input == ":help" {
                 print_help(); 

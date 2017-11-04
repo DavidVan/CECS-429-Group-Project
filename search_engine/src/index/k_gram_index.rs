@@ -79,7 +79,7 @@ impl KGramIndex {
      * *`gram` - The gram to be added
      * *`term` - The term to be associated with the gram
      */
-    fn add_index<S: Into<String>>(&mut self, gram: &str, term: S) {
+    fn add_index(&mut self, gram: &str, term: &str) {
         if self.m_index.contains_key(gram) {
             let mut gram_terms = self.m_index.get_mut(gram).expect("Error retrieving gram");
             if !gram_terms.contains(&term.to_string()) {
