@@ -21,7 +21,7 @@ fn main() {
     let mut id_file : HashMap<u32, String> = HashMap::new();
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
-    
+
     // Loops lets user select first directory to access
     loop {
         print!("Select directory to access: ");
@@ -69,8 +69,14 @@ fn main() {
             } else if input == ":v" || input == ":vocab" {
                 print_vocab(&index);
             } else if input == ":enable k" || input == ":enable kgram" {
+                if !k_gram_index.is_enabled() {
+                   change = true;  
+                }
                 toggle_k_gram(&mut k_gram_index, true);
             } else if input == ":disable k" || input == ":disable kgram" {
+                if k_gram_index.is_enabled() {
+                   change = true;  
+                }
                 toggle_k_gram(&mut k_gram_index, false);
             } else if input == ":h" || input == ":help" {
                 print_help(); 
@@ -255,5 +261,7 @@ fn print_help(){
     println!(":q || :quit - Quits the Program");
     println!(":index DIRECTORY - Changes directory to specified directory and build index under that directory");
     println!(":stem TERM - Normalizes and applies the stemmer on a specified term");
+    println!(":enable kgram || :enable k - Enables K Gram Index when indexing");
+    println!(":disable kgram || :disable k - Disables K Gram Index when indexing");
     println!();
 }

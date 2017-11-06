@@ -22,8 +22,9 @@ fn test_normalize() {
         for variant in variants {
             println!("Testing with variant: {}", variant);
 
-            let results = document_parser::normalize_token(variant.to_string());
-
+            let normalized_results = document_parser::normalize_token(variant.to_string());
+            let results = document_parser::stem_terms(normalized_results);
+            
             let result = results.get(0).expect("Not a term");
 
             // println!("Size of result: {}", results.len());
