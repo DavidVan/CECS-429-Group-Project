@@ -21,7 +21,7 @@ use std::path::*;
 pub fn process_query(
     input: &str,
     index: &PositionalInvertedIndex,
-    id_file: &HashMap<u64, String>,
+    id_file: &HashMap<u32, String>,
 ) -> HashSet<String> {
     let parser = QueryParser::new();
     let processed_query = QueryParser::process_query(&parser, input);
@@ -75,7 +75,7 @@ pub fn process_query(
         let mut not_results = Vec::new();
 
         if query.contains("NEAR/") {
-            let near_k_results: Vec<u64> = near_query(query.clone(), index);
+            let near_k_results: Vec<u32> = near_query(query.clone(), index);
             let mut near_k_inner_results = HashSet::new();
             for result in near_k_results {
                 let file_path = id_file.get(&result).unwrap().to_string();
@@ -103,7 +103,7 @@ pub fn process_query(
                 else if phrase_literal && !not_query {
                     // call function to process
                     // read results into and results vec (might have to get file name)
-                    let phrase_literal_results : Vec<u64> = phrase_query(entry.clone(), &index);
+                    let phrase_literal_results : Vec<u32> = phrase_query(entry.clone(), &index);
                     let mut phrase_literal_inner_results = HashSet::new();
                     for result in phrase_literal_results {
                         let file_path = id_file.get(&result).unwrap().to_string();
@@ -217,7 +217,7 @@ pub fn process_query(
  *
  * The list of files satisfying the query
  */
-pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u64> {
+pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
     let first_term = document_parser::normalize_token(literals[0].to_string())[0].to_string();
@@ -226,7 +226,7 @@ pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec
 
     near = near.replace("NEAR/", "");
     //extract the maximum distance
-    let max_distance = near.parse::<i64>().unwrap();
+    let max_distance = near.parse::<i32>().unwrap();
 
     println!("first term: {}", first_term);
     let first_term_postings = index.get_postings(&first_term);
@@ -235,7 +235,7 @@ pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec
     let mut j = 0;
     let mut first_positions;
     let mut second_positions;
-    let mut documents: Vec<u64> = Vec::new();
+    let mut documents: Vec<u32> = Vec::new();
     //iterate through postings lists until a common document ID is found
     while i < first_term_postings.len() && j < second_term_postings.len() {
         if first_term_postings[i].get_doc_id() < second_term_postings[j].get_doc_id() {
@@ -271,13 +271,13 @@ pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec
  * True if the positions of the first term are within distance of the positions of the second term
  * False otherwise
  */
-pub fn is_near(first_positions: Vec<u64>, second_positions: Vec<u64>, max_distance: i64) -> bool {
+pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distance: i32) -> bool {
     let mut i = 0;
     let mut j = 0;
-    let mut difference: i64;
+    let mut difference: i32;
     //iterate through the positions
     while i < first_positions.len() && j < second_positions.len() {
-        difference = (second_positions[j] as i64) - (first_positions[i] as i64);
+        difference = (second_positions[j] as i32) - (first_positions[i] as i32);
         //if the distance is within the max_distance then we return true
         if difference <= max_distance && difference > 0 {
             return true;
@@ -293,7 +293,7 @@ pub fn is_near(first_positions: Vec<u64>, second_positions: Vec<u64>, max_distan
 }
 
 
-pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u64> {
+pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
     let mut normalized_literals:Vec<String> = Vec::new();
@@ -346,7 +346,7 @@ pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> V
         current_postings = merged;
     }
 
-    let mut documents:Vec<u64> = Vec::new();
+    let mut documents:Vec<u32> = Vec::new();
     
     for i in current_postings {
         documents.push(i.get_doc_id());
@@ -355,14 +355,14 @@ pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> V
     return documents;
 }
 
-pub fn adjacent_positions(term_positions: Vec<u64>, positions: Vec<u64>) -> Vec<u64> {
+pub fn adjacent_positions(term_positions: Vec<u32>, positions: Vec<u32>) -> Vec<u32> {
     let mut i = 0;
     let mut j = 0;
-    let mut off_by_one_positions: Vec<u64> = Vec::new();
+    let mut off_by_one_positions: Vec<u32> = Vec::new();
     //iterate through the positions
 
     while j < term_positions.len() && i < positions.len() {
-        let difference = (term_positions[j]as i64) - (positions[i] as i64);
+        let difference = (term_positions[j]as i32) - (positions[i] as i32);
         //if the distance is within the max_distance then we return true
         if difference == 1 {
             off_by_one_positions.push(term_positions[j]);
@@ -380,9 +380,9 @@ pub fn adjacent_positions(term_positions: Vec<u64>, positions: Vec<u64>) -> Vec<
     off_by_one_positions
 }
 
-pub fn intersection(first: Vec<u64>, second: Vec<u64>) -> Vec<u64> {
+pub fn intersection(first: Vec<u32>, second: Vec<u32>) -> Vec<u32> {
 
-    let mut intersect: Vec<u64> = Vec::new();
+    let mut intersect: Vec<u32> = Vec::new();
     for i in 0..first.len() {
         if i==0 || (i>0 && first[i]!=first[i-1]) { 
             let r = second.binary_search(&first[i]);
