@@ -1,4 +1,5 @@
 use index::positional_inverted_index::{PositionalInvertedIndex,PositionalPosting};
+use index::k_gram_index::KGramIndex;
 use parser::document_parser;
 use parser::query_parser::QueryParser;
 use std::collections::HashMap;
@@ -21,6 +22,7 @@ use std::path::*;
 pub fn process_query(
     input: &str,
     index: &PositionalInvertedIndex,
+    kgram: &KGramIndex,
     id_file: &HashMap<u32, String>,
 ) -> HashSet<String> {
     let parser = QueryParser::new();
