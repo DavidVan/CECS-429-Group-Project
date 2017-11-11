@@ -46,8 +46,17 @@ pub fn build_index(
         let iter = document_body.split_whitespace();
 
         id_number.insert(i as u32, file.to_string());
+
+        let mut tftd: HashMap<String,u32> = HashMap::new(); 
+
         //normalize each token in the file and add it to the index with its document id and position
         for (j, word) in iter.enumerate() {
+            if !tftd.contains_key(word) {
+                tftd.insert(word.to_string(),1);
+            } else {
+                *tftd.get_mut(word).unwrap() = tftd.get(word).unwrap() + 1;
+            }
+
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
             let tokens = normalize_token(word.to_string());
             if k_gram_index.is_enabled() {
@@ -58,6 +67,18 @@ pub fn build_index(
                 index.add_term(&term, i as u32, j as u32);
             }
         }
+
+        let mut wdt: HashMap<String,f64> = HashMap::new();
+        for (term,value) in &tftd {
+            let weight:f64 = 1.0f64 + (*value as f64).ln();
+            wdt.insert(term.to_string(),weight);
+        }
+        let mut ld: f64 = 0.0f64;
+        let mut sumWeightsSquared: f64 = 0.0f64;
+        for val in wdt.values() {
+            sumWeightsSquared = sumWeightsSquared + val.powi(2);
+        }
+        ld = sumWeightsSquared.sqrt();
     }
 
     println!("Indexing complete!\n");
