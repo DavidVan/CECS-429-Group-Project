@@ -34,7 +34,7 @@ pub fn process_query(
     let mut and_entries_precursor_string_vec = Vec::new(); // Dirty hack to get around lifetimes...
     for query in processed_query {
         and_entries_precursor_string_vec.clear(); // Need to clear it here and only here...
-        // println!("Query For: {}", query);
+        println!("Query For: {}", query);
         let mut and_entries = Vec::new();
         let and_entries_precursor: Vec<&str> = query.split_whitespace().collect();
         for item in and_entries_precursor {
@@ -67,7 +67,7 @@ pub fn process_query(
                     }
                     entry_builder.push(next_entry.to_string());
                 }
-                continue;
+                continue; // Why?
             }
             and_entries.push(String::from(entry.clone()));
         }
@@ -75,6 +75,17 @@ pub fn process_query(
         // results....
         let mut and_results = Vec::new();
         let mut not_results = Vec::new();
+
+        let mut new_and_entries : Vec<String> = Vec::new();
+
+        for entry in and_entries {
+            if entry.starts_with("*") {
+                println!("WILDCARD: {}", entry);
+                new_and_entries.push(entry);
+            } else if entry.ends_with("*") {
+            
+            }
+        }
 
         if query.contains("NEAR/") {
             let near_k_results: Vec<u32> = near_query(query.clone(), index);
@@ -89,7 +100,7 @@ pub fn process_query(
                 and_results.push(near_k_inner_results);
             }
         } else {
-            for entry in and_entries {
+            for entry in new_and_entries {
                 // println!("AND ENTRY DAVID {}", entry);
                 let not_query = entry.starts_with("-");
                 let phrase_literal_vec: Vec<&str> = entry.split_whitespace().collect();
