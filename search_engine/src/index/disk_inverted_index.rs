@@ -1,0 +1,110 @@
+use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian, LittleEndian};
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::SeekFrom;
+
+struct DiskInvertedIndex<'a> {
+    path: &'a str,
+    vocab_list: File,
+    postings: File,
+    vocab_table: Vec<u64>,
+}
+
+trait IndexReader {
+    fn read_postings_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32>;
+    fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str>;
+    fn binary_search_vocabulary(&self, term: &str) -> i64;
+    fn read_vocab_table(&self, index_name: &str) -> Vec<u64>;
+    fn get_term_count(&self) -> u32;
+}
+
+impl<'a> DiskInvertedIndex<'a> {
+    fn new(&self, path: &'a str) -> DiskInvertedIndex {
+        DiskInvertedIndex {
+            path: path,
+            vocab_list: File::open("vocab.bin").unwrap(),
+            postings: File::open("postings.bin").unwrap(),
+            vocab_table: self.read_vocab_table(path),
+        }
+    }
+}
+
+impl<'a> IndexReader for DiskInvertedIndex<'a> {
+    fn read_postings_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32> {
+        let mut doc_ids: Vec<u32> = Vec::new();
+        postings.seek(SeekFrom::Start(postings_position as u64)).unwrap();
+        let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
+        postings.read_exact(&mut doc_freq_buffer);
+        let document_frequency = (&doc_freq_buffer[..]).read_u32::<LittleEndian>().unwrap();
+        for i in 0..document_frequency {
+            let mut doc_id_buffer = [0; 4];
+            postings.read_exact(&mut doc_id_buffer);
+            let doc_id = (&doc_id_buffer[..]).read_u32::<LittleEndian>().unwrap();
+            doc_ids.push(doc_id);
+            let mut term_freq_buffer = [0; 4];
+            postings.read_exact(&mut term_freq_buffer);
+            let term_frequency = (&term_freq_buffer[..]).read_u32::<LittleEndian>().unwrap();
+            postings.seek(SeekFrom::Current((term_frequency * 4) as i64)); // Skip reading term positions... We only need doc ids.
+        }
+        doc_ids
+    }
+
+    fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str> {
+        let postings_position = self.binary_search_vocabulary(term);
+        match postings_position >= 0 {
+            true => Ok(self.read_postings_from_file(&self.postings, postings_position)),
+            false => Err("Postings position is less than 0."),
+        }
+    }
+
+    fn binary_search_vocabulary(&self, term: &str) -> i64 {
+        let mut vocab_list = &self.vocab_list;
+        let mut i = 0;
+        let mut j = self.vocab_table.len();
+        while i <= j {
+            let m = (i + j) / 2;
+            let vocab_list_position = self.vocab_table.get(m * 2).unwrap();
+            let mut term_length = 0;
+            if m == self.vocab_table.len() / 2 - 1 {
+                term_length = vocab_list.metadata().unwrap().len() as u64 - self.vocab_table[m * 2];
+            }
+            else {
+                term_length = self.vocab_table.get((m + 1) * 2).unwrap() - vocab_list_position;
+            }
+
+            vocab_list.seek(SeekFrom::Start(*vocab_list_position as u64)).unwrap();
+
+            let mut buffer = vec![0; term_length as usize];
+            vocab_list.read_exact(&mut buffer);
+            let file_term = String::from_utf8(buffer).unwrap();
+
+            if term == file_term {
+                return *(self.vocab_table.get(m * 2 + 1)).unwrap() as i64;
+            }
+            else if term < &file_term {
+                j = m - 1;
+            }
+            else {
+                i = m + 1;
+            }
+        }
+        -1
+    }
+
+    fn read_vocab_table(&self, index_name: &str) -> Vec<u64> {
+        
+        let mut table_file = File::open("vocab_table.bin").unwrap();
+        let mut buffer_temp = [0; 4];
+        table_file.read_exact(&mut buffer_temp);
+        
+        let table_index = 0;
+        let vocab_table = vec![0; (&buffer_temp[..]).read_u32::<LittleEndian>().unwrap() as usize * 2];
+        let mut buffer = [0; 8];
+
+        vocab_table
+    }
+
+    fn get_term_count(&self) -> u32 {
+        return self.vocab_table.len() as u32 / 2;
+    }
+}
