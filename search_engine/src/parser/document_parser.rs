@@ -72,6 +72,7 @@ pub fn build_index(
         for (term,value) in &tftd {
             let weight:f64 = 1.0f64 + (*value as f64).ln();
             wdt.insert(term.to_string(),weight);
+            index.add_score(term,weight);
         }
         let mut ld: f64 = 0.0f64;
         let mut sumWeightsSquared: f64 = 0.0f64;

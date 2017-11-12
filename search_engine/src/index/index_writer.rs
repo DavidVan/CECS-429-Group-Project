@@ -85,4 +85,5 @@ impl<'a> DiskIndex for IndexWriter<'a> {
         
     }
 
+    
 }
