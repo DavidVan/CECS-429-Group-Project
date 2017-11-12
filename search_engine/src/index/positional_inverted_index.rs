@@ -58,6 +58,17 @@ impl PositionalPosting {
     }
 
     /*
+     * Returns weight of term for document clone to preserve data integrity
+     *
+     * # Returns
+     *
+     * The weight of the term for the document in the posting
+     */
+    pub fn get_wdt(&self) -> f64 {
+        self.m_wdt.clone()
+    }
+    
+    /*
      * Returns positions of term for the posting.
      * 
      * # Returns

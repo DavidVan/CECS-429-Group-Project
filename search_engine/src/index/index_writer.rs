@@ -68,6 +68,9 @@ impl<'a> DiskIndex for IndexWriter<'a> {
                 let doc_id_location = doc_id.get_doc_id() - last_doc_id;
                 postings_file.write_u32::<LittleEndian>(doc_id_location);
 
+                let wdt = doc_id.get_wdt();
+                postings_file.write_f64::<LittleEndian>(wdt);
+
                 let positions = doc_id.get_positions(); // Get postings positions for every document
                 let term_frequency = positions.len() as u32;
                 postings_file.write_u32::<LittleEndian>(term_frequency);
