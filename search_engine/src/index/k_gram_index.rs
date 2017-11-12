@@ -109,6 +109,10 @@ impl KGramIndex {
         return k_grams;
     }
 
+    pub fn get_terms(&self, gram: &str) -> &Vec<String> {
+        self.m_index.get(gram).expect("Error retrieving grams")
+    }
+
     /*
      * Returns the status of the k_gram_index
      *

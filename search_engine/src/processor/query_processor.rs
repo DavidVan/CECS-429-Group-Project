@@ -79,11 +79,37 @@ pub fn process_query(
         let mut new_and_entries : Vec<String> = Vec::new();
 
         for entry in and_entries {
-            if entry.starts_with("*") {
+            if entry.contains("*") {
                 println!("WILDCARD: {}", entry);
-                new_and_entries.push(entry);
-            } else if entry.ends_with("*") {
-            
+                let mut terms : Vec<String> = Vec::new();
+                if entry.starts_with("*") {
+                    let grams = entry.split("*");             
+                    for gram in grams {
+                        if gram.ends_with("*") {
+                        
+                        } else if gram.contains("*") {
+                        
+                        } else {
+                             
+                        }
+                    }
+                } else if entry.ends_with("*") {
+                    let grams = entry.split("*");             
+                    for gram in grams {
+                        if gram.starts_with("*") {
+                        
+                        } else if gram.contains("*") {
+                        
+                        } else {
+                        
+                        }
+                    }
+                } else {
+                
+                }
+            } else {
+                println!("NOT WILDCARD: {}", entry);
+                new_and_entries.push(entry); 
             }
         }
 
@@ -393,13 +419,13 @@ pub fn adjacent_positions(term_positions: Vec<u32>, positions: Vec<u32>) -> Vec<
     off_by_one_positions
 }
 
-pub fn intersection(first: Vec<u32>, second: Vec<u32>) -> Vec<u32> {
+pub fn intersection<T: Clone + Ord + PartialOrd >(first: Vec<T>, second: Vec<T>) -> Vec<T> {
 
-    let mut intersect: Vec<u32> = Vec::new();
+    let mut intersect: Vec<T> = Vec::new();
     for i in 0..first.len() {
         if i==0 || (i>0 && first[i]!=first[i-1]) { 
             let r = second.binary_search(&first[i]);
-            match r { Ok(_) => intersect.push(first[i]),
+            match r { Ok(_) => intersect.push(first[i].clone()),
                      Err(_) => (), 
             
             }
