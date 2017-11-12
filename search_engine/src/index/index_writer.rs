@@ -57,7 +57,9 @@ impl<'a> DiskIndex for IndexWriter<'a> {
             let postings = index.get_postings(s);
             let vocab_position = *vocab_positions.get(vocab_index).unwrap(); // Location of vocab
             vocab_table.write_u64::<LittleEndian>(vocab_position);
-            let postings_file_size = (&postings_file).bytes().size_hint().1.unwrap() as u64;
+            let postings_file_metadata = postings_file.metadata().unwrap();
+            let postings_file_size = postings_file_metadata.len();
+            // let postings_file_size = (&postings_file).bytes().size_hint().1.unwrap() as u64;
             vocab_table.write_u64::<LittleEndian>(postings_file_size);
             let document_frequency = postings.len() as u32;
             postings_file.write_u32::<LittleEndian>(document_frequency);
@@ -65,6 +67,17 @@ impl<'a> DiskIndex for IndexWriter<'a> {
             for doc_id in postings {
                 let doc_id_location = doc_id.get_doc_id() - last_doc_id;
                 postings_file.write_u32::<LittleEndian>(doc_id_location);
+
+                let positions = doc_id.get_positions(); // Get postings positions for every document
+                let term_frequency = positions.len() as u32;
+                postings_file.write_u32::<LittleEndian>(term_frequency);
+                let mut last_pos = 0;
+                for pos in positions {
+                    let pos_location = pos - last_pos;
+                    postings_file.write_u32::<LittleEndian>(pos_location);
+                    last_pos = pos;
+                }
+
                 last_doc_id = doc_id.get_doc_id();
             }
             vocab_index += 1;
