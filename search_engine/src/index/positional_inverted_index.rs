@@ -12,6 +12,11 @@ pub struct PositionalPosting {
     m_doc_id: u32,
 
     /*
+    * Score of term for the given document
+    */
+    m_wdt: f64,
+
+    /*
      * The list of positions for each posting
      */
     m_positions: Vec<u32>,
@@ -37,6 +42,7 @@ impl PositionalPosting {
         PositionalPosting {
             m_doc_id: doc_id,
             m_positions: Vec::new(),
+            m_wdt: 0.0f64
         }
     }
 
@@ -160,6 +166,7 @@ impl PositionalInvertedIndex {
             let mut new_posting = PositionalPosting {
                 m_doc_id: doc_id,
                 m_positions: Vec::new(),
+                m_wdt: 0.0f64
             };
             new_posting.add_position(pos);
             let mut positional_postings = Vec::new();
@@ -223,4 +230,11 @@ impl PositionalInvertedIndex {
         dictionary.sort();
         return dictionary;
     }
+
+
+    pub fn add_score(&mut self, term: &str, weight:f64) {
+        let m_index = &mut self.m_index;
+        m_index.get_mut(term).unwrap().iter_mut().last().unwrap().m_wdt = weight;
+    }
+    
 }
