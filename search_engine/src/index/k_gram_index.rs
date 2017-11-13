@@ -4,6 +4,7 @@ use std::collections::HashMap;
 /*
  * Structure that represents KGram Index
  */
+#[derive(Serialize, Deserialize, Debug)]
 pub struct KGramIndex {
 
     /*
