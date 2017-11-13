@@ -68,6 +68,8 @@ fn main() {
                 change = index_directory(&mut index_path, input.clone());
             } else if input == ":v" || input == ":vocab" {
                 print_vocab(&index);
+            } else if input == ":k" || input == ":kgram" {
+                print_kgram(&k_gram_index);
             } else if input == ":enable k" || input == ":enable kgram" {
                 if !k_gram_index.is_enabled() {
                    change = true;  
@@ -227,6 +229,19 @@ fn print_vocab(
         println!("{}", term);
     }
     println!("Total terms: {}", dictionary.len());
+}
+
+fn print_kgram(
+    kgram: &KGramIndex) {
+    
+    println!("K Grams");
+
+    let kgrams= kgram.get_k_grams();
+
+    for gram in kgrams.iter() {
+        println!("{}", gram);
+    }
+    println!("Total kgrams: {}", kgrams.len());
 }
 
 /*

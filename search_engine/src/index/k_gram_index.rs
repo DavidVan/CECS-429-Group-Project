@@ -61,11 +61,16 @@ impl KGramIndex {
                     let buffer_first_char : String = buffer_string.chars().skip(1).take(1).collect();
 
                     self.add_index(&buffer_string, &term);
-                    self.add_index(&buffer_last_char, &term);
                     self.add_index(&buffer_first_half, &term);
                     self.add_index(&buffer_second_half, &term);
-                    self.add_index(&buffer_first_char, &term);
                     self.add_index(&buffer_mid_char, &term);
+
+                    if buffer_first_char == "$" {
+                        self.add_index(&buffer_first_char, &term);
+                    }
+                    if buffer_last_char == "$" {
+                        self.add_index(&buffer_last_char, &term);
+                    }
                 }
             }
         }
@@ -105,6 +110,8 @@ impl KGramIndex {
         for k_gram in self.m_index.keys() {
             k_grams.push(k_gram);
         }
+
+        k_grams.sort(); 
 
         return k_grams;
     }

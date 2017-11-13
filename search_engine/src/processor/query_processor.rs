@@ -81,32 +81,149 @@ pub fn process_query(
         for entry in and_entries {
             if entry.contains("*") {
                 println!("WILDCARD: {}", entry);
-                let mut terms : Vec<String> = Vec::new();
+                let mut results: Vec<String> = Vec::new();
                 if entry.starts_with("*") {
-                    let grams = entry.split("*");             
-                    for gram in grams {
-                        if gram.ends_with("*") {
-                        
-                        } else if gram.contains("*") {
-                        
-                        } else {
-                             
+                    let mut batch_one: Vec<String> = Vec::new();
+                    let mut batch_two: Vec<String> = Vec::new();
+                    let mut final_batch : Vec<String> = Vec::new();
+
+                    println!("Checking Batch One");
+                    let slice = &entry[1..];
+                    let mid = &entry[1..entry.len() - 1];
+                    let big_gram = format!("{}{}", &entry[1..], "$");
+                    for i in 0..(big_gram.len()) {
+                        if i < big_gram.len() - 2 {
+                            let three_gram = &big_gram[i..(i + 3)];
+                            println!("Gram: {}", three_gram);
+                            if !three_gram.contains("*") {
+                                let terms = kgram.get_terms(three_gram);
+                                for term in terms {
+                                    println!("Term: {}", term);
+                                    if !batch_one.contains(term) &&
+                                        (term.ends_with(slice) ||
+                                         term.contains(mid)) {
+                                        batch_one.push(term.to_string()); 
+                                        println!("SUCCESS");
+                                    }
+                                }
+                            }
                         }
+                        if i < big_gram.len() - 1 {
+                            let two_gram = &big_gram[i..(i + 2)];
+                            println!("Gram: {}", two_gram);
+                            if !two_gram.contains("*") {
+                                let terms = kgram.get_terms(two_gram);
+                                for term in terms {
+                                    println!("Term: {}", term);
+                                    if !batch_one.contains(term) &&
+                                        (term.ends_with(slice) ||
+                                         term.contains(mid)) {
+                                        batch_one.push(term.to_string()); 
+                                        println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        println!("Batch One: {:?}", batch_one);
                     }
+                    println!("Checking Batch Two");
+                    if entry.ends_with("*") {
+                        let slice = &entry[..entry.len() - 1];
+                        let big_gram = format!("{}{}", "$", &entry[..entry.len() - 1]);
+                        for i in 0..(big_gram.len()) {
+                            if i < big_gram.len() - 2 {
+                                let three_gram = &big_gram[i..(i + 3)];
+                                println!("Gram: {}", three_gram);
+                                if !three_gram.contains("*") {
+                                    let terms = kgram.get_terms(three_gram);
+                                    for term in terms {
+                                        println!("Term: {}", term);
+                                        if !batch_two.contains(term) &&
+                                            term.contains(mid) {
+                                            batch_two.push(term.to_string()); 
+                                            println!("SUCCESS");
+                                        }
+                                    }
+                                }
+                            }
+                            if i < big_gram.len() - 1 {
+                                let two_gram = &big_gram[i..(i + 2)];
+                                println!("Gram: {}", two_gram);
+                                if !two_gram.contains("*") {
+                                    let terms = kgram.get_terms(two_gram);
+                                    for term in terms {
+                                        println!("Term: {}", term);
+                                        if !batch_two.contains(term) &&
+                                            term.contains(mid) {
+                                            batch_two.push(term.to_string()); 
+                                            println!("SUCCESS");
+                                        }
+                                    }
+                                }
+                            }
+                            println!("Batch Two: {:?}", batch_two);
+                        }
+                    } else if entry.contains("*") {
+                    
+                    }
+                    if batch_two.is_empty() {
+                        final_batch.append(&mut batch_one); 
+                    } else {
+                        final_batch = intersection(batch_one, batch_two);
+                    }
+                    results.append(&mut final_batch);
                 } else if entry.ends_with("*") {
-                    let grams = entry.split("*");             
-                    for gram in grams {
-                        if gram.starts_with("*") {
-                        
-                        } else if gram.contains("*") {
-                        
-                        } else {
-                        
+                    let mut batch_one: Vec<String> = Vec::new();
+                    let mut batch_two: Vec<String> = Vec::new();
+                    let mut final_batch : Vec<String> = Vec::new();
+                    let slice = &entry[..entry.len() - 1];
+                    let big_gram = format!("{}{}", "$", &entry[..entry.len() - 1]);
+                    for i in 0..(big_gram.len()) {
+                        if i < big_gram.len() - 2 {
+                            let three_gram = &big_gram[i..(i + 3)];
+                            println!("Gram: {}", three_gram);
+                            if !three_gram.contains("*") {
+                                let terms = kgram.get_terms(three_gram);
+                                for term in terms {
+                                    println!("Term: {}", term);
+                                    if !batch_one.contains(term) &&
+                                        term.starts_with(slice) {
+                                        batch_one.push(term.to_string()); 
+                                        println!("SUCCESS");
+                                    }
+                                }
+                            }
                         }
+                        if i < big_gram.len() - 1 {
+                            let two_gram = &big_gram[i..(i + 2)];
+                            println!("Gram: {}", two_gram);
+                            if !two_gram.contains("*") {
+                                let terms = kgram.get_terms(two_gram);
+                                for term in terms {
+                                    println!("Term: {}", term);
+                                    if !batch_one.contains(term) &&
+                                        term.starts_with(slice) {
+                                        batch_one.push(term.to_string()); 
+                                        println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        println!("Batch Two: {:?}", batch_two);
                     }
+                    if entry.contains("*") {
+                    
+                    }
+                    if batch_two.is_empty() {
+                        final_batch.append(&mut batch_one); 
+                    } else {
+                        final_batch = intersection(batch_one, batch_two);
+                    }
+                    results.append(&mut final_batch);
                 } else {
                 
                 }
+                new_and_entries.append(&mut results);
             } else {
                 println!("NOT WILDCARD: {}", entry);
                 new_and_entries.push(entry); 
