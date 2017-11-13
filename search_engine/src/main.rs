@@ -1,10 +1,13 @@
 extern crate search_engine;
+extern crate serde;
+extern crate serde_json;
 extern crate stemmer;
 
 use search_engine::index::index_writer::IndexWriter;
 use search_engine::index::index_writer::DiskIndex;
 use search_engine::index::disk_inverted_index::DiskInvertedIndex;
 use search_engine::index::disk_inverted_index::IndexReader;
+use search_engine::index::index_writer;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
@@ -13,6 +16,8 @@ use search_engine::reader::user_input;
 use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
 use search_engine::index::k_gram_index::KGramIndex;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::prelude::*;
 use std::path::*;
 
 fn main() {
@@ -75,7 +80,27 @@ fn main() {
         // Links document ID's to file names
         id_file = build_index(&index_path, &mut index, &mut k_gram_index);
 
+        let serialized_id_file = serde_json::to_string(&id_file).unwrap();
+        let serialized_kgramindex = serde_json::to_string(&k_gram_index).unwrap();
+
+        
+        let id_file_fileName = format!("{}/{}", index_path.display(), "id_file.bin");
+        let kgram_fileName = format!("{}/{}", index_path.display(), "kgram.bin");
+
         //  TODO: BUILD INDEX FILE HERE
+        
+        let mut id_file_file = match File::create(&id_file_fileName) {
+            Err(why) => panic!("Couldn't create {}", &id_file_fileName),
+            Ok(file) => file,
+        };
+
+        let mut kgram_file = match File::create(&kgram_fileName) {
+            Err(why) => panic!("Couldn't create {}", &kgram_fileName),
+            Ok(file) => file,
+        };
+
+        id_file_file.write(&serialized_id_file.as_bytes());
+        kgram_file.write(&serialized_kgramindex.as_bytes());
 
         let index_writer = IndexWriter::new(&index_path.to_str().unwrap());
         index_writer.build_index_for_directory(&index, index_writer.get_folder_path()); 
@@ -90,6 +115,26 @@ fn main() {
         for zxx in test_x {
             println!("{:?}", zxx);
         }
+
+        println!("{}", index_path.display());
+
+        let id_file_fileName = format!("{}/{}", index_path.display(), "id_file.bin");
+        let kgram_fileName = format!("{}/{}", index_path.display(), "kgram.bin");
+
+        let mut id_file_file = File::open(id_file_fileName).unwrap();
+
+        let mut id_file_contents = String::new();
+        id_file_file.read_to_string(&mut id_file_contents);
+
+        id_file = serde_json::from_str(&id_file_contents).unwrap();
+
+        let mut kgram_file = File::open(kgram_fileName).unwrap();
+
+        let mut kgram_file_contents = String::new();
+        kgram_file.read_to_string(&mut kgram_file_contents);
+
+        k_gram_index = serde_json::from_str(&kgram_file_contents).expect("Error reading kgram file");
+        
         loop {
             println!("{}", index_path.display());
 
