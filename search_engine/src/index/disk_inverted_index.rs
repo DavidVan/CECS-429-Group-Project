@@ -14,6 +14,7 @@ pub struct DiskInvertedIndex<'a> {
 
 pub trait IndexReader {
     fn read_postings_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32>;
+    fn read_positions_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32>;
     fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str>;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
@@ -45,6 +46,12 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             println!("Document Id: {}", (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap());
             let doc_id = (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
             doc_ids.push(doc_id);
+
+            let mut doc_score_buffer = [0; 8];
+            postings.read_exact(&mut doc_score_buffer);
+            println!("Document Score: {}", (&doc_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+            // Do something with document score here
+
             let mut term_freq_buffer = [0; 4];
             postings.read_exact(&mut term_freq_buffer);
             println!("Term Frequency: {}", (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap());
@@ -52,6 +59,23 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             postings.seek(SeekFrom::Current((term_frequency * 4) as i64)); // Skip reading term positions... We only need doc ids.
         }
         doc_ids
+    }
+
+    fn read_positions_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32> {
+        let mut positions = Vec::new();
+        postings.seek(SeekFrom::Start((postings_position + 20) as u64)).unwrap();
+        let mut positions_buffer = [0; 4];
+        let mut postings_accumulator = 0;
+        loop {
+            match postings.read_exact(&mut positions_buffer) {
+                Ok(_) => {
+                    postings_accumulator += (&positions_buffer[..]).read_u32::<BigEndian>().unwrap();
+                    positions.push(postings_accumulator);
+                }
+                Err(_) => break
+            }
+        }
+        positions
     }
 
     fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str> {
@@ -112,6 +136,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             match table_file.read_exact(&mut vocab_pos_buffer) {
                 Ok(_) => {
                     vocab_table.push((&vocab_pos_buffer[..]).read_u64::<BigEndian>().unwrap());
+                    //table_file.seek(SeekFrom::Current(7)); // Skip the document weights (Ld) values...
                     table_index += 1;
                 },
                 Err(_) => break
