@@ -15,8 +15,11 @@ use std::path::*;
 fn main() {
     let mut index_path = search_engine_paths::initialize_path();
 
+    let mut menu: i32;
     let mut input: String;
     let mut change: bool;
+    let mut query_index : bool = false;
+    let mut ranked_retrieval : bool = false;
 
     let mut id_file : HashMap<u32, String> = HashMap::new();
     let mut index = PositionalInvertedIndex::new();
@@ -27,7 +30,7 @@ fn main() {
         print!("Select directory to access: ");
         input = user_input::read_input();
         if input == ":q" {
-            return (); // Prematurely ends program
+            return; // Prematurely ends program
         }
         if input.is_empty() {
             println!("Please input valid directory");
@@ -41,52 +44,104 @@ fn main() {
         }
     }
 
-    // Loop that drives program after initial setup
     loop {
-        // Links document ID's to file names
+        println!("{}", index_path.display());
 
+        println!("Select Mode: ");
+        println!("1. Build Index");
+        println!("2. Query Index\n");
+        println!("3. Quit");
+
+        menu = user_input::read_number_range(1,3);
+
+        if menu == 1 {
+            query_index = false;
+        } else if menu == 2 {
+            query_index = true;
+        } else if menu == 3 {
+            return; 
+        }
+        break;
+    }
+
+    
+    if !query_index {
+        println!("Building Index...");
         // Builds new index if directory was changed
-        if change {
-            id_file = build_index(&index_path, &mut index, &mut k_gram_index);
-            change = false;
+        
+        // Links document ID's to file names
+        id_file = build_index(&index_path, &mut index, &mut k_gram_index);
+
+        //  TODO: BUILD INDEX FILE HERE
+
+    }
+    
+    if query_index {
+        loop {
+            println!("{}", index_path.display());
+
+            println!("Choose Retrieval Method: "); 
+            println!("1. Boolean Retrieval");
+            println!("2. Ranked Retrieval \n");
+            println!("3. Quit");
+
+            menu = user_input::read_number_range(1,3);
+
+            if menu == 1 {
+                ranked_retrieval = false;
+            } else if menu == 2 {
+                ranked_retrieval = true;
+            } else if menu == 3 {
+                return; 
+            }
+            break;
         }
 
-        println!("{}", index_path.display());
-        print!("Input a Query: ");
-        input = user_input::read_input_line();
-
-        if !input.starts_with(":") {
-            process_query(&input, &index, &k_gram_index, &id_file);
+        // Loop that drives program after initial setup
+        if ranked_retrieval {
+            println!("Using Ranked Retrieval"); 
         } else {
-            if input == ":q" || input == ":quit" {
-               return (); 
-            } else if input.starts_with(":o ") || input.starts_with(":open ") {
-                open_file(&index_path, input.as_str());
-            } else if input.starts_with(":s ") || input.starts_with(":stem ") {
-                stem_term(input.as_str());
-            } else if input.starts_with(":i ") || input.starts_with(":index ") {
-                change = index_directory(&mut index_path, input.clone());
-            } else if input == ":v" || input == ":vocab" {
-                print_vocab(&index);
-            } else if input == ":k" || input == ":kgram" {
-                print_kgram(&k_gram_index);
-            } else if input == ":enable k" || input == ":enable kgram" {
-                if !k_gram_index.is_enabled() {
-                   change = true;  
-                }
-                toggle_k_gram(&mut k_gram_index, true);
-            } else if input == ":disable k" || input == ":disable kgram" {
-                if k_gram_index.is_enabled() {
-                   change = true;  
-                }
-                toggle_k_gram(&mut k_gram_index, false);
-            } else if input == ":h" || input == ":help" {
-                print_help(); 
+            println!("Using Boolean Retrieval"); 
+        }
+        loop {
+            println!("{}", index_path.display());
+            print!("Input a Query: ");
+            input = user_input::read_input_line();
+
+            if !input.starts_with(":") {
+                process_query(&input, &index, &k_gram_index, &id_file);
             } else {
-                println!("Invalid command - Use ':help' to view commands");
+                if input == ":q" || input == ":quit" {
+                   return (); 
+                } else if input.starts_with(":o ") || input.starts_with(":open ") {
+                    open_file(&index_path, input.as_str());
+                } else if input.starts_with(":s ") || input.starts_with(":stem ") {
+                    stem_term(input.as_str());
+                } else if input.starts_with(":i ") || input.starts_with(":index ") {
+                    change = index_directory(&mut index_path, input.clone());
+                } else if input == ":v" || input == ":vocab" {
+                    print_vocab(&index);
+                } else if input == ":k" || input == ":kgram" {
+                    print_kgram(&k_gram_index);
+                } else if input == ":enable k" || input == ":enable kgram" {
+                    if !k_gram_index.is_enabled() {
+                       change = true;  
+                    }
+                    toggle_k_gram(&mut k_gram_index, true);
+                } else if input == ":disable k" || input == ":disable kgram" {
+                    if k_gram_index.is_enabled() {
+                       change = true;  
+                    }
+                    toggle_k_gram(&mut k_gram_index, false);
+                } else if input == ":h" || input == ":help" {
+                    print_help(); 
+                } else {
+                    println!("Invalid command - Use ':help' to view commands");
+                }
             }
         }
     }
+
 }
 
 /*
