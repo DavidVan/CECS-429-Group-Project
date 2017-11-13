@@ -49,3 +49,28 @@ pub fn read_input_line() -> String {
     }
     return input;
 }
+
+pub fn read_number() -> i32 {
+
+    let mut input_text = String::new();
+    stdin().read_line(&mut input_text) .expect("failed to read from stdin");
+
+    let trimmed = input_text.trim();
+    match trimmed.parse::<i32>() {
+        Ok(i) => return i,
+        Err(..) => panic!("Error! Not an integer")
+    };
+}
+
+pub fn read_number_range(low: i32, high: i32) -> i32 {
+
+    loop {
+        let input : i32 = read_number();
+
+        if input >= low && input <= high {
+            return input; 
+        }
+        println!("Input not in range");
+    }
+
+}

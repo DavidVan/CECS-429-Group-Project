@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::Cursor;
 use index::positional_inverted_index::PositionalInvertedIndex;
+use index::k_gram_index::KGramIndex;
 
 pub struct IndexWriter<'a> {
     folder_path: &'a str
@@ -87,6 +88,4 @@ impl<'a> DiskIndex for IndexWriter<'a> {
         }
         
     }
-
-    
 }
