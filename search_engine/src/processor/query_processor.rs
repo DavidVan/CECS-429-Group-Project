@@ -1,4 +1,5 @@
 use index::positional_inverted_index::{PositionalInvertedIndex,PositionalPosting};
+use index::k_gram_index::KGramIndex;
 use parser::document_parser;
 use parser::query_parser::QueryParser;
 use std::collections::HashMap;
@@ -21,6 +22,7 @@ use std::path::*;
 pub fn process_query(
     input: &str,
     index: &PositionalInvertedIndex,
+    kgram: &KGramIndex,
     id_file: &HashMap<u32, String>,
 ) -> HashSet<String> {
     let parser = QueryParser::new();
@@ -32,7 +34,7 @@ pub fn process_query(
     let mut and_entries_precursor_string_vec = Vec::new(); // Dirty hack to get around lifetimes...
     for query in processed_query {
         and_entries_precursor_string_vec.clear(); // Need to clear it here and only here...
-        // println!("Query For: {}", query);
+        println!("Query For: {}", query);
         let mut and_entries = Vec::new();
         let and_entries_precursor: Vec<&str> = query.split_whitespace().collect();
         for item in and_entries_precursor {
@@ -65,7 +67,7 @@ pub fn process_query(
                     }
                     entry_builder.push(next_entry.to_string());
                 }
-                continue;
+                continue; // Why?
             }
             and_entries.push(String::from(entry.clone()));
         }
@@ -73,6 +75,160 @@ pub fn process_query(
         // results....
         let mut and_results = Vec::new();
         let mut not_results = Vec::new();
+
+        let mut new_and_entries : Vec<String> = Vec::new();
+
+        for entry in and_entries {
+            if entry.contains("*") {
+                println!("WILDCARD: {}", entry);
+                let mut results: Vec<String> = Vec::new();
+                if entry.starts_with("*") {
+                    let mut batch_one: Vec<String> = Vec::new();
+                    let mut batch_two: Vec<String> = Vec::new();
+                    let mut final_batch : Vec<String> = Vec::new();
+
+                    println!("Checking Batch One");
+                    let slice = &entry[1..];
+                    let mid = &entry[1..entry.len() - 1];
+                    let big_gram = format!("{}{}", &entry[1..], "$");
+                    for i in 0..(big_gram.len()) {
+                        if i < big_gram.len() - 2 {
+                            let three_gram = &big_gram[i..(i + 3)];
+                            println!("Gram: {}", three_gram);
+                            if !three_gram.contains("*") {
+                                let terms = kgram.get_terms(three_gram);
+                                for term in terms {
+                                    println!("Term: {}", term);
+                                    if !batch_one.contains(term) &&
+                                        (term.ends_with(slice) ||
+                                         term.contains(mid)) {
+                                        batch_one.push(term.to_string()); 
+                                        println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        if i < big_gram.len() - 1 {
+                            let two_gram = &big_gram[i..(i + 2)];
+                            println!("Gram: {}", two_gram);
+                            if !two_gram.contains("*") {
+                                let terms = kgram.get_terms(two_gram);
+                                for term in terms {
+                                    println!("Term: {}", term);
+                                    if !batch_one.contains(term) &&
+                                        (term.ends_with(slice) ||
+                                         term.contains(mid)) {
+                                        batch_one.push(term.to_string()); 
+                                        println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        println!("Batch One: {:?}", batch_one);
+                    }
+                    println!("Checking Batch Two");
+                    if entry.ends_with("*") {
+                        let slice = &entry[..entry.len() - 1];
+                        let big_gram = format!("{}{}", "$", &entry[..entry.len() - 1]);
+                        for i in 0..(big_gram.len()) {
+                            if i < big_gram.len() - 2 {
+                                let three_gram = &big_gram[i..(i + 3)];
+                                println!("Gram: {}", three_gram);
+                                if !three_gram.contains("*") {
+                                    let terms = kgram.get_terms(three_gram);
+                                    for term in terms {
+                                        println!("Term: {}", term);
+                                        if !batch_two.contains(term) &&
+                                            term.contains(mid) {
+                                            batch_two.push(term.to_string()); 
+                                            println!("SUCCESS");
+                                        }
+                                    }
+                                }
+                            }
+                            if i < big_gram.len() - 1 {
+                                let two_gram = &big_gram[i..(i + 2)];
+                                println!("Gram: {}", two_gram);
+                                if !two_gram.contains("*") {
+                                    let terms = kgram.get_terms(two_gram);
+                                    for term in terms {
+                                        println!("Term: {}", term);
+                                        if !batch_two.contains(term) &&
+                                            term.contains(mid) {
+                                            batch_two.push(term.to_string()); 
+                                            println!("SUCCESS");
+                                        }
+                                    }
+                                }
+                            }
+                            println!("Batch Two: {:?}", batch_two);
+                        }
+                    } else if entry.contains("*") {
+                    
+                    }
+                    if batch_two.is_empty() {
+                        final_batch.append(&mut batch_one); 
+                    } else {
+                        final_batch = intersection(batch_one, batch_two);
+                    }
+                    results.append(&mut final_batch);
+                } else if entry.ends_with("*") {
+                    let mut batch_one: Vec<String> = Vec::new();
+                    let mut batch_two: Vec<String> = Vec::new();
+                    let mut final_batch : Vec<String> = Vec::new();
+                    let slice = &entry[..entry.len() - 1];
+                    let big_gram = format!("{}{}", "$", &entry[..entry.len() - 1]);
+                    for i in 0..(big_gram.len()) {
+                        if i < big_gram.len() - 2 {
+                            let three_gram = &big_gram[i..(i + 3)];
+                            println!("Gram: {}", three_gram);
+                            if !three_gram.contains("*") {
+                                let terms = kgram.get_terms(three_gram);
+                                for term in terms {
+                                    println!("Term: {}", term);
+                                    if !batch_one.contains(term) &&
+                                        term.starts_with(slice) {
+                                        batch_one.push(term.to_string()); 
+                                        println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        if i < big_gram.len() - 1 {
+                            let two_gram = &big_gram[i..(i + 2)];
+                            println!("Gram: {}", two_gram);
+                            if !two_gram.contains("*") {
+                                let terms = kgram.get_terms(two_gram);
+                                for term in terms {
+                                    println!("Term: {}", term);
+                                    if !batch_one.contains(term) &&
+                                        term.starts_with(slice) {
+                                        batch_one.push(term.to_string()); 
+                                        println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        println!("Batch Two: {:?}", batch_two);
+                    }
+                    if entry.contains("*") {
+                    
+                    }
+                    if batch_two.is_empty() {
+                        final_batch.append(&mut batch_one); 
+                    } else {
+                        final_batch = intersection(batch_one, batch_two);
+                    }
+                    results.append(&mut final_batch);
+                } else {
+                
+                }
+                new_and_entries.append(&mut results);
+            } else {
+                println!("NOT WILDCARD: {}", entry);
+                new_and_entries.push(entry); 
+            }
+        }
 
         if query.contains("NEAR/") {
             let near_k_results: Vec<u32> = near_query(query.clone(), index);
@@ -87,7 +243,7 @@ pub fn process_query(
                 and_results.push(near_k_inner_results);
             }
         } else {
-            for entry in and_entries {
+            for entry in new_and_entries {
                 // println!("AND ENTRY DAVID {}", entry);
                 let not_query = entry.starts_with("-");
                 let phrase_literal_vec: Vec<&str> = entry.split_whitespace().collect();
@@ -380,13 +536,13 @@ pub fn adjacent_positions(term_positions: Vec<u32>, positions: Vec<u32>) -> Vec<
     off_by_one_positions
 }
 
-pub fn intersection(first: Vec<u32>, second: Vec<u32>) -> Vec<u32> {
+pub fn intersection<T: Clone + Ord + PartialOrd >(first: Vec<T>, second: Vec<T>) -> Vec<T> {
 
-    let mut intersect: Vec<u32> = Vec::new();
+    let mut intersect: Vec<T> = Vec::new();
     for i in 0..first.len() {
         if i==0 || (i>0 && first[i]!=first[i-1]) { 
             let r = second.binary_search(&first[i]);
-            match r { Ok(_) => intersect.push(first[i]),
+            match r { Ok(_) => intersect.push(first[i].clone()),
                      Err(_) => (), 
             
             }

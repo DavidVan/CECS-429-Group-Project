@@ -56,7 +56,7 @@ fn main() {
         input = user_input::read_input_line();
 
         if !input.starts_with(":") {
-            process_query(&input, &index, &id_file);
+            process_query(&input, &index, &k_gram_index, &id_file);
         } else {
             if input == ":q" || input == ":quit" {
                return (); 
@@ -68,6 +68,8 @@ fn main() {
                 change = index_directory(&mut index_path, input.clone());
             } else if input == ":v" || input == ":vocab" {
                 print_vocab(&index);
+            } else if input == ":k" || input == ":kgram" {
+                print_kgram(&k_gram_index);
             } else if input == ":enable k" || input == ":enable kgram" {
                 if !k_gram_index.is_enabled() {
                    change = true;  
@@ -122,10 +124,11 @@ fn build_index(
 fn process_query(
     input: &str,
     index: &PositionalInvertedIndex,
+    k_gram_index: &KGramIndex,
     id_file: &HashMap<u32, String>) {
 
     println!();
-    let results = query_processor::process_query(input, index, id_file);
+    let results = query_processor::process_query(input, index, k_gram_index, id_file);
     println!();
     for result in results.clone() {
         println!("Result: {}", result);
@@ -226,6 +229,19 @@ fn print_vocab(
         println!("{}", term);
     }
     println!("Total terms: {}", dictionary.len());
+}
+
+fn print_kgram(
+    kgram: &KGramIndex) {
+    
+    println!("K Grams");
+
+    let kgrams= kgram.get_k_grams();
+
+    for gram in kgrams.iter() {
+        println!("{}", gram);
+    }
+    println!("Total kgrams: {}", kgrams.len());
 }
 
 /*

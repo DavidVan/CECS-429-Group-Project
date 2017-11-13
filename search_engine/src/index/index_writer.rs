@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::Cursor;
 use index::positional_inverted_index::PositionalInvertedIndex;
+use index::k_gram_index::KGramIndex;
 
 struct IndexWriter<'a> {
     folder_path: &'a str
@@ -18,6 +19,7 @@ trait DiskIndex {
     fn build_index_for_directory(&self, index: &PositionalInvertedIndex, folder: &str);
     fn build_vocab_file(&self, folder: &str, dictionary: &Vec<&String>, vocab_positions: &mut Vec<u64>);
     fn build_postings_file(&self, folder: &str, index: &PositionalInvertedIndex, dictionary: &Vec<&String>, vocab_positions: &mut Vec<u64>);
+    fn build_kgram_index(&self, folder: &str, kgram: &KGramIndex);
 }
 
 impl<'a> IndexWriter<'a> {
@@ -72,4 +74,7 @@ impl<'a> DiskIndex for IndexWriter<'a> {
         
     }
 
+    fn build_kgram_index(&self, folder: &str, kgram: &KGramIndex) {
+    
+    }
 }
