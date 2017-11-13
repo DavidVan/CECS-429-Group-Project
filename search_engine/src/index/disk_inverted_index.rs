@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::SeekFrom;
 
-struct DiskInvertedIndex<'a> {
+pub struct DiskInvertedIndex<'a> {
     path: &'a str,
     vocab_list: File,
     postings: File,
@@ -22,8 +22,8 @@ impl<'a> DiskInvertedIndex<'a> {
     fn new(&self, path: &'a str) -> DiskInvertedIndex {
         DiskInvertedIndex {
             path: path,
-            vocab_list: File::open("vocab.bin").unwrap(),
-            postings: File::open("postings.bin").unwrap(),
+            vocab_list: File::open(format!("{}/{}", self.path, "vocab.bin")).unwrap(),
+            postings: File::open(format!("{}/{}", self.path, "postings.bin")).unwrap(),
             vocab_table: self.read_vocab_table(path),
         }
     }
@@ -35,15 +35,15 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         postings.seek(SeekFrom::Start(postings_position as u64)).unwrap();
         let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
         postings.read_exact(&mut doc_freq_buffer);
-        let document_frequency = (&doc_freq_buffer[..]).read_u32::<LittleEndian>().unwrap();
+        let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
         for i in 0..document_frequency {
             let mut doc_id_buffer = [0; 4];
             postings.read_exact(&mut doc_id_buffer);
-            let doc_id = (&doc_id_buffer[..]).read_u32::<LittleEndian>().unwrap();
+            let doc_id = (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
             doc_ids.push(doc_id);
             let mut term_freq_buffer = [0; 4];
             postings.read_exact(&mut term_freq_buffer);
-            let term_frequency = (&term_freq_buffer[..]).read_u32::<LittleEndian>().unwrap();
+            let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
             postings.seek(SeekFrom::Current((term_frequency * 4) as i64)); // Skip reading term positions... We only need doc ids.
         }
         doc_ids
@@ -93,14 +93,18 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
     fn read_vocab_table(&self, index_name: &str) -> Vec<u64> {
         
-        let mut table_file = File::open("vocab_table.bin").unwrap();
-        let mut buffer_temp = [0; 4];
-        table_file.read_exact(&mut buffer_temp);
+        let mut table_file = File::open(format!("{}/{}", self.path, "vocab_table.bin")).unwrap();
+        let mut vocab_size_buffer= [0; 4];
+        table_file.read_exact(&mut vocab_size_buffer);
         
-        let table_index = 0;
-        let vocab_table = vec![0; (&buffer_temp[..]).read_u32::<LittleEndian>().unwrap() as usize * 2];
-        let mut buffer = [0; 8];
-
+        let mut table_index = 0;
+        let mut vocab_table = vec![0; (&vocab_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 2];
+        let mut vocab_pos_buffer = [0; 8];
+        loop {
+            table_file.read_exact(&mut vocab_pos_buffer);
+            vocab_table.push((&vocab_pos_buffer[..]).read_u64::<BigEndian>().unwrap());
+            table_index += 1;
+        }
         vocab_table
     }
 

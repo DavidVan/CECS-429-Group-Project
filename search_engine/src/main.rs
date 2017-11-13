@@ -1,8 +1,9 @@
 extern crate search_engine;
 extern crate stemmer;
 
-use search_engine::index::index_writer;
-use search_engine::index::disk_inverted_index;
+use search_engine::index::index_writer::IndexWriter;
+use search_engine::index::index_writer::DiskIndex;
+use search_engine::index::disk_inverted_index::DiskInvertedIndex;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
@@ -49,6 +50,8 @@ fn main() {
         // Builds new index if directory was changed
         if change {
             id_file = build_index(&index_path, &mut index, &mut k_gram_index);
+            let index_writer = IndexWriter::new(&index_path.to_str().unwrap());
+            index_writer.build_index_for_directory(&index, index_writer.get_folder_path()); 
             change = false;
         }
 
