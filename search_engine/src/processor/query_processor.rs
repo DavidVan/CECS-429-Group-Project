@@ -221,7 +221,81 @@ pub fn process_query(
                     }
                     results.append(&mut final_batch);
                 } else {
-                
+                    let mut halves = entry.split("*");
+                    
+                    let second_half= halves.next().unwrap();
+                    let first_half = halves.next().unwrap();
+
+                    let mut batch_one: Vec<String> = Vec::new();
+                    let mut batch_two: Vec<String> = Vec::new();
+
+                    // println!("Checking Batch One");
+                    let big_gram = format!("{}{}", &first_half, "$");
+                    for i in 0..(big_gram.len()) {
+                        if i < big_gram.len() - 2 {
+                            let three_gram = &big_gram[i..(i + 3)];
+                            // println!("Gram: {}", three_gram);
+                            if !three_gram.contains("*") {
+                                let terms = kgram.get_terms(three_gram);
+                                for term in terms {
+                                    // println!("Term: {}", term);
+                                    if !batch_one.contains(term) && term.ends_with(first_half) {
+                                        batch_one.push(term.to_string()); 
+                                        // println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        if i < big_gram.len() - 1 {
+                            let two_gram = &big_gram[i..(i + 2)];
+                            // println!("Gram: {}", two_gram);
+                            if !two_gram.contains("*") {
+                                let terms = kgram.get_terms(two_gram);
+                                for term in terms {
+                                    // println!("Term: {}", term);
+                                    if !batch_one.contains(term) && term.ends_with(first_half) {
+                                        batch_one.push(term.to_string()); 
+                                        // println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        // println!("Batch One: {:?}", batch_one);
+                    }
+
+                    let big_gram = format!("{}{}", "$", &second_half);
+                    for i in 0..(big_gram.len()) {
+                        if i < big_gram.len() - 2 {
+                            let three_gram = &big_gram[i..(i + 3)];
+                            // println!("Gram: {}", three_gram);
+                            if !three_gram.contains("*") {
+                                let terms = kgram.get_terms(three_gram);
+                                for term in terms {
+                                    // println!("Term: {}", term);
+                                    if !batch_two.contains(term) && term.starts_with(second_half) {
+                                        // println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                        if i < big_gram.len() - 1 {
+                            let two_gram = &big_gram[i..(i + 2)];
+                            // println!("Gram: {}", two_gram);
+                            if !two_gram.contains("*") {
+                                let terms = kgram.get_terms(two_gram);
+                                for term in terms {
+                                    // println!("Term: {}", term);
+                                    if !batch_two.contains(term) && term.starts_with(second_half) {
+                                        batch_two.push(term.to_string()); 
+                                        // println!("SUCCESS");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // println!("Batch Two: {:?}", batch_two);
+                    let mut final_batch = intersection(batch_one, batch_two);
+                    results.append(&mut final_batch);
                 }
                 new_and_entries.append(&mut results);
             } else {
