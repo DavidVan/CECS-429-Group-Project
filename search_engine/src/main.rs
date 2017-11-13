@@ -4,6 +4,7 @@ extern crate stemmer;
 use search_engine::index::index_writer::IndexWriter;
 use search_engine::index::index_writer::DiskIndex;
 use search_engine::index::disk_inverted_index::DiskInvertedIndex;
+use search_engine::index::disk_inverted_index::IndexReader;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
@@ -81,9 +82,14 @@ fn main() {
     }
     
     if query_index {
-
         // TODO: REMOVE WHEN LOADING INDEX FROM DISK
-        id_file = build_index(&index_path, &mut index, &mut k_gram_index);
+        // id_file = build_index(&index_path, &mut index, &mut k_gram_index);
+        let disk_inverted_index_path = index_path.clone();
+        let disk_inverted_index = DiskInvertedIndex::new(&disk_inverted_index_path.to_str().unwrap());
+        let test_x = disk_inverted_index.get_postings("alpha").unwrap();
+        for zxx in test_x {
+            println!("{:?}", zxx);
+        }
         loop {
             println!("{}", index_path.display());
 
