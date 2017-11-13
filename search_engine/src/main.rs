@@ -77,6 +77,9 @@ fn main() {
     }
     
     if query_index {
+
+        // TODO: REMOVE WHEN LOADING INDEX FROM DISK
+        id_file = build_index(&index_path, &mut index, &mut k_gram_index);
         loop {
             println!("{}", index_path.display());
 

@@ -87,81 +87,81 @@ pub fn process_query(
                     let mut batch_two: Vec<String> = Vec::new();
                     let mut final_batch : Vec<String> = Vec::new();
 
-                    println!("Checking Batch One");
+                    // println!("Checking Batch One");
                     let slice = &entry[1..];
                     let mid = &entry[1..entry.len() - 1];
                     let big_gram = format!("{}{}", &entry[1..], "$");
                     for i in 0..(big_gram.len()) {
                         if i < big_gram.len() - 2 {
                             let three_gram = &big_gram[i..(i + 3)];
-                            println!("Gram: {}", three_gram);
+                            // println!("Gram: {}", three_gram);
                             if !three_gram.contains("*") {
                                 let terms = kgram.get_terms(three_gram);
                                 for term in terms {
-                                    println!("Term: {}", term);
+                                    // println!("Term: {}", term);
                                     if !batch_one.contains(term) &&
                                         (term.ends_with(slice) ||
                                          term.contains(mid)) {
                                         batch_one.push(term.to_string()); 
-                                        println!("SUCCESS");
+                                        // println!("SUCCESS");
                                     }
                                 }
                             }
                         }
                         if i < big_gram.len() - 1 {
                             let two_gram = &big_gram[i..(i + 2)];
-                            println!("Gram: {}", two_gram);
+                            // println!("Gram: {}", two_gram);
                             if !two_gram.contains("*") {
                                 let terms = kgram.get_terms(two_gram);
                                 for term in terms {
-                                    println!("Term: {}", term);
+                                    // println!("Term: {}", term);
                                     if !batch_one.contains(term) &&
                                         (term.ends_with(slice) ||
                                          term.contains(mid)) {
                                         batch_one.push(term.to_string()); 
-                                        println!("SUCCESS");
+                                        // println!("SUCCESS");
                                     }
                                 }
                             }
                         }
-                        println!("Batch One: {:?}", batch_one);
+                        // println!("Batch One: {:?}", batch_one);
                     }
-                    println!("Checking Batch Two");
+                    // println!("Checking Batch Two");
                     if entry.ends_with("*") {
                         let slice = &entry[..entry.len() - 1];
                         let big_gram = format!("{}{}", "$", &entry[..entry.len() - 1]);
                         for i in 0..(big_gram.len()) {
                             if i < big_gram.len() - 2 {
                                 let three_gram = &big_gram[i..(i + 3)];
-                                println!("Gram: {}", three_gram);
+                                // println!("Gram: {}", three_gram);
                                 if !three_gram.contains("*") {
                                     let terms = kgram.get_terms(three_gram);
                                     for term in terms {
-                                        println!("Term: {}", term);
+                                        // println!("Term: {}", term);
                                         if !batch_two.contains(term) &&
                                             term.contains(mid) {
                                             batch_two.push(term.to_string()); 
-                                            println!("SUCCESS");
+                                            // println!("SUCCESS");
                                         }
                                     }
                                 }
                             }
                             if i < big_gram.len() - 1 {
                                 let two_gram = &big_gram[i..(i + 2)];
-                                println!("Gram: {}", two_gram);
+                                // println!("Gram: {}", two_gram);
                                 if !two_gram.contains("*") {
                                     let terms = kgram.get_terms(two_gram);
                                     for term in terms {
-                                        println!("Term: {}", term);
+                                        // println!("Term: {}", term);
                                         if !batch_two.contains(term) &&
                                             term.contains(mid) {
                                             batch_two.push(term.to_string()); 
-                                            println!("SUCCESS");
+                                            // println!("SUCCESS");
                                         }
                                     }
                                 }
                             }
-                            println!("Batch Two: {:?}", batch_two);
+                            // println!("Batch Two: {:?}", batch_two);
                         }
                     } else if entry.contains("*") {
                     
@@ -181,35 +181,35 @@ pub fn process_query(
                     for i in 0..(big_gram.len()) {
                         if i < big_gram.len() - 2 {
                             let three_gram = &big_gram[i..(i + 3)];
-                            println!("Gram: {}", three_gram);
+                            // println!("Gram: {}", three_gram);
                             if !three_gram.contains("*") {
                                 let terms = kgram.get_terms(three_gram);
                                 for term in terms {
-                                    println!("Term: {}", term);
+                                    // println!("Term: {}", term);
                                     if !batch_one.contains(term) &&
                                         term.starts_with(slice) {
                                         batch_one.push(term.to_string()); 
-                                        println!("SUCCESS");
+                                        // println!("SUCCESS");
                                     }
                                 }
                             }
                         }
                         if i < big_gram.len() - 1 {
                             let two_gram = &big_gram[i..(i + 2)];
-                            println!("Gram: {}", two_gram);
+                            // println!("Gram: {}", two_gram);
                             if !two_gram.contains("*") {
                                 let terms = kgram.get_terms(two_gram);
                                 for term in terms {
-                                    println!("Term: {}", term);
+                                    // println!("Term: {}", term);
                                     if !batch_one.contains(term) &&
                                         term.starts_with(slice) {
                                         batch_one.push(term.to_string()); 
-                                        println!("SUCCESS");
+                                        // println!("SUCCESS");
                                     }
                                 }
                             }
                         }
-                        println!("Batch Two: {:?}", batch_two);
+                        // println!("Batch Two: {:?}", batch_two);
                     }
                     if entry.contains("*") {
                     
@@ -229,6 +229,8 @@ pub fn process_query(
                 new_and_entries.push(entry); 
             }
         }
+
+        println!("Full Query: {:?}", new_and_entries);
 
         if query.contains("NEAR/") {
             let near_k_results: Vec<u32> = near_query(query.clone(), index);

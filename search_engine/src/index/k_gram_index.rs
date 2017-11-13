@@ -29,7 +29,7 @@ impl KGramIndex {
     pub fn new() -> KGramIndex {
         KGramIndex {
             m_index: HashMap::new(),
-            m_enable: false,
+            m_enable: true,
         }
     }
 
