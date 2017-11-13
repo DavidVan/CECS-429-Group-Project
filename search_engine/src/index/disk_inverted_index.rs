@@ -8,7 +8,7 @@ use std::cmp::Ordering;
 pub struct DiskInvertedIndex<'a> {
     path: &'a str,
     vocab_list: File,
-    postings: File,
+    pub postings: File,
     vocab_table: Vec<u64>,
 }
 

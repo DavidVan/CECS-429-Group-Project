@@ -404,8 +404,9 @@ pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> 
             j = j + 1;
         } else if first_term_postings[i] == second_term_postings[j] {
             //if the two terms have a common document, retrieve the positions
-            first_positions = first_term_postings[i].get_positions();
-            second_positions = second_term_postings[j].get_positions();
+            // first_positions = first_term_postings[i].get_positions();
+            // second_positions = second_term_postings[j].get_positions();
+
             //check if the two terms are near each other
             if is_near(first_positions, second_positions, max_distance) {
                 documents.push(first_term_postings[i]);
