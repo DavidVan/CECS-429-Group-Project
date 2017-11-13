@@ -1,4 +1,6 @@
 use index::positional_inverted_index::{PositionalInvertedIndex,PositionalPosting};
+use index::disk_inverted_index::DiskInvertedIndex;
+use index::disk_inverted_index::IndexReader;
 use index::k_gram_index::KGramIndex;
 use parser::document_parser;
 use parser::query_parser::QueryParser;
@@ -21,7 +23,7 @@ use std::path::*;
  */
 pub fn process_query(
     input: &str,
-    index: &PositionalInvertedIndex,
+    index: &DiskInvertedIndex,
     kgram: &KGramIndex,
     id_file: &HashMap<u32, String>,
 ) -> HashSet<String> {
@@ -284,12 +286,12 @@ pub fn process_query(
                         if !index.contains_term(normalized_token.as_str()) {
                             break;
                         }
-                        let postings = index.get_postings(normalized_token.as_str());
+                        let postings = index.get_postings(normalized_token.as_str()).unwrap();
                         let mut and_inner_results = HashSet::new();
                         for posting in postings {
                             if not_query {
                                 let file_path =
-                                    id_file.get(&posting.get_doc_id()).unwrap().to_string();
+                                    id_file.get(&posting).unwrap().to_string();
                                 let file: &Path = file_path.as_ref();
                                 let file_name = file.file_name();
                                 not_results.push(String::from(
@@ -297,7 +299,7 @@ pub fn process_query(
                                 ));
                             } else {
                                 let file_path =
-                                    id_file.get(&posting.get_doc_id()).unwrap().to_string();
+                                    id_file.get(&posting).unwrap().to_string();
                                 let file: &Path = file_path.as_ref();
                                 let file_name = file.file_name();
                                 and_inner_results.insert(String::from(
@@ -375,7 +377,7 @@ pub fn process_query(
  *
  * The list of files satisfying the query
  */
-pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
+pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
     let first_term = document_parser::normalize_token(literals[0].to_string())[0].to_string();
@@ -387,8 +389,8 @@ pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec
     let max_distance = near.parse::<i32>().unwrap();
 
     println!("first term: {}", first_term);
-    let first_term_postings = index.get_postings(&first_term);
-    let second_term_postings = index.get_postings(&second_term);
+    let first_term_postings = index.get_postings(&first_term).unwrap();
+    let second_term_postings = index.get_postings(&second_term).unwrap();
     let mut i = 0;
     let mut j = 0;
     let mut first_positions;
@@ -396,17 +398,17 @@ pub fn near_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec
     let mut documents: Vec<u32> = Vec::new();
     //iterate through postings lists until a common document ID is found
     while i < first_term_postings.len() && j < second_term_postings.len() {
-        if first_term_postings[i].get_doc_id() < second_term_postings[j].get_doc_id() {
+        if first_term_postings[i] < second_term_postings[j] {
             i = i + 1;
-        } else if first_term_postings[i].get_doc_id() > second_term_postings[j].get_doc_id() {
+        } else if first_term_postings[i] > second_term_postings[j] {
             j = j + 1;
-        } else if first_term_postings[i].get_doc_id() == second_term_postings[j].get_doc_id() {
+        } else if first_term_postings[i] == second_term_postings[j] {
             //if the two terms have a common document, retrieve the positions
             first_positions = first_term_postings[i].get_positions();
             second_positions = second_term_postings[j].get_positions();
             //check if the two terms are near each other
             if is_near(first_positions, second_positions, max_distance) {
-                documents.push(first_term_postings[i].get_doc_id());
+                documents.push(first_term_postings[i]);
             }
             i = i + 1;
             j = j + 1;
@@ -451,7 +453,7 @@ pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distan
 }
 
 
-pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> Vec<u32> {
+pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
     let mut normalized_literals:Vec<String> = Vec::new();
@@ -460,17 +462,17 @@ pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> V
         normalized_literals.push(document_parser::normalize_token(word.to_string())[0].to_string());
     }
 
-    let mut current_postings:Vec<PositionalPosting> = index.get_postings(&normalized_literals[0]).to_vec();
+    let mut current_postings:Vec<u32> = index.get_postings(&normalized_literals[0]).unwrap();
 
     for ind in 1..normalized_literals.len() {
-        let next = index.get_postings(&normalized_literals[ind]);
+        let next = index.get_postings(&normalized_literals[ind]).unwrap();
         let mut i = 0;
         let mut j = 0;
         // list of postings containing document ids that terms share in common and positions
         let mut merged:Vec<PositionalPosting> = Vec::new();
         //iterate through postings lists until a common document ID is found
         while i < current_postings.len() && j < next.len() {
-            if current_postings[i].get_doc_id() == next[j].get_doc_id() {
+            if current_postings[i] == next[j] {
                 //if the two terms have a common document, retrieve the positions
                 let positions_of_current = current_postings[i].get_positions();
                 let positions_of_next = next[j].get_positions();
@@ -495,9 +497,9 @@ pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> V
                 i = i + 1;
                 j = j + 1;
             }
-            else if current_postings[i].get_doc_id() < next[j].get_doc_id() {
+            else if current_postings[i] < next[j] {
                 i = i + 1;
-            } else if current_postings[i].get_doc_id() > next[j].get_doc_id() {
+            } else if current_postings[i] > next[j] {
                 j = j + 1;
             } 
         }
@@ -507,7 +509,7 @@ pub fn phrase_query(query_literal: String, index: &PositionalInvertedIndex) -> V
     let mut documents:Vec<u32> = Vec::new();
     
     for i in current_postings {
-        documents.push(i.get_doc_id());
+        documents.push(i);
     }
 
     return documents;

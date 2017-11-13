@@ -108,13 +108,8 @@ fn main() {
     
     if query_index {
         // TODO: REMOVE WHEN LOADING INDEX FROM DISK
-        // id_file = build_index(&index_path, &mut index, &mut k_gram_index);
         let disk_inverted_index_path = index_path.clone();
         let disk_inverted_index = DiskInvertedIndex::new(&disk_inverted_index_path.to_str().unwrap());
-        let test_x = disk_inverted_index.get_postings("alpha").unwrap();
-        for zxx in test_x {
-            println!("{:?}", zxx);
-        }
 
         println!("{}", index_path.display());
 

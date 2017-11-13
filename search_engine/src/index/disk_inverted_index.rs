@@ -15,6 +15,7 @@ pub struct DiskInvertedIndex<'a> {
 pub trait IndexReader {
     fn read_postings_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32>;
     fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str>;
+    fn contains_term(&self, term: &str) -> bool;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
     fn get_term_count(&self) -> u32;
@@ -63,6 +64,9 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         }
     }
 
+    fn contains_term(&self, term: &str) -> bool {
+        return self.binary_search_vocabulary(term) == -1; 
+    }
     fn binary_search_vocabulary(&self, term: &str) -> i64 {
         let mut vocab_list = &self.vocab_list;
         let mut i = 0;
