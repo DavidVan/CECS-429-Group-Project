@@ -569,19 +569,38 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
     let mut current_term_positions = index.get_positions(&normalized_literals[0]);
 
     for ind in 1..normalized_literals.len() {
-        let next = index.get_postings(&normalized_literals[ind]).unwrap();
+        let mut next = index.get_postings(&normalized_literals[ind]).unwrap();
         let next_term_positions = index.get_positions(&normalized_literals[ind]);
-        let mut i = 0;
-        let mut j = 0;
+        let mut i : usize= 0;
+        let mut j : usize= 0;
         // list of postings containing document ids that terms share in common and positions
         let mut merged: Vec<u32> = Vec::new();
         //iterate through postings lists until a common document ID is found
-        while i < current_postings.len() && j < next.len() {
-            if current_postings[i] == next[j] {
+        
+        current_postings.sort();
+        next.sort();
+
+        let max : u32 = *(current_postings.last()).max(next.last()).unwrap();
+        println!("Max: {}", max);
+
+        while (i as u32) < max && (j as u32) < max {
+            println!("i: {} j: {}", i, j);
+            if i == j {
                 //if the two terms have a common document, retrieve the positions
+                
+                if !current_term_positions.contains_key(&(i as u32)) {
+                    i = i + 1;
+                    continue;
+                }
+                if !next_term_positions.contains_key(&(j as u32)) {
+                    j = j + 1;
+                    continue; 
+                }
                 let positions_of_current = current_term_positions.get(&(i as u32)).unwrap();
                 let positions_of_next = next_term_positions.get(&(j as u32)).unwrap();
                 //return all positions of the second term where the terms are adjacent to each other
+                //
+                println!("{:?}\n{:?}", positions_of_current, positions_of_next);
                 
                 let merged_positions = adjacent_positions(positions_of_next, positions_of_current);
                 //if none exist we can continue
@@ -595,6 +614,7 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
                 for j in merged_positions {
                     temp_posting.insert(i, j);
                 }
+                println!("ADDING");
                 merged.push(i as u32);
                 // if positions.is_empty() {
                 //     return Vec::new();
@@ -604,9 +624,9 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
                 i = i + 1;
                 j = j + 1;
             }
-            else if current_postings[i] < next[j] {
+            else if i < j {
                 i = i + 1;
-            } else if current_postings[i] > next[j] {
+            } else if i > j {
                 j = j + 1;
             } 
         }
