@@ -130,25 +130,18 @@ fn main() {
 
         k_gram_index = serde_json::from_str(&kgram_file_contents).expect("Error reading kgram file");
         
-        let test_z = disk_inverted_index.get_postings("bravo").unwrap();
-        let postings_pos_bravo = disk_inverted_index.binary_search_vocabulary("bravo");
-        for zxx in test_z {
-            println!("{}, orig: {}", id_file.get(&zxx).unwrap(), zxx);
-            let test_bravo = disk_inverted_index.read_positions_from_file(&disk_inverted_index.postings, postings_pos_bravo, zxx);
-            println!("{} length of positions", test_bravo.len());
-            for xzx in test_bravo {
-                println!("{} bravo", xzx);
+        for (doc_id, positions) in disk_inverted_index.get_positions("bravo").iter() {
+            println!("{}, orig: {}", id_file.get(&doc_id).unwrap(), doc_id);
+            println!("{} length of positions", positions.len());
+            for position in positions {
+                println!("{} bravo", position);
             }
-            
         }
-        let postings_pos_alpha = disk_inverted_index.binary_search_vocabulary("alpha");
-        let test_x = disk_inverted_index.get_postings("alpha").unwrap();
-        for zxx in test_x {
-            println!("{}, orig: {}", id_file.get(&zxx).unwrap(), zxx);
-            let test_alpha = disk_inverted_index.read_positions_from_file(&disk_inverted_index.postings, postings_pos_alpha, zxx);
-            println!("{} length of positions", test_alpha.len());
-            for xzx in test_alpha {
-                println!("{} alpha", xzx);
+        for (doc_id, positions) in disk_inverted_index.get_positions("alpha").iter() {
+            println!("{}, orig: {}", id_file.get(&doc_id).unwrap(), doc_id);
+            println!("{} length of positions", positions.len());
+            for position in positions {
+                println!("{} bravo", position);
             }
         }
         loop {

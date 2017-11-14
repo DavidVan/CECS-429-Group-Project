@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::io::ErrorKind;
 use std::io::SeekFrom;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 pub struct DiskInvertedIndex<'a> {
     path: &'a str,
@@ -14,9 +15,13 @@ pub struct DiskInvertedIndex<'a> {
 
 pub trait IndexReader {
     fn read_postings_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32>;
-    fn read_positions_from_file(&self, mut postings: &File, postings_position: i64, doc_id_found: u32) -> Vec<u32>;
+    fn get_positions(&self, term: &str) -> HashMap<u32, Vec<u32>>; // Map from document ids to term positions for a document id
     fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str>;
     fn contains_term(&self, term: &str) -> bool;
+    fn get_document_score(&self, term: &str, doc_id_wanted: u32) -> Option<f64>;
+    fn get_document_frequency(&self, term: &str) -> u32;
+    fn get_term_frequency(&self, term: &str, doc_id_wanted: u32) -> Option<u32>;
+    fn get_document_length(&self, term: &str) -> f64;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
     fn get_term_count(&self) -> u32;
@@ -63,35 +68,118 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         doc_ids
     }
 
-    fn read_positions_from_file(&self, mut postings: &File, postings_position: i64, doc_id_wanted: u32) -> Vec<u32> {
-        let mut positions = Vec::new();
-        postings.seek(SeekFrom::Start(postings_position as u64)).unwrap();
+    fn get_positions(&self, term: &str) -> HashMap<u32, Vec<u32>> {
+        let postings_position = self.binary_search_vocabulary(term);
+        let mut doc_to_positions = HashMap::new();
+        (&self.postings).seek(SeekFrom::Start(postings_position as u64));
         let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
-        postings.read_exact(&mut doc_freq_buffer);
+        (&self.postings).read_exact(&mut doc_freq_buffer);
         let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
         let mut doc_id = 0;
         for i in 0..document_frequency {
             let mut doc_id_buffer = [0; 4];
-            postings.read_exact(&mut doc_id_buffer);
+            (&self.postings).read_exact(&mut doc_id_buffer);
             doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
             println!("This is document ID: {} for occurance {}", doc_id, i);
-            postings.seek(SeekFrom::Current(8)); // Skip Document Score (Wdt)
+
+            let mut positions = Vec::new();
+
+            (&self.postings).seek(SeekFrom::Current(8)); // Skip Document Score (Wdt)
             let mut term_freq_buffer = [0; 4];
-            postings.read_exact(&mut term_freq_buffer);
+            (&self.postings).read_exact(&mut term_freq_buffer);
             let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
             println!("Term frequency {} for document ID {}", term_frequency, doc_id);
             let mut positions_buffer = [0; 4];
             let mut postings_accumulator = 0;
             for j in 0..term_frequency {
-                postings.read_exact(&mut positions_buffer);
+                (&self.postings).read_exact(&mut positions_buffer);
                 postings_accumulator += (&positions_buffer[..]).read_u32::<BigEndian>().unwrap();
                 println!("Current position: {} for term frequency occurance {}", postings_accumulator, j);
-                if doc_id == doc_id_wanted {
-                    positions.push(postings_accumulator);
-                }
+                positions.push(postings_accumulator);
             }
+            doc_to_positions.insert(doc_id, positions);
         }
-        positions
+        doc_to_positions
+    }
+
+    fn get_document_score(&self, term: &str, doc_id_wanted: u32) -> Option<f64> {
+        let postings_position = self.binary_search_vocabulary(term);
+        (&self.postings).seek(SeekFrom::Start(postings_position as u64));
+        let mut doc_freq_buffer = [0; 4];
+        (&self.postings).read_exact(&mut doc_freq_buffer);
+        let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+        let mut doc_id = 0;
+        for i in 0..document_frequency {
+            let mut doc_id_buffer = [0; 4];
+            (&self.postings).read_exact(&mut doc_id_buffer);
+            doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
+            let mut document_weight_buffer = [0; 8];
+            (&self.postings).read_exact(&mut document_weight_buffer);
+            let document_weight = (&document_weight_buffer[..]).read_f64::<BigEndian>().unwrap();
+            if doc_id == doc_id_wanted {
+                return Some(document_weight);
+            }
+            let mut term_freq_buffer = [0; 4];
+            (&self.postings).read_exact(&mut term_freq_buffer);
+            let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+            (&self.postings).seek(SeekFrom::Current((term_frequency * 4) as i64));
+        }
+        None
+    }
+
+    fn get_document_frequency(&self, term: &str) -> u32 {
+        let postings_position = self.binary_search_vocabulary(term);
+        (&self.postings).seek(SeekFrom::Start(postings_position as u64));
+        let mut doc_freq_buffer = [0; 4];
+        (&self.postings).read_exact(&mut doc_freq_buffer);
+        (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap() // Return the document frequency
+    }
+
+    fn get_term_frequency(&self, term: &str, doc_id_wanted: u32) -> Option<u32> {
+        let postings_position = self.binary_search_vocabulary(term);
+        (&self.postings).seek(SeekFrom::Start(postings_position as u64));
+        let mut doc_freq_buffer = [0; 4];
+        (&self.postings).read_exact(&mut doc_freq_buffer);
+        let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+        let mut doc_id = 0;
+        for i in 0..document_frequency {
+            let mut doc_id_buffer = [0; 4];
+            (&self.postings).read_exact(&mut doc_id_buffer);
+            doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
+            (&self.postings).seek(SeekFrom::Current(8)); // Skip document weight
+            let mut term_freq_buffer = [0; 4];
+            (&self.postings).read_exact(&mut term_freq_buffer);
+            let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+            if doc_id == doc_id_wanted {
+                return Some(term_frequency);
+            }
+            (&self.postings).seek(SeekFrom::Current((term_frequency * 4) as i64));
+        }
+        None
+    }
+
+    fn get_document_length(&self, term: &str) -> f64 {
+        let postings_position = self.binary_search_vocabulary(term);
+        (&self.postings).seek(SeekFrom::Start(postings_position as u64));
+        let mut doc_freq_buffer = [0; 4];
+        (&self.postings).read_exact(&mut doc_freq_buffer);
+        let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+        let mut doc_id = 0;
+        let mut document_length = 0_f64;
+        for i in 0..document_frequency {
+            let mut doc_id_buffer = [0; 4];
+            (&self.postings).read_exact(&mut doc_id_buffer);
+            doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
+            let mut document_weight_buffer = [0; 8];
+            (&self.postings).read_exact(&mut document_weight_buffer);
+            let document_weight = (&document_weight_buffer[..]).read_f64::<BigEndian>().unwrap();
+            document_length += document_weight.powi(2);
+            let mut term_freq_buffer = [0; 4];
+            (&self.postings).read_exact(&mut term_freq_buffer);
+            let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+            (&self.postings).seek(SeekFrom::Current((term_frequency * 4) as i64));
+        }
+        document_length
     }
 
     fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str> {
