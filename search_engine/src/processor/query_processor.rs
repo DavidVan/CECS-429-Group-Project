@@ -25,7 +25,10 @@ pub fn process_query(
 }
 
 fn process_query_rank(
-    
+    input: &str,
+    index: &DiskInvertedIndex,
+    kgram: &KGramIndex,
+    id_file: &HashMap<u32, String>,
 ) -> HashSet<String> {
 
     HashSet::new()
