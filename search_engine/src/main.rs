@@ -257,10 +257,12 @@ fn process_query(
         println!("Result: {}", result);
     }
     println!();
-    if results.len() != 1 {
-        println!("{} Documents", results.len());
-    } else {
-        println!("{} Document", results.len());
+    if !ranked_retrieval {
+        if results.len() != 1 {
+            println!("{} Documents", results.len());
+        } else {
+            println!("{} Document", results.len());
+        }
     }
     println!();
 }
