@@ -8,6 +8,29 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::*;
 
+pub fn process_query(
+    ranked_retrieval: bool,
+    input: &str,
+    index: &DiskInvertedIndex,
+    kgram: &KGramIndex,
+    id_file: &HashMap<u32, String>,
+) -> HashSet<String> {
+
+    if ranked_retrieval {
+        return process_query_bool(input, index, kgram, id_file);
+    } else { 
+        return process_query_bool(input,  index, kgram, id_file); 
+    }
+
+}
+
+fn process_query_rank(
+    
+) -> HashSet<String> {
+
+    HashSet::new()
+}
+
 /*
  * Processes a query and returns results containing the files fulfilling the query
  *
@@ -21,7 +44,7 @@ use std::path::*;
  *
  * The HashSet containing the files fulfilling the query
  */
-pub fn process_query(
+pub fn process_query_bool(
     input: &str,
     index: &DiskInvertedIndex,
     kgram: &KGramIndex,

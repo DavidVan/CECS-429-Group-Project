@@ -176,7 +176,7 @@ fn main() {
             input = user_input::read_input_line();
 
             if !input.starts_with(":") {
-                process_query(&input, &disk_inverted_index, &k_gram_index, &id_file);
+                process_query(ranked_retrieval, &input, &disk_inverted_index, &k_gram_index, &id_file);
             } else {
                 if input == ":q" || input == ":quit" {
                    return (); 
@@ -244,13 +244,14 @@ fn build_index(
  * *`id_file` - HashMap that contains the association between a Document ID and the file name
  */
 fn process_query(
+    ranked_retrieval: bool,
     input: &str,
     index: &DiskInvertedIndex,
     k_gram_index: &KGramIndex,
     id_file: &HashMap<u32, String>) {
 
     println!();
-    let results = query_processor::process_query(input, index, k_gram_index, id_file);
+    let results = query_processor::process_query(ranked_retrieval, input, index, k_gram_index, id_file);
     println!();
     for result in results.clone() {
         println!("Result: {}", result);
