@@ -8,13 +8,13 @@ use std::cmp::Ordering;
 pub struct DiskInvertedIndex<'a> {
     path: &'a str,
     vocab_list: File,
-    postings: File,
+    pub postings: File,
     vocab_table: Vec<u64>,
 }
 
 pub trait IndexReader {
     fn read_postings_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32>;
-    fn read_positions_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32>;
+    fn read_positions_from_file(&self, mut postings: &File, postings_position: i64, doc_id_found: u32) -> Vec<u32>;
     fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str>;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
@@ -40,11 +40,12 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         postings.read_exact(&mut doc_freq_buffer);
         println!("Document Frequency: {}", (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap());
         let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+        let mut doc_id = 0;
         for i in 0..document_frequency {
             let mut doc_id_buffer = [0; 4];
             postings.read_exact(&mut doc_id_buffer);
             println!("Document Id: {}", (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap());
-            let doc_id = (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
+            doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
             doc_ids.push(doc_id);
 
             let mut doc_score_buffer = [0; 8];
@@ -61,18 +62,32 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         doc_ids
     }
 
-    fn read_positions_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<u32> {
+    fn read_positions_from_file(&self, mut postings: &File, postings_position: i64, doc_id_wanted: u32) -> Vec<u32> {
         let mut positions = Vec::new();
-        postings.seek(SeekFrom::Start((postings_position + 20) as u64)).unwrap();
-        let mut positions_buffer = [0; 4];
-        let mut postings_accumulator = 0;
-        loop {
-            match postings.read_exact(&mut positions_buffer) {
-                Ok(_) => {
-                    postings_accumulator += (&positions_buffer[..]).read_u32::<BigEndian>().unwrap();
+        postings.seek(SeekFrom::Start(postings_position as u64)).unwrap();
+        let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
+        postings.read_exact(&mut doc_freq_buffer);
+        let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+        let mut doc_id = 0;
+        for i in 0..document_frequency {
+            let mut doc_id_buffer = [0; 4];
+            postings.read_exact(&mut doc_id_buffer);
+            doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
+            println!("This is document ID: {} for occurance {}", doc_id, i);
+            postings.seek(SeekFrom::Current(8)); // Skip Document Score (Wdt)
+            let mut term_freq_buffer = [0; 4];
+            postings.read_exact(&mut term_freq_buffer);
+            let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
+            println!("Term frequency {} for document ID {}", term_frequency, doc_id);
+            let mut positions_buffer = [0; 4];
+            let mut postings_accumulator = 0;
+            for j in 0..term_frequency {
+                postings.read_exact(&mut positions_buffer);
+                postings_accumulator += (&positions_buffer[..]).read_u32::<BigEndian>().unwrap();
+                println!("Current position: {} for term frequency occurance {}", postings_accumulator, j);
+                if doc_id == doc_id_wanted {
                     positions.push(postings_accumulator);
                 }
-                Err(_) => break
             }
         }
         positions
@@ -122,8 +137,6 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn read_vocab_table(index_name: &str) -> Vec<u64> {
-        println!("Hello from vocab table");
-        
         let mut table_file = File::open(format!("{}/{}", index_name, "vocab_table.bin")).unwrap();
         let mut vocab_size_buffer= [0; 4];
         table_file.read_exact(&mut vocab_size_buffer);
@@ -132,11 +145,10 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         let mut vocab_table = vec![0; (&vocab_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 2];
         let mut vocab_pos_buffer = [0; 8];
         loop {
-            println!("loop");
             match table_file.read_exact(&mut vocab_pos_buffer) {
                 Ok(_) => {
                     vocab_table.push((&vocab_pos_buffer[..]).read_u64::<BigEndian>().unwrap());
-                    //table_file.seek(SeekFrom::Current(7)); // Skip the document weights (Ld) values...
+                    //table_file.seek(SeekFrom::Current(8)); // Skip the document weights (Ld) values...
                     table_index += 1;
                 },
                 Err(_) => break

@@ -52,6 +52,8 @@ impl<'a> DiskIndex for IndexWriter<'a> {
     fn build_postings_file(&self, folder: &str, index: &PositionalInvertedIndex, dictionary: &Vec<&String>, vocab_positions: &mut Vec<u64>) {
         let mut postings_file = File::create(format!("{}/{}", folder, "postings.bin")).unwrap();
         let mut vocab_table = File::create(format!("{}/{}", folder, "vocab_table.bin")).unwrap();
+        let mut document_weights = File::create(format!("{}/{}", folder, "doc_weights.bin")).unwrap();
+
         vocab_table.write_u32::<BigEndian>(dictionary.len() as u32);
         let mut vocab_index = 0;
         for s in dictionary {
@@ -60,8 +62,15 @@ impl<'a> DiskIndex for IndexWriter<'a> {
             vocab_table.write_u64::<BigEndian>(vocab_position);
             let postings_file_metadata = postings_file.metadata().unwrap();
             let postings_file_size = postings_file_metadata.len();
-            // let postings_file_size = (&postings_file).bytes().size_hint().1.unwrap() as u64;
+
+            let document_weights_file_metadata = document_weights.metadata().unwrap();
+            let document_weights_file_size = document_weights_file_metadata.len();
+
             vocab_table.write_u64::<BigEndian>(postings_file_size);
+            //vocab_table.write_u64::<BigEndian>(document_weights_file_size);
+
+            let mut document_weight : f64 = 0.0; // Ld score accumulator
+
             let document_frequency = postings.len() as u32;
             postings_file.write_u32::<BigEndian>(document_frequency);
             let mut last_doc_id = 0;
@@ -69,8 +78,10 @@ impl<'a> DiskIndex for IndexWriter<'a> {
                 let doc_id_location = doc_id.get_doc_id() - last_doc_id;
                 postings_file.write_u32::<BigEndian>(doc_id_location);
 
-                let wdt = doc_id.get_wdt();
-                //postings_file.write_f64::<BigEndian>(wdt);
+                let document_score = doc_id.get_doc_score();
+                postings_file.write_f64::<BigEndian>(document_score); //Wdt
+
+                document_weight += document_score.powi(2);
 
                 let positions = doc_id.get_positions(); // Get postings positions for every document
                 let term_frequency = positions.len() as u32;
@@ -81,6 +92,9 @@ impl<'a> DiskIndex for IndexWriter<'a> {
                     postings_file.write_u32::<BigEndian>(pos_location);
                     last_pos = pos;
                 }
+
+                // Store document length (Ld) values in doc_weights.bin
+                document_weights.write_f64::<BigEndian>(document_weight);
 
                 last_doc_id = doc_id.get_doc_id();
             }
