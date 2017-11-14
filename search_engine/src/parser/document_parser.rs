@@ -51,11 +51,7 @@ pub fn build_index(
 
         //normalize each token in the file and add it to the index with its document id and position
         for (j, word) in iter.enumerate() {
-            if !tftd.contains_key(word) {
-                tftd.insert(word.to_string(),1);
-            } else {
-                *tftd.get_mut(word).unwrap() = tftd.get(word).unwrap() + 1;
-            }
+           
 
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
             let tokens = normalize_token(word.to_string());
@@ -64,6 +60,11 @@ pub fn build_index(
             }
             let tokens = normalize_token(word.to_string());
             for term in tokens {
+                 if !tftd.contains_key(&term) {
+                tftd.insert(term.to_string(),1);
+                } else {
+                    *tftd.get_mut(&term).unwrap() = tftd.get(&term).unwrap() + 1;
+                }
                 index.add_term(&term, i as u32, j as u32);
             }
         }

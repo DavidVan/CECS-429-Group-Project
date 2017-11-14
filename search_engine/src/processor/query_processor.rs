@@ -581,9 +581,11 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
                 //return all positions of the second term where the terms are adjacent to each other
                 
                 let merged_positions = adjacent_positions(positions_of_next, positions_of_current);
-                //if none exist we can return
+                //if none exist we can continue
                 if merged_positions.is_empty() {
-                    return Vec::new();
+                    i = i + 1;
+                    j = j + 1;
+                    continue;
                 }
                 //create new positional posting to push to merged list of postings
                 let mut temp_posting = HashMap::new();
