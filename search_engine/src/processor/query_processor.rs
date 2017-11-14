@@ -361,8 +361,6 @@ pub fn process_query(
     for x in union {
         results.insert(x);
     }
-
-
     results
 }
 
@@ -391,6 +389,9 @@ pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> 
     println!("first term: {}", first_term);
     let first_term_postings = index.get_postings(&first_term).unwrap();
     let second_term_postings = index.get_postings(&second_term).unwrap();
+
+    let first_term_positions = index.get_positions(&first_term);
+    let second_term_positions= index.get_positions(&second_term);
     let mut i = 0;
     let mut j = 0;
     let mut first_positions;
@@ -404,8 +405,8 @@ pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> 
             j = j + 1;
         } else if first_term_postings[i] == second_term_postings[j] {
             //if the two terms have a common document, retrieve the positions
-            // first_positions = first_term_postings[i].get_positions();
-            // second_positions = second_term_postings[j].get_positions();
+            first_positions = first_term_positions.get(&(i as u32)).unwrap();
+            second_positions = second_term_positions.get(&(j as u32)).unwrap();
 
             //check if the two terms are near each other
             if is_near(first_positions, second_positions, max_distance) {
@@ -432,7 +433,7 @@ pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> 
  * True if the positions of the first term are within distance of the positions of the second term
  * False otherwise
  */
-pub fn is_near(first_positions: Vec<u32>, second_positions: Vec<u32>, max_distance: i32) -> bool {
+pub fn is_near(first_positions: &Vec<u32>, second_positions: &Vec<u32>, max_distance: i32) -> bool {
     let mut i = 0;
     let mut j = 0;
     let mut difference: i32;
@@ -465,18 +466,21 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
 
     let mut current_postings:Vec<u32> = index.get_postings(&normalized_literals[0]).unwrap();
 
+    let mut current_term_positions = index.get_positions(&normalized_literals[0]);
+
     for ind in 1..normalized_literals.len() {
         let next = index.get_postings(&normalized_literals[ind]).unwrap();
+        let next_term_positions = index.get_positions(&normalized_literals[ind]);
         let mut i = 0;
         let mut j = 0;
         // list of postings containing document ids that terms share in common and positions
-        let mut merged:Vec<PositionalPosting> = Vec::new();
+        let mut merged: Vec<u32> = Vec::new();
         //iterate through postings lists until a common document ID is found
         while i < current_postings.len() && j < next.len() {
             if current_postings[i] == next[j] {
                 //if the two terms have a common document, retrieve the positions
-                let positions_of_current = current_postings[i].get_positions();
-                let positions_of_next = next[j].get_positions();
+                let positions_of_current = current_term_positions.get(&(i as u32)).unwrap();
+                let positions_of_next = next_term_positions.get(&(j as u32)).unwrap();
                 //return all positions of the second term where the terms are adjacent to each other
                 
                 let merged_positions = adjacent_positions(positions_of_next, positions_of_current);
@@ -485,11 +489,11 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
                     return Vec::new();
                 }
                 //create new positional posting to push to merged list of postings
-                let mut temp_posting = PositionalPosting::new(current_postings[i].get_doc_id());
-                for i in merged_positions {
-                    temp_posting.add_position(i);
+                let mut temp_posting = HashMap::new();
+                for j in merged_positions {
+                    temp_posting.insert(i, j);
                 }
-                merged.push(temp_posting);
+                merged.push(i as u32);
                 // if positions.is_empty() {
                 //     return Vec::new();
                 // } else {
@@ -516,7 +520,7 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
     return documents;
 }
 
-pub fn adjacent_positions(term_positions: Vec<u32>, positions: Vec<u32>) -> Vec<u32> {
+pub fn adjacent_positions(term_positions: &Vec<u32>, positions: &Vec<u32>) -> Vec<u32> {
     let mut i = 0;
     let mut j = 0;
     let mut off_by_one_positions: Vec<u32> = Vec::new();

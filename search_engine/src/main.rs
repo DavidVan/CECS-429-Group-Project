@@ -176,7 +176,7 @@ fn main() {
             input = user_input::read_input_line();
 
             if !input.starts_with(":") {
-                process_query(&input, &index, &k_gram_index, &id_file);
+                process_query(&input, &disk_inverted_index, &k_gram_index, &id_file);
             } else {
                 if input == ":q" || input == ":quit" {
                    return (); 
@@ -245,7 +245,7 @@ fn build_index(
  */
 fn process_query(
     input: &str,
-    index: &PositionalInvertedIndex,
+    index: &DiskInvertedIndex,
     k_gram_index: &KGramIndex,
     id_file: &HashMap<u32, String>) {
 
