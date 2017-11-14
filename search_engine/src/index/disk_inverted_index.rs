@@ -192,7 +192,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn contains_term(&self, term: &str) -> bool {
-        return self.binary_search_vocabulary(term) == -1; 
+        return self.binary_search_vocabulary(term) != -1; 
     }
     fn binary_search_vocabulary(&self, term: &str) -> i64 {
         let mut vocab_list = &self.vocab_list;
