@@ -13,7 +13,7 @@ impl InvertedIndex {
 
         if self.m_index.contains_key(term) {
             let mut p = self.m_index.get_mut(term);
-            let mut posting = p.as_mut().unwrap();
+            let posting = p.as_mut().unwrap();
             if posting[posting.len() - 1] != doc_id {
                 posting.push(doc_id);
             }

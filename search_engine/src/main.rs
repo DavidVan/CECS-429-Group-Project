@@ -6,8 +6,6 @@ extern crate stemmer;
 use search_engine::index::index_writer::IndexWriter;
 use search_engine::index::index_writer::DiskIndex;
 use search_engine::index::disk_inverted_index::DiskInvertedIndex;
-use search_engine::index::disk_inverted_index::IndexReader;
-use search_engine::index::index_writer;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
@@ -29,12 +27,12 @@ fn main() {
     let mut query_index : bool = false;
     let mut ranked_retrieval : bool = false;
 
-    let mut id_file : HashMap<u32, String> = HashMap::new();
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
 
     // Loops lets user select first directory to access
     loop {
+        println!("Current Working Directory: {}\n", index_path.display());
         print!("Select directory to access: ");
         input = user_input::read_input();
         if input == ":q" {
@@ -53,7 +51,7 @@ fn main() {
     }
 
     loop {
-        println!("{}", index_path.display());
+        println!("Current Working Directory: {}\n", index_path.display());
 
         println!("Select Mode: ");
         println!("1. Build Index");
@@ -78,74 +76,57 @@ fn main() {
         // Builds new index if directory was changed
         
         // Links document ID's to file names
-        id_file = build_index(&index_path, &mut index, &mut k_gram_index);
+        let id_file = build_index(&index_path, &mut index, &mut k_gram_index);
 
         let serialized_id_file = serde_json::to_string(&id_file).unwrap();
         let serialized_kgramindex = serde_json::to_string(&k_gram_index).unwrap();
 
         
-        let id_file_fileName = format!("{}/{}", index_path.display(), "id_file.bin");
-        let kgram_fileName = format!("{}/{}", index_path.display(), "kgram.bin");
+        let id_file_filename = format!("{}/{}", index_path.display(), "id_file.bin");
+        let kgram_filename = format!("{}/{}", index_path.display(), "kgram.bin");
 
         //  TODO: BUILD INDEX FILE HERE
         
-        let mut id_file_file = match File::create(&id_file_fileName) {
-            Err(why) => panic!("Couldn't create {}", &id_file_fileName),
+        let mut id_file_file = match File::create(&id_file_filename) {
+            Err(why) => panic!("Couldn't create {} - {}", &id_file_filename, why),
             Ok(file) => file,
         };
 
-        let mut kgram_file = match File::create(&kgram_fileName) {
-            Err(why) => panic!("Couldn't create {}", &kgram_fileName),
+        let mut kgram_file = match File::create(&kgram_filename) {
+            Err(why) => panic!("Couldn't create {} - {}", &kgram_filename, why),
             Ok(file) => file,
         };
 
-        id_file_file.write(&serialized_id_file.as_bytes());
-        kgram_file.write(&serialized_kgramindex.as_bytes());
+        id_file_file.write(&serialized_id_file.as_bytes()).expect("Failed to write id file");
+        kgram_file.write(&serialized_kgramindex.as_bytes()).expect("Failed to write kgram file");
 
         let index_writer = IndexWriter::new(&index_path.to_str().unwrap());
         index_writer.build_index_for_directory(&index, index_writer.get_folder_path()); 
     }
     
     if query_index {
-        // TODO: REMOVE WHEN LOADING INDEX FROM DISK
         let disk_inverted_index_path = index_path.clone();
         let disk_inverted_index = DiskInvertedIndex::new(&disk_inverted_index_path.to_str().unwrap());
 
-        println!("{}", index_path.display());
+        let id_file_filename = format!("{}/{}", index_path.display(), "id_file.bin");
+        let kgram_filename = format!("{}/{}", index_path.display(), "kgram.bin");
 
-        let id_file_fileName = format!("{}/{}", index_path.display(), "id_file.bin");
-        let kgram_fileName = format!("{}/{}", index_path.display(), "kgram.bin");
-
-        let mut id_file_file = File::open(id_file_fileName).unwrap();
+        let mut id_file_file = File::open(id_file_filename).unwrap();
 
         let mut id_file_contents = String::new();
-        id_file_file.read_to_string(&mut id_file_contents);
+        id_file_file.read_to_string(&mut id_file_contents).expect("Failed to read id file");
 
-        id_file = serde_json::from_str(&id_file_contents).unwrap();
+        let id_file = serde_json::from_str(&id_file_contents).unwrap();
 
-        let mut kgram_file = File::open(kgram_fileName).unwrap();
+        let mut kgram_file = File::open(kgram_filename).unwrap();
 
         let mut kgram_file_contents = String::new();
-        kgram_file.read_to_string(&mut kgram_file_contents);
+        kgram_file.read_to_string(&mut kgram_file_contents).expect("Failed to read kgram file");
 
         k_gram_index = serde_json::from_str(&kgram_file_contents).expect("Error reading kgram file");
         
-        for (doc_id, positions) in disk_inverted_index.get_positions("bravo").iter() {
-            println!("{}, orig: {}", id_file.get(&doc_id).unwrap(), doc_id);
-            println!("{} length of positions", positions.len());
-            for position in positions {
-                println!("{} bravo", position);
-            }
-        }
-        for (doc_id, positions) in disk_inverted_index.get_positions("alpha").iter() {
-            println!("{}, orig: {}", id_file.get(&doc_id).unwrap(), doc_id);
-            println!("{} length of positions", positions.len());
-            for position in positions {
-                println!("{} bravo", position);
-            }
-        }
         loop {
-            println!("{}", index_path.display());
+            println!("Current Working Directory: {}\n", index_path.display());
 
             println!("Choose Retrieval Method: "); 
             println!("1. Boolean Retrieval");
@@ -185,21 +166,17 @@ fn main() {
                 } else if input.starts_with(":s ") || input.starts_with(":stem ") {
                     stem_term(input.as_str());
                 } else if input.starts_with(":i ") || input.starts_with(":index ") {
-                    change = index_directory(&mut index_path, input.clone());
+                    index_directory(&mut index_path, input.clone());
+                } else if input == ":mode r" || input == ":mode ranked" {
+                    println!("Switching to Ranked Retrieval");
+                    ranked_retrieval = true; 
+                } else if input == ":mode b" || input == ":mode boolean" {
+                    println!("Switching to Boolean Retrieval");
+                    ranked_retrieval = false; 
                 } else if input == ":v" || input == ":vocab" {
                     print_vocab(&index);
                 } else if input == ":k" || input == ":kgram" {
                     print_kgram(&k_gram_index);
-                } else if input == ":enable k" || input == ":enable kgram" {
-                    if !k_gram_index.is_enabled() {
-                       change = true;  
-                    }
-                    toggle_k_gram(&mut k_gram_index, true);
-                } else if input == ":disable k" || input == ":disable kgram" {
-                    if k_gram_index.is_enabled() {
-                       change = true;  
-                    }
-                    toggle_k_gram(&mut k_gram_index, false);
                 } else if input == ":h" || input == ":help" {
                     print_help(); 
                 } else {
@@ -208,7 +185,6 @@ fn main() {
             }
         }
     }
-
 }
 
 /*
@@ -367,29 +343,6 @@ fn print_kgram(
         println!("{}", gram);
     }
     println!("Total kgrams: {}", kgrams.len());
-}
-
-/*
- * Toggled the  K_gram index on/off
- *
- * # Arguments
- *
- * *`k_gram` - The KGramIndex that will be enabled/disabled
- * *`enable` - The toggle value of the KGramIndex
- */
-fn toggle_k_gram(
-    k_gram_index: &mut KGramIndex, enable: bool) {
-
-    println!();
-    if enable {
-        println!("K Gram Index Enabled\n");
-        k_gram_index.enable_k_gram();
-    } else {
-        println!("K Gram Index Disabled\n");
-        k_gram_index.disable_k_gram();
-    }   
-    println!();
-
 }
 
 /*

@@ -75,12 +75,12 @@ pub fn build_index(
             wdt.insert(term.to_string(),weight);
             index.add_score(term,weight);
         }
-        let mut ld: f64 = 0.0f64;
-        let mut sumWeightsSquared: f64 = 0.0f64;
+        // let mut ld: f64 = 0.0f64;
+        let mut sum_weights_squared: f64 = 0.0f64;
         for val in wdt.values() {
-            sumWeightsSquared = sumWeightsSquared + val.powi(2);
+            sum_weights_squared = sum_weights_squared + val.powi(2);
         }
-        ld = sumWeightsSquared.sqrt();
+        // ld = sum_weights_squared.sqrt();
     }
 
     println!("Indexing complete!\n");
@@ -172,7 +172,7 @@ pub fn normalize_token(term: String) -> Vec<String> {
         normalized_strings.push(reduced_string);
     }
     //lowercase the remaining word(s)
-    for mut word in normalized_strings.iter_mut() {
+    for word in normalized_strings.iter_mut() {
         *word = word.to_lowercase();
     }
 
@@ -182,7 +182,7 @@ pub fn normalize_token(term: String) -> Vec<String> {
 pub fn stem_terms(mut strings_to_stem: Vec <String> ) -> Vec <String>{
     //stem the remaining word(s)
     let mut stemmer = Stemmer::new("english").unwrap();
-    for mut word in strings_to_stem.iter_mut() {
+    for word in strings_to_stem.iter_mut() {
         *word = stemmer.stem(word);
     }
 

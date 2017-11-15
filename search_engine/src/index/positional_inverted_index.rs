@@ -146,13 +146,12 @@ impl PositionalInvertedIndex {
      */
     pub fn add_term(&mut self, term: &str, doc_id: u32, pos: u32) {
         if self.m_index.contains_key(term) {
-            let mut m_index = &mut self.m_index;
             {
-                let mut positional_postings = m_index.get_mut(term)
+                let positional_postings = self.m_index.get_mut(term)
                     .expect("No term found");
 
                 let num_of_doc_ids = positional_postings.len();
-                let mut last_posting = positional_postings.get_mut(num_of_doc_ids - 1)
+                let last_posting = positional_postings.get_mut(num_of_doc_ids - 1)
                     .expect(
                     "Could not get posting",
                 );
@@ -165,10 +164,10 @@ impl PositionalInvertedIndex {
                 }
             }
             {
-                if m_index.get(term).unwrap().last().unwrap().get_doc_id() != doc_id {
+                if self.m_index.get(term).unwrap().last().unwrap().get_doc_id() != doc_id {
                     let mut new_posting = PositionalPosting::new(doc_id);
                     new_posting.add_position(pos);
-                    m_index.get_mut(term).expect("term not found").push(
+                    self.m_index.get_mut(term).expect("term not found").push(
                         new_posting,
                     );
                 }

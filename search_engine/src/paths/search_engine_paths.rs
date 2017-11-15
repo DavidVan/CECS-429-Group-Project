@@ -16,7 +16,6 @@ pub fn initialize_path() -> PathBuf {
     }
     index_path.push("search_engine");
     index_path.push("assets");
-    println!("{}", index_path.display());
     return index_path;
 }
 

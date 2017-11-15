@@ -1,30 +1,30 @@
 use std::cmp::Ordering;
 
 pub struct DocumentAccumulator {
-   doc_id: u64, 
-   accumulator: f64,
+   m_doc_id: u64, 
+   m_accumulator: f64,
 }
 
 impl DocumentAccumulator {
-    pub fn new(docId: u64, acc: f64) -> DocumentAccumulator {
+    pub fn new(doc_id: u64, accumulator: f64) -> DocumentAccumulator {
         DocumentAccumulator {
-            doc_id: docId,
-            accumulator: acc
+            m_doc_id: doc_id,
+            m_accumulator: accumulator
         }
     }
     pub fn get_doc_id(&self) -> u64 {
-        self.doc_id 
+        self.m_doc_id 
     }
 
     pub fn get_accumulator(&self) -> f64 {
-        self.accumulator 
+        self.m_accumulator 
     }
 }
 
 impl Ord for DocumentAccumulator {
     
     fn cmp(&self, other: &DocumentAccumulator) -> Ordering {
-       self.accumulator.partial_cmp(&other.accumulator).unwrap()
+       self.m_accumulator.partial_cmp(&other.m_accumulator).unwrap()
     }
 }
 
@@ -40,6 +40,6 @@ impl PartialOrd for DocumentAccumulator {
 
 impl PartialEq for DocumentAccumulator {
     fn eq(&self, other: &DocumentAccumulator) -> bool {
-        self.accumulator == other.accumulator 
+        self.m_accumulator == other.m_accumulator 
     }
 }
