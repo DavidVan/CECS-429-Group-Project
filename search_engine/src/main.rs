@@ -6,6 +6,7 @@ extern crate stemmer;
 use search_engine::index::index_writer::IndexWriter;
 use search_engine::index::index_writer::DiskIndex;
 use search_engine::index::disk_inverted_index::DiskInvertedIndex;
+use search_engine::index::disk_inverted_index::IndexReader;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
@@ -116,7 +117,7 @@ fn main() {
         let mut id_file_contents = String::new();
         id_file_file.read_to_string(&mut id_file_contents).expect("Failed to read id file");
 
-        let id_file = serde_json::from_str(&id_file_contents).unwrap();
+        let id_file : HashMap<u32, String> = serde_json::from_str(&id_file_contents).unwrap();
 
         let mut kgram_file = File::open(kgram_filename).unwrap();
 
@@ -125,6 +126,21 @@ fn main() {
 
         k_gram_index = serde_json::from_str(&kgram_file_contents).expect("Error reading kgram file");
         
+        for (doc_id1, positions1) in disk_inverted_index.get_positions("bravo").iter() {
+            println!("{}, orig: {}", id_file.get(&doc_id1).unwrap(), doc_id1);
+            println!("{} length of positions", positions1.len());
+            for position1 in positions1 {
+                println!("{} bravo", position1);
+            }
+        }
+        for (doc_id1, positions1) in disk_inverted_index.get_positions("alpha").iter() {
+            println!("{}, orig: {}", id_file.get(&doc_id1).unwrap(), doc_id1);
+            println!("{} length of positions", positions1.len());
+            for position1 in positions1 {
+                println!("{} alpha", position1);
+            }
+        }
+
         loop {
             println!("Current Working Directory: {}\n", index_path.display());
 

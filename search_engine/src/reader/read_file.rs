@@ -111,6 +111,9 @@ pub fn read_file(file_name: &str) -> Document {
     if extension == "json" {
         return read_json_file(file_name);
     }
+    if extension == "txt" {
+        return read_text_file(file_name);
+    }
     return read_text_file(file_name);
 }
 

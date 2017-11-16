@@ -61,11 +61,11 @@ impl<'a> DiskIndex for IndexWriter<'a> {
             let postings_file_metadata = postings_file.metadata().unwrap();
             let postings_file_size = postings_file_metadata.len();
 
-            // let document_weights_file_metadata = document_weights.metadata().unwrap();
-            // let document_weights_file_size = document_weights_file_metadata.len();
+            let document_weights_file_metadata = document_weights.metadata().unwrap();
+            let document_weights_file_size = document_weights_file_metadata.len();
 
             vocab_table.write_u64::<BigEndian>(postings_file_size).expect("Error writing to file");
-            //vocab_table.write_u64::<BigEndian>(document_weights_file_size);
+            vocab_table.write_u64::<BigEndian>(document_weights_file_size);
 
             let mut document_weight : f64 = 0.0; // Ld score accumulator
 

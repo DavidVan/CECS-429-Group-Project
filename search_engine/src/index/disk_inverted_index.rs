@@ -1,13 +1,16 @@
 use byteorder::{ReadBytesExt, BigEndian};
+use btree::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::SeekFrom;
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::mem::size_of;
 
 pub struct DiskInvertedIndex<'a> {
     path: &'a str,
     vocab_list: File,
+    btree_map: BTree<String, (i64, i64)>,
     pub postings: File,
     vocab_table: Vec<u64>,
 }
@@ -22,7 +25,8 @@ pub trait IndexReader {
     fn get_document_frequency(&self, term: &str) -> u32;
     fn get_term_frequency(&self, term: &str, doc_id_wanted: u32) -> Option<u32>;
     fn get_document_length(&self, term: &str) -> f64;
-    fn binary_search_vocabulary(&self, term: &str) -> i64;
+    fn binary_search_vocabulary(&self, term: &str) -> (i64, i64);
+    fn btree_search_vocabulary(&self, term: &str) -> (i64, i64);
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
     fn get_term_count(&self) -> u32;
 }
@@ -32,6 +36,7 @@ impl<'a> DiskInvertedIndex<'a> {
         DiskInvertedIndex {
             path: path.clone(),
             vocab_list: File::open(format!("{}/{}", path, "vocab.bin")).unwrap(),
+            btree_map: BTree::new(&String::from(format!("{}/{}", path, "btree")), size_of::<String>(), size_of::<(i64, i64)>()).unwrap(),
             postings: File::open(format!("{}/{}", path, "postings.bin")).unwrap(),
             vocab_table: DiskInvertedIndex::read_vocab_table(path),
         }
@@ -73,7 +78,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn get_positions(&self, term: &str) -> HashMap<u32, Vec<u32>> {
-        let postings_position = self.binary_search_vocabulary(term);
+        let (postings_position, _) = self.binary_search_vocabulary(term);
         let mut doc_to_positions = HashMap::new();
         (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error Retrieving Positions");
         let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
@@ -107,7 +112,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn get_document_score(&self, term: &str, doc_id_wanted: u32) -> Option<f64> {
-        let postings_position = self.binary_search_vocabulary(term);
+        let (postings_position, _) = self.binary_search_vocabulary(term);
         (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error reading from Buffer");
         let mut doc_freq_buffer = [0; 4];
         (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error reading from Buffer");
@@ -132,7 +137,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn get_document_frequency(&self, term: &str) -> u32 {
-        let postings_position = self.binary_search_vocabulary(term);
+        let (postings_position, _) = self.binary_search_vocabulary(term);
         (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error Seeking from Buffer");
         let mut doc_freq_buffer = [0; 4];
         (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error Seeking from Buffer");
@@ -140,7 +145,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn get_term_frequency(&self, term: &str, doc_id_wanted: u32) -> Option<u32> {
-        let postings_position = self.binary_search_vocabulary(term);
+        let (postings_position, _) = self.binary_search_vocabulary(term);
         (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error seeking from file)");
         let mut doc_freq_buffer = [0; 4];
         (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error seeking from file)");
@@ -163,7 +168,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn get_document_length(&self, term: &str) -> f64 {
-        let postings_position = self.binary_search_vocabulary(term);
+        let (postings_position, _) = self.binary_search_vocabulary(term);
         (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error seeking from file");
         let mut doc_freq_buffer = [0; 4];
         (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error seeking from file");
@@ -189,7 +194,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
     fn get_postings(&self, term: &str) -> Result<Vec<u32>, &'static str> {
         println!("get postings function called");
-        let postings_position = self.binary_search_vocabulary(term);
+        let (postings_position, _) = self.binary_search_vocabulary(term);
         match postings_position >= 0 {
             true => Ok(self.read_postings_from_file(&self.postings, postings_position)),
             false => Err("Postings position is less than 0."),
@@ -197,22 +202,29 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn contains_term(&self, term: &str) -> bool {
-        return self.binary_search_vocabulary(term) != -1; 
+        return self.binary_search_vocabulary(term) != (-1, -1); 
     }
-    fn binary_search_vocabulary(&self, term: &str) -> i64 {
+
+    fn binary_search_vocabulary(&self, term: &str) -> (i64, i64) { // First in tuple is position in postings.bin. Second in tuple is position in doc_weights.bin
         let mut vocab_list = &self.vocab_list;
         let mut i = 0;
-        let mut j = self.vocab_table.len() / 2 - 1;
+        let mut j = self.vocab_table.len() / 3 - 1;
         while i <= j {
             let m = (i + j) / 2;
             println!("i: {}, j: {}, m: {}", i, j, m);
-            let vocab_list_position = self.vocab_table.get(m * 2).unwrap();
-            let term_length;
-            if m == self.vocab_table.len() / 2 - 1 {
-                term_length = vocab_list.metadata().unwrap().len() as u64 - self.vocab_table[m * 2];
+            let vocab_list_position = self.vocab_table.get(m * 3).unwrap();
+            let mut term_length = 0;
+            if m == self.vocab_table.len() / 3 - 1 {
+                println!("Vocab List File Length: {}", vocab_list.metadata().unwrap().len());
+                println!("Vocab Table Position: {}", self.vocab_table[m * 3]);
+                term_length = vocab_list.metadata().unwrap().len() as u64 - self.vocab_table[m * 3];
+                println!("Term length when m is equal: {}", term_length);
             }
             else {
-                term_length = self.vocab_table.get((m + 1) * 2).unwrap() - vocab_list_position;
+                println!("Vocab List Pos: {}", vocab_list_position);
+                println!("Vocab Table Position: {}", self.vocab_table.get((m + 1) * 3).unwrap());
+                term_length = self.vocab_table.get((m + 1) * 3).unwrap() - vocab_list_position;
+                println!("Term length when m is not equal: {}", term_length);
             }
 
             vocab_list.seek(SeekFrom::Start(*vocab_list_position as u64)).unwrap();
@@ -225,12 +237,18 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             let compare_value = term.cmp(&file_term);
 
             match compare_value {
-                Ordering::Equal => return *(self.vocab_table.get(m * 2 + 1)).unwrap() as i64,
+                Ordering::Equal => return (*(self.vocab_table.get(m * 3 + 1)).unwrap() as i64, *(self.vocab_table.get(m * 3 + 2)).unwrap() as i64),
                 Ordering::Less => j = m - 1,
                 Ordering::Greater => i = m + 1
             }
         }
-        -1
+        (-1, -1)
+    }
+
+
+    fn btree_search_vocabulary(&self, term: &str) -> (i64, i64) {
+        // self.btree_map.get(&String::from(term))
+        (-1, -1)
     }
 
     fn read_vocab_table(index_name: &str) -> Vec<u64> {
@@ -238,15 +256,14 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         let mut vocab_size_buffer= [0; 4];
         table_file.read_exact(&mut vocab_size_buffer).expect("Error reading from file");
         
-        // let mut table_index = 0;
-        let mut vocab_table = vec![0; (&vocab_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 2];
+        let mut table_index = 0;
+        let mut vocab_table = vec![0; (&vocab_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 3];
         let mut vocab_pos_buffer = [0; 8];
         loop {
             match table_file.read_exact(&mut vocab_pos_buffer) {
                 Ok(_) => {
                     vocab_table.push((&vocab_pos_buffer[..]).read_u64::<BigEndian>().unwrap());
-                    //table_file.seek(SeekFrom::Current(8)); // Skip the document weights (Ld) values...
-                    // table_index += 1;
+                    table_index += 1;
                 },
                 Err(_) => break
             }
