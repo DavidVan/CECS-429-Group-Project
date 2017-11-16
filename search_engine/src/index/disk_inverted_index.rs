@@ -150,7 +150,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         results 
     }
 
-    fn read_doc_weights_from_file(&self, doc_weights: &File, doc_weights_position: i64) -> (f64, f64, u64, u64, f64) {
+    fn read_doc_weights_from_file(&self, mut doc_weights: &File, doc_weights_position: i64) -> (f64, f64, u64, u64, f64) {
         let mut avg_doc_length_buffer = [0; 8];
         doc_weights.read_exact(&mut avg_doc_length_buffer).unwrap();
         let avg_doc_length = (&avg_doc_length_buffer[..]).read_f64::<BigEndian>().unwrap();
