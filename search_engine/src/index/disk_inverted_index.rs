@@ -15,15 +15,13 @@ pub struct DiskInvertedIndex<'a> {
 }
 
 pub trait IndexReader {
-    fn read_postings_from_file(&self, postings: &File, postings_position: i64) -> Vec<(u32, u32, Vec<u32>)>; // Document ID, tf_td, Positions
-    fn read_postings_from_file_no_positions(&self, postings: &File, postings_position: i64) -> Vec<(u32, u32)>; // Document ID, tf_td
+    fn read_postings_from_file(&self, postings: &File, postings_position: i64) -> Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>; // Document ID, tf_td, regular term score, tf_idf term score, okapi term score, wacky term score, Positions
+    fn read_postings_from_file_no_positions(&self, postings: &File, postings_position: i64) -> Vec<(u32, u32, f64, f64, f64, f64)>; // Document ID, tf_td, regular term score, tf_idf term score, okapi term score, wacky term score
     fn get_path(&self) -> String;
-    fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, Vec<u32>)>, &'static str>;
-    fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32)>, &'static str>;
+    fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>, &'static str>;
+    fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64)>, &'static str>;
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
-    fn get_term_score(&self, term: &str, doc_id_wanted: u32) -> Option<f64>;
-    fn get_term_frequency(&self, term: &str, doc_id_wanted: u32) -> Option<u32>;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
     fn btree_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
@@ -43,8 +41,8 @@ impl<'a> DiskInvertedIndex<'a> {
 }
 
 impl<'a> IndexReader for DiskInvertedIndex<'a> {
-    fn read_postings_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<(u32, u32, Vec<u32>)> {
-        let mut results: Vec<(u32, u32, Vec<u32>)> = Vec::new();
+    fn read_postings_from_file(&self, mut postings: &File, postings_position: i64) -> Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)> {
+        let mut results: Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)> = Vec::new();
         postings.seek(SeekFrom::Start(postings_position as u64)).unwrap();
         let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
         postings.read_exact(&mut doc_freq_buffer).unwrap();
@@ -60,19 +58,23 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
             let mut term_score_buffer = [0; 8];
             postings.read_exact(&mut term_score_buffer).expect("Error reading buffer");
+            let term_score = (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
             println!("Term Score: {}", (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut tf_idf_term_score_buffer = [0; 8];
             postings.read_exact(&mut tf_idf_term_score_buffer).expect("Error reading buffer");
-            println!("Term Score: {}", (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+            let tf_idf_term_score = (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
+            println!("tf-idf Term Score: {}", (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut okapi_term_score_buffer = [0; 8];
             postings.read_exact(&mut okapi_term_score_buffer).expect("Error reading buffer");
-            println!("Term Score: {}", (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+            let okapi_term_score = (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
+            println!("Okapi Term Score: {}", (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut wacky_term_score_buffer = [0; 8];
             postings.read_exact(&mut wacky_term_score_buffer).expect("Error reading buffer");
-            println!("Term Score: {}", (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+            let wacky_term_score = (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
+            println!("Wacky Term Score: {}", (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut term_freq_buffer = [0; 4];
             postings.read_exact(&mut term_freq_buffer).expect("Error reading buffer");
@@ -88,13 +90,13 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
                 positions.push(postings_accumulator);
             }
             
-            results.push((doc_id, term_frequency, positions));
+            results.push((doc_id, term_frequency, term_score, tf_idf_term_score, okapi_term_score, wacky_term_score, positions));
         }
         results 
     }
 
-    fn read_postings_from_file_no_positions(&self, mut postings: &File, postings_position: i64) -> Vec<(u32, u32)> {
-        let mut results: Vec<(u32, u32)> = Vec::new();
+    fn read_postings_from_file_no_positions(&self, mut postings: &File, postings_position: i64) -> Vec<(u32, u32, f64, f64, f64, f64)> {
+        let mut results: Vec<(u32, u32, f64, f64, f64, f64)> = Vec::new();
         postings.seek(SeekFrom::Start(postings_position as u64)).unwrap();
         let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
         postings.read_exact(&mut doc_freq_buffer).unwrap();
@@ -109,26 +111,30 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
             let mut term_score_buffer = [0; 8];
             postings.read_exact(&mut term_score_buffer).expect("Error reading buffer");
+            let term_score = (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
             println!("Term Score: {}", (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut tf_idf_term_score_buffer = [0; 8];
             postings.read_exact(&mut tf_idf_term_score_buffer).expect("Error reading buffer");
-            println!("Term Score: {}", (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+            let tf_idf_term_score = (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
+            println!("tf-idf Term Score: {}", (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut okapi_term_score_buffer = [0; 8];
             postings.read_exact(&mut okapi_term_score_buffer).expect("Error reading buffer");
-            println!("Term Score: {}", (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+            let okapi_term_score = (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
+            println!("Okapi Term Score: {}", (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut wacky_term_score_buffer = [0; 8];
             postings.read_exact(&mut wacky_term_score_buffer).expect("Error reading buffer");
-            println!("Term Score: {}", (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+            let wacky_term_score = (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
+            println!("Wacky Term Score: {}", (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut term_freq_buffer = [0; 4];
             postings.read_exact(&mut term_freq_buffer).expect("Error reading buffer");
             println!("Term Frequency: {}", (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap());
             let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
 
-            results.push((doc_id, term_frequency));
+            results.push((doc_id, term_frequency, term_score, tf_idf_term_score, okapi_term_score, wacky_term_score));
             
             postings.seek(SeekFrom::Current((term_frequency * 4) as i64)).expect("Error Seeking From File"); // Skip reading term positions... We only need doc ids.
         }
@@ -147,56 +153,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         (&doc_freq_buffer[..]).read_u32::<BigEndian>().expect("Error Seeking from Buffer") // Return the document frequency
     }
 
-    fn get_term_score(&self, term: &str, doc_id_wanted: u32) -> Option<f64> {
-        let postings_position = self.binary_search_vocabulary(term);
-        (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error reading from Buffer");
-        let mut doc_freq_buffer = [0; 4];
-        (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error reading from Buffer");
-        let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().expect("Error reading from Buffer");
-        let mut doc_id = 0;
-        for _ in 0..document_frequency {
-            let mut doc_id_buffer = [0; 4];
-            (&self.postings).read_exact(&mut doc_id_buffer).expect("Error reading from Buffer");
-            doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().expect("Error reading from Buffer");
-            let mut term_weight_buffer = [0; 8];
-            (&self.postings).read_exact(&mut term_weight_buffer).expect("Error reading from Buffer");
-            let term_weight = (&term_weight_buffer[..]).read_f64::<BigEndian>().expect("Error reading from Buffer");
-            if doc_id == doc_id_wanted {
-                return Some(term_weight);
-            }
-            (&self.postings).seek(SeekFrom::Current(24)).expect("Error reading from Buffer");
-            let mut term_freq_buffer = [0; 4];
-            (&self.postings).read_exact(&mut term_freq_buffer).expect("Error reading from Buffer");
-            let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().expect("Error reading from Buffer");
-            (&self.postings).seek(SeekFrom::Current((term_frequency * 4) as i64)).expect("Error Seeking from Buffer");
-        }
-        None
-    }
-
-    fn get_term_frequency(&self, term: &str, doc_id_wanted: u32) -> Option<u32> {
-        let postings_position = self.binary_search_vocabulary(term);
-        (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error seeking from file)");
-        let mut doc_freq_buffer = [0; 4];
-        (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error seeking from file)");
-        let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().expect("Error seeking from file)");
-        let mut doc_id = 0;
-        for _ in 0..document_frequency {
-            let mut doc_id_buffer = [0; 4];
-            (&self.postings).read_exact(&mut doc_id_buffer).expect("Error seeking from file)");
-            doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().expect("Error seeking from file)");
-            (&self.postings).seek(SeekFrom::Current(32)).expect("Error seeking from file"); // Skip term weight
-            let mut term_freq_buffer = [0; 4];
-            (&self.postings).read_exact(&mut term_freq_buffer).expect("Error seeking from file)");
-            let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().expect("Error seeking from file)");
-            if doc_id == doc_id_wanted {
-                return Some(term_frequency);
-            }
-            (&self.postings).seek(SeekFrom::Current((term_frequency * 4) as i64)).expect("Error seeking from file)");
-        }
-        None
-    }
-
-    fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32)>, &'static str> {
+    fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64)>, &'static str> {
         println!("get postings function called");
         let postings_position = self.binary_search_vocabulary(term);
         match postings_position >= 0 {
@@ -205,7 +162,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         }
     }
 
-    fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, Vec<u32>)>, &'static str> {
+    fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>, &'static str> {
         println!("get postings function called");
         let postings_position = self.binary_search_vocabulary(term);
         match postings_position >= 0 {

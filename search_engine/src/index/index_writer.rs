@@ -55,12 +55,12 @@ impl<'a> DiskIndex for IndexWriter<'a> {
 
         vocab_table.write_u32::<BigEndian>(dictionary.len() as u32).expect("Error writing to file");
         let mut vocab_index = 0;
+        let postings_file_metadata = postings_file.metadata().unwrap();
+        let mut postings_file_size = postings_file_metadata.len();
         for s in dictionary {
             let postings = index.get_postings(s);
             let vocab_position = *vocab_positions.get(vocab_index).unwrap(); // Location of vocab
             vocab_table.write_u64::<BigEndian>(vocab_position).expect("Error writing to file");
-            let postings_file_metadata = postings_file.metadata().unwrap();
-            let postings_file_size = postings_file_metadata.len();
 
             vocab_table.write_u64::<BigEndian>(postings_file_size).expect("Error writing to file");
 
@@ -95,18 +95,25 @@ impl<'a> DiskIndex for IndexWriter<'a> {
                 last_doc_id = doc_id.get_doc_id();
             }
             vocab_index += 1;
+            postings_file_size = postings_file_metadata.len();
         }
         
     }
 
     fn build_doc_weights_file(&self, folder: &str, average_doc_length: f64, doc_weights: &Vec<DocumentWeight>) {
         let mut document_weights = File::create(format!("{}/{}", folder, "doc_weights.bin")).unwrap();
+        let mut document_weights_table = File::create(format!("{}/{}", folder, "doc_weights_table.bin")).unwrap();
         document_weights.write_f64::<BigEndian>(average_doc_length).expect("Error writing to file");
+        let document_weights_metadata = document_weights.metadata().unwrap();
+        let mut document_weights_file_size = document_weights_metadata.len();
         for weight in doc_weights {
+            document_weights_table.write_u32::<BigEndian>(weight.get_doc_id());
+            document_weights_table.write_u64::<BigEndian>(document_weights_file_size);
             document_weights.write_f64::<BigEndian>(weight.get_doc_weight()).expect("Error writing to file");
             document_weights.write_u64::<BigEndian>(weight.get_doc_length()).expect("Error writing to file");
             document_weights.write_u64::<BigEndian>(weight.get_byte_size()).expect("Error writing to file");
             document_weights.write_f64::<BigEndian>(weight.get_avg_tftd()).expect("Error writing to file");
+            document_weights_file_size = document_weights_metadata.len();
         }
     }
 
