@@ -163,11 +163,11 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
         let mut doc_length_buffer = [0; 8];
         doc_weights.read_exact(&mut doc_length_buffer).unwrap();
-        let doc_length = (&doc_length_buffer[..]).read_f64::<BigEndian>().unwrap();
+        let doc_length = (&doc_length_buffer[..]).read_u64::<BigEndian>().unwrap();
 
         let mut byte_size_buffer = [0; 8];
         doc_weights.read_exact(&mut byte_size_buffer).unwrap();
-        let byte_size = (&byte_size_buffer[..]).read_f64::<BigEndian>().unwrap();
+        let byte_size = (&byte_size_buffer[..]).read_u64::<BigEndian>().unwrap();
 
         let mut avg_tftd_buffer = [0; 8];
         doc_weights.read_exact(&mut avg_tftd_buffer).unwrap();
