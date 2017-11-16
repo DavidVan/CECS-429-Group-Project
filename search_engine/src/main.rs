@@ -3,8 +3,6 @@ extern crate serde;
 extern crate serde_json;
 extern crate stemmer;
 
-use search_engine::index::index_writer::IndexWriter;
-use search_engine::index::index_writer::DiskIndex;
 use search_engine::index::disk_inverted_index::DiskInvertedIndex;
 use search_engine::index::disk_inverted_index::IndexReader;
 use search_engine::parser::document_parser;
@@ -101,8 +99,6 @@ fn main() {
         id_file_file.write(&serialized_id_file.as_bytes()).expect("Failed to write id file");
         kgram_file.write(&serialized_kgramindex.as_bytes()).expect("Failed to write kgram file");
 
-        let index_writer = IndexWriter::new(&index_path.to_str().unwrap());
-        index_writer.build_index_for_directory(&index, index_writer.get_folder_path()); 
     }
     
     if query_index {
