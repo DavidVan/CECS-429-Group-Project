@@ -76,7 +76,7 @@ impl<'a> DiskIndex for IndexWriter<'a> {
                 let doc_id_location = doc_id.get_doc_id() - last_doc_id;
                 postings_file.write_u32::<BigEndian>(doc_id_location).expect("Error writing to file");
 
-                let document_score = doc_id.get_doc_score();
+                let document_score = doc_id.get_term_score();
                 postings_file.write_f64::<BigEndian>(document_score).expect("Error writing to file"); //Wdt
 
                 document_weight += document_score.powi(2);

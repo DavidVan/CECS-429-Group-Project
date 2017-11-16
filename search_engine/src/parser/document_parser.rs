@@ -70,17 +70,34 @@ pub fn build_index(
         }
 
         let mut wdt: HashMap<String,f64> = HashMap::new();
+        let mut wdt_tf_idf: HashMap<String,f64> = HashMap::new();
+        let mut wdt_okapi: HashMap<String,f64> = HashMap::new();
+        let mut wdt_wacky: HashMap<String,f64> = HashMap::new();
         for (term,value) in &tftd {
             let weight:f64 = 1.0f64 + (*value as f64).ln();
+            let tf_idf_weight: f64 = ((tftd.len() as f64/(*value)as f64)).ln();
+            let okapi_weight: f64 =2.2f64 * (*value as f64);
+            let wacky_weight = weight/(1.0f64 + ( ( (tftd.values().sum::<u32>() as f64) / (tftd.len() as f64) ).ln() ) );
             wdt.insert(term.to_string(),weight);
-            index.add_score(term,weight);
+            wdt_tf_idf.insert(term.to_string(),tf_idf_weight);
+            wdt_okapi.insert(term.to_string(),okapi_weight);
+            wdt_wacky.insert(term.to_string(),wacky_weight);
+            index.set_score(term,weight);
+            index.set_tf_idf_score(term,tf_idf_weight);
+            index.set_okapi_score(term,okapi_weight);
+            index.set_wacky_score(term,wacky_weight);
         }
-        // let mut ld: f64 = 0.0f64;
+        let mut doc_weights: f64 = 0.0f64;
+
         let mut sum_weights_squared: f64 = 0.0f64;
         for val in wdt.values() {
             sum_weights_squared = sum_weights_squared + val.powi(2);
         }
-        // ld = sum_weights_squared.sqrt();
+        doc_weights = sum_weights_squared.sqrt();
+        let avg_tftd = (tftd.values().sum::<u32>() as f64) / (tftd.len() as f64);
+        let doc_length = tftd.len();
+        let byte_size = fs::metadata(file).unwrap().len();
+
     }
 
     println!("Indexing complete!\n");
