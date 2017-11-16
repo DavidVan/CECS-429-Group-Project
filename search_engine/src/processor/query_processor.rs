@@ -343,7 +343,7 @@ fn process_query_rank(
                 for posting in postings {
                     let doc_id = posting.0;
                     let term_doc_frequency = posting.1;
-                    let wdt = get_wdt(scheme, doc_id, &normalized_token, term_doc_frequency);
+                    let wdt = get_wdt(scheme, doc_id, &normalized_token, term_doc_frequency, index);
                     let accumulator : f64 = wqt * wdt;
                     if doc_accs.contains_key(&doc_id) {
                         *doc_accs.get_mut(&doc_id).unwrap() += accumulator;
@@ -352,10 +352,10 @@ fn process_query_rank(
                     }
                     if doc_lds.contains_key(&doc_id) {
                         if scheme == "tfidf" {
-                            *doc_lds.get_mut(&doc_id).unwrap() += get_ld(scheme, doc_id, &normalized_token, index); 
+                            *doc_lds.get_mut(&doc_id).unwrap() += get_ld(scheme, doc_id, &normalized_token, term_doc_frequency, index); 
                         }
                     } else {
-                        let ld = get_ld(scheme, doc_id, &normalized_token, index);
+                        let ld = get_ld(scheme, doc_id, &normalized_token, term_doc_frequency, index);
                         doc_lds.insert(doc_id, ld); 
                     }
                 }
@@ -403,7 +403,7 @@ fn get_wqt(scheme: &str, number_of_docs: u32, token: &str, index: &DiskInvertedI
 }
 
 
-fn get_wdt(scheme: &str, doc_id: u32, token: &str, term_doc_frequency: u32) -> f64 {
+fn get_wdt(scheme: &str, doc_id: u32, token: &str, term_doc_frequency: u32, index: &DiskInvertedIndex) -> f64 {
     if scheme == "default" {
         return 1.0 + (term_doc_frequency as f64).ln();
     } else if scheme == "tfidf" {
@@ -411,22 +411,29 @@ fn get_wdt(scheme: &str, doc_id: u32, token: &str, term_doc_frequency: u32) -> f
     } else if scheme == "okapi" {
         return 2.2 * term_doc_frequency as f64;
     } else if scheme == "wacky" {
-        // return (1.0 + (index.get_term_frequency(&token, doc_id).unwrap() as f64).ln())/(1.0);
-        return 1.0;
+        let doc_weights = index.get_document_weights(doc_id).unwrap();
+        let tftd_a = doc_weights.4;
+
+        return (1.0 + (term_doc_frequency as f64).ln())/(1.0 + (tftd_a).ln());
     } else {
         return 1.0;
     }
 }
 
-fn get_ld(scheme: &str, doc_id: u32, token: &str, index:&DiskInvertedIndex) -> f64 {
+fn get_ld(scheme: &str, doc_id: u32, token: &str, term_doc_frequency: u32, index:&DiskInvertedIndex) -> f64 {
+    let doc_weights = index.get_document_weights(doc_id).unwrap();
+    let doc_weight = doc_weights.1;
+    let doc_length_a = doc_weights.0;
+    let doc_length = doc_weights.2;
+    let byte_size = doc_weights.3;
     if scheme == "default" {
-        return 1.0;
+        return doc_weight;
     } else if scheme == "tfidf" {
-        return 1.0;
+        return doc_weight;
     } else if scheme == "okapi" {
-        return 1.0;
+        return 1.2 * (0.25 + (0.75 * (doc_length as f64)/(doc_length_a as f64) + term_doc_frequency as f64));
     } else {
-        return 1.0;
+        return (byte_size as f64).sqrt();
     }
 }
 
