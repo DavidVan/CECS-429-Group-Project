@@ -103,10 +103,14 @@ impl<'a> DiskIndex for IndexWriter<'a> {
         let mut document_weights = File::create(format!("{}/{}", folder, "doc_weights.bin")).unwrap();
         document_weights.write_f64::<BigEndian>(average_doc_length).expect("Error writing to file");
         for weight in doc_weights {
-            document_weights.write_f64::<BigEndian>(weight.get_doc_weight()).expect("Error writing to file");
-            document_weights.write_u64::<BigEndian>(weight.get_doc_length()).expect("Error writing to file");
-            document_weights.write_u64::<BigEndian>(weight.get_byte_size()).expect("Error writing to file");
-            document_weights.write_f64::<BigEndian>(weight.get_avg_tftd()).expect("Error writing to file");
+            document_weights.write_f64::<BigEndian>(1.0).expect("Error writing to file");
+            document_weights.write_u64::<BigEndian>(1).expect("Error writing to file");
+            document_weights.write_u64::<BigEndian>(1).expect("Error writing to file");
+            document_weights.write_f64::<BigEndian>(1.0).expect("Error writing to file");
+            // document_weights.write_f64::<BigEndiaight()).expect("Error writing to file");
+            // document_weights.write_u64::<BigEndian>(weight.get_doc_length()).expect("Error writing to file");
+            // document_weights.write_u64::<BigEndian>(weight.get_byte_size()).expect("Error writing to file");
+            // document_weights.write_f64::<BigEndian>(weight.get_avg_tftd()).expect("Error writing to file");
         }
     }
 

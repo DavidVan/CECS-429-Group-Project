@@ -58,10 +58,21 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().unwrap();
             doc_ids.push(doc_id);
 
-            let mut doc_score_buffer = [0; 8];
-            postings.read_exact(&mut doc_score_buffer).expect("Error reading buffer");
-            println!("Document Score: {}", (&doc_score_buffer[..]).read_f64::<BigEndian>().unwrap());
-            // Do something with document score here
+            let mut term_score_buffer = [0; 8];
+            postings.read_exact(&mut term_score_buffer).expect("Error reading buffer");
+            println!("Term Score: {}", (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+
+            let mut tf_idf_term_score_buffer = [0; 8];
+            postings.read_exact(&mut tf_idf_term_score_buffer).expect("Error reading buffer");
+            println!("Term Score: {}", (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+
+            let mut okapi_term_score_buffer = [0; 8];
+            postings.read_exact(&mut okapi_term_score_buffer).expect("Error reading buffer");
+            println!("Term Score: {}", (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
+
+            let mut wacky_term_score_buffer = [0; 8];
+            postings.read_exact(&mut wacky_term_score_buffer).expect("Error reading buffer");
+            println!("Term Score: {}", (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut term_freq_buffer = [0; 4];
             postings.read_exact(&mut term_freq_buffer).expect("Error reading buffer");
@@ -92,7 +103,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
             let mut positions = Vec::new();
 
-            (&self.postings).seek(SeekFrom::Current(8)).expect("Error Seeking Positions from File"); // Skip Document Score (Wdt)
+            (&self.postings).seek(SeekFrom::Current(32)).expect("Error Seeking Positions from File"); // Skip Term Score (Wdt)
             let mut term_freq_buffer = [0; 4];
             (&self.postings).read_exact(&mut term_freq_buffer).expect("Error Reading from Buffer");
             let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
@@ -136,6 +147,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             if doc_id == doc_id_wanted {
                 return Some(term_weight);
             }
+            (&self.postings).seek(SeekFrom::Current(24)).expect("Error reading from Buffer");
             let mut term_freq_buffer = [0; 4];
             (&self.postings).read_exact(&mut term_freq_buffer).expect("Error reading from Buffer");
             let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().expect("Error reading from Buffer");
@@ -155,7 +167,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             let mut doc_id_buffer = [0; 4];
             (&self.postings).read_exact(&mut doc_id_buffer).expect("Error seeking from file)");
             doc_id += (&doc_id_buffer[..]).read_u32::<BigEndian>().expect("Error seeking from file)");
-            (&self.postings).seek(SeekFrom::Current(8)).expect("Error seeking from file"); // Skip document weight
+            (&self.postings).seek(SeekFrom::Current(32)).expect("Error seeking from file"); // Skip term weight
             let mut term_freq_buffer = [0; 4];
             (&self.postings).read_exact(&mut term_freq_buffer).expect("Error seeking from file)");
             let term_frequency = (&term_freq_buffer[..]).read_u32::<BigEndian>().expect("Error seeking from file)");
@@ -192,7 +204,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             if m == self.vocab_table.len() / 2 - 1 {
                 println!("Vocab List File Length: {}", vocab_list.metadata().unwrap().len());
                 println!("Vocab Table Position: {}", self.vocab_table[m * 2]);
-                term_length = vocab_list.metadata().unwrap().len() as u64 - self.vocab_table[m * 3];
+                term_length = vocab_list.metadata().unwrap().len() as u64 - self.vocab_table[m * 2];
                 println!("Term length when m is equal: {}", term_length);
             }
             else {
@@ -232,7 +244,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         table_file.read_exact(&mut vocab_size_buffer).expect("Error reading from file");
         
         let mut table_index = 0;
-        let mut vocab_table = vec![0; (&vocab_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 3];
+        let mut vocab_table = vec![0; (&vocab_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 2];
         let mut vocab_pos_buffer = [0; 8];
         loop {
             match table_file.read_exact(&mut vocab_pos_buffer) {
