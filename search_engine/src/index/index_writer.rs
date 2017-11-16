@@ -103,6 +103,7 @@ impl<'a> DiskIndex for IndexWriter<'a> {
     fn build_doc_weights_file(&self, folder: &str, average_doc_length: f64, doc_weights: &Vec<DocumentWeight>) {
         let mut document_weights = File::create(format!("{}/{}", folder, "doc_weights.bin")).unwrap();
         let mut document_weights_table = File::create(format!("{}/{}", folder, "doc_weights_table.bin")).unwrap();
+        document_weights_table.write_u32::<BigEndian>(doc_weights.len() as u32).expect("Error writin to file");
         document_weights.write_f64::<BigEndian>(average_doc_length).expect("Error writing to file");
         let document_weights_metadata = document_weights.metadata().unwrap();
         let mut document_weights_file_size = document_weights_metadata.len();
