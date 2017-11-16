@@ -50,7 +50,6 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         postings.read_exact(&mut doc_freq_buffer).unwrap();
         println!("Document Frequency: {}", (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap());
         let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
-        let mut positions = Vec::new();
         let mut doc_id = 0;
         for _ in 0..document_frequency {
             let mut doc_id_buffer = [0; 4];
@@ -81,6 +80,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
             let mut positions_buffer = [0; 4];
             let mut postings_accumulator = 0;
+            let mut positions = Vec::new();
             for j in 0..term_frequency {
                 (&self.postings).read_exact(&mut positions_buffer).expect("Error reading from Buffer");
                 postings_accumulator += (&positions_buffer[..]).read_u32::<BigEndian>().unwrap();
