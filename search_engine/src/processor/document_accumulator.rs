@@ -1,18 +1,18 @@
 use std::cmp::Ordering;
 
 pub struct DocumentAccumulator {
-   m_doc_id: u64, 
+   m_doc_id: u32, 
    m_accumulator: f64,
 }
 
 impl DocumentAccumulator {
-    pub fn new(doc_id: u64, accumulator: f64) -> DocumentAccumulator {
+    pub fn new(doc_id: u32, accumulator: f64) -> DocumentAccumulator {
         DocumentAccumulator {
             m_doc_id: doc_id,
             m_accumulator: accumulator
         }
     }
-    pub fn get_doc_id(&self) -> u64 {
+    pub fn get_doc_id(&self) -> u32 {
         self.m_doc_id 
     }
 

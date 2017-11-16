@@ -22,6 +22,7 @@ use std::path::*;
 fn main() {
     let mut index_path = search_engine_paths::initialize_path();
 
+    let mut scheme = "default";
     let mut menu: i32;
     let mut input: String;
     let mut change: bool;
@@ -173,7 +174,7 @@ fn main() {
             input = user_input::read_input_line();
 
             if !input.starts_with(":") {
-                process_query(ranked_retrieval, &input, &disk_inverted_index, &k_gram_index, &id_file);
+                process_query(ranked_retrieval, scheme, &input, &disk_inverted_index, &k_gram_index, &id_file);
             } else {
                 if input == ":q" || input == ":quit" {
                    return (); 
@@ -189,6 +190,14 @@ fn main() {
                 } else if input == ":mode b" || input == ":mode boolean" {
                     println!("Switching to Boolean Retrieval");
                     ranked_retrieval = false; 
+                } else if input == ":scheme d" || input == ":scheme default" {
+                    scheme = "default"; 
+                } else if input == ":scheme t" || input == ":scheme tfidf" {
+                    scheme = "tfidf"; 
+                } else if input == ":scheme o" || input == ":scheme okami" {
+                    scheme = "okami"; 
+                } else if input == ":scheme w" || input == ":scheme wacky" {
+                    scheme = "wacky"; 
                 } else if input == ":v" || input == ":vocab" {
                     print_vocab(&index);
                 } else if input == ":k" || input == ":kgram" {
@@ -237,13 +246,14 @@ fn build_index(
  */
 fn process_query(
     ranked_retrieval: bool,
+    scheme: &str,
     input: &str,
     index: &DiskInvertedIndex,
     k_gram_index: &KGramIndex,
     id_file: &HashMap<u32, String>) {
 
     println!();
-    let results = query_processor::process_query(ranked_retrieval, input, index, k_gram_index, id_file);
+    let results = query_processor::process_query(ranked_retrieval, scheme, input, index, k_gram_index, id_file);
     println!();
     for result in results.clone() {
         println!("Result: {}", result);
