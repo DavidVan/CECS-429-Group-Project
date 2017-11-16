@@ -23,6 +23,7 @@ use stemmer::Stemmer;
  */
 
 pub struct DocumentWeight {
+    doc_id: u32,
     doc_weight: f64,
     doc_length: u64,
     byte_size: u64,
@@ -30,13 +31,18 @@ pub struct DocumentWeight {
 }
 
 impl DocumentWeight {
-    fn new(doc_weight: f64, doc_length: u64, byte_size: u64, avg_tftd: f64) -> Self {
+    fn new(doc_id: u32, doc_weight: f64, doc_length: u64, byte_size: u64, avg_tftd: f64) -> Self {
         DocumentWeight {
+            doc_id: doc_id,
             doc_weight: doc_weight,
             doc_length: doc_length,
             byte_size: byte_size,
             avg_tftd: avg_tftd,
         }
+    } 
+
+    pub fn get_doc_id(&self) -> u32 {
+        self.doc_id
     }
 
     pub fn get_doc_weight(&self) -> f64 {
@@ -139,7 +145,7 @@ pub fn build_index(
         let byte_size = fs::metadata(file).unwrap().len();
         let avg_tftd = (tftd.values().sum::<u32>() as f64) / (tftd.len() as f64);
 
-        doc_weights.push(DocumentWeight::new(euclidian_doc_weights, doc_length, byte_size, avg_tftd));
+        doc_weights.push(DocumentWeight::new(i as u32, euclidian_doc_weights, doc_length, byte_size, avg_tftd));
     }
 
     let avg_doc_length = avg_doc_weight_accumulator / doc_weights.len();
