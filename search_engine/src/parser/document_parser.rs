@@ -148,13 +148,11 @@ pub fn build_index(
         doc_weights.push(DocumentWeight::new(i as u32, euclidian_doc_weights, doc_length, byte_size, avg_tftd));
     }
 
-    let avg_doc_length = avg_doc_weight_accumulator / doc_weights.len();
+    let avg_doc_length = avg_doc_weight_accumulator as f64 / doc_weights.len() as f64;
 
     // Build DiskInvertedIndex
     let index_writer = IndexWriter::new(directory.as_str());
-    index_writer.build_index_for_directory(index, directory.as_str());
-    // Build doc_weights.bin
-    index_writer.build_doc_weights_file(directory.as_str(), avg_doc_length as f64, &doc_weights);
+    index_writer.build_index_for_directory(index, &doc_weights, avg_doc_length, directory.as_str());
 
 
     println!("Indexing complete!\n");

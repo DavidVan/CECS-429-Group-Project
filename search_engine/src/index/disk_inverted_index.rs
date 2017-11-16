@@ -3,17 +3,17 @@ use btree::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::SeekFrom;
-use std::cmp::Ordering;
 use std::mem::size_of;
+use std::cmp::Ordering;
 
 pub struct DiskInvertedIndex<'a> {
     path: &'a str,
     vocab_list: File,
-    doc_weights_list: File,
+    doc_id_list: File,
     btree_map: BTree<String, i64>,
     pub postings: File,
     vocab_table: Vec<u64>,
-    doc_weights_table: Vec<u64>,
+    doc_id_table: Vec<u64>,
 }
 
 pub trait IndexReader {
@@ -28,10 +28,10 @@ pub trait IndexReader {
     fn contains_doc_id(&self, doc_id: u32) -> bool; // For use with doc_weights.bin
     fn get_document_frequency(&self, term: &str) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
-    fn binary_search_doc_weights(&self, doc_id: u32) -> i64;
+    fn binary_search_doc_id(&self, doc_id: u32) -> i64;
     fn btree_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
-    fn read_doc_weights_table(index_name: &str) -> Vec<u64>;
+    fn read_doc_id_table(index_name: &str) -> Vec<u64>;
     fn get_term_count(&self) -> u32;
 }
 
@@ -40,11 +40,11 @@ impl<'a> DiskInvertedIndex<'a> {
         DiskInvertedIndex {
             path: path.clone(),
             vocab_list: File::open(format!("{}/{}", path, "vocab.bin")).unwrap(),
-            doc_weights_list: File::open(format!("{}/{}", path, "doc_weights.bin")).unwrap(),
+            doc_id_list: File::open(format!("{}/{}", path, "doc_id.bin")).unwrap(),
             btree_map: BTree::new(&String::from(format!("{}/{}", path, "btree")), size_of::<String>(), size_of::<(i64, i64)>()).unwrap(),
             postings: File::open(format!("{}/{}", path, "postings.bin")).unwrap(),
             vocab_table: DiskInvertedIndex::read_vocab_table(path),
-            doc_weights_table: DiskInvertedIndex::read_doc_weights_table(path),
+            doc_id_table: DiskInvertedIndex::read_doc_id_table(path),
         }
     }
 }
@@ -205,9 +205,9 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u64, u64, f64), &'static str> {
-        let doc_weights_position = self.binary_search_doc_weights(doc_id);
-        match doc_weights_position >= 0 {
-            true => Ok(self.read_doc_weights_from_file(&self.doc_weights_list, doc_weights_position)),
+        let doc_id_position = self.binary_search_doc_id(doc_id);
+        match doc_id_position >= 0 {
+            true => Ok(self.read_doc_weights_from_file(&self.doc_id_list, doc_id_position)),
             false => Err("Document weights position is less than 0."),
         }
     }
@@ -217,7 +217,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
     }
 
     fn contains_doc_id(&self, doc_id: u32) -> bool {
-        return self.binary_search_doc_weights(doc_id) != -1; 
+        return self.binary_search_doc_id(doc_id) != -1; 
     }
 
     fn binary_search_vocabulary(&self, term: &str) -> i64 {
@@ -226,20 +226,13 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         let mut j = self.vocab_table.len() / 2 - 1;
         while i <= j {
             let m = (i + j) / 2;
-            println!("i: {}, j: {}, m: {}", i, j, m);
             let vocab_list_position = self.vocab_table.get(m * 2).unwrap();
             let mut term_length = 0;
             if m == self.vocab_table.len() / 2 - 1 {
-                println!("Vocab List File Length: {}", vocab_list.metadata().unwrap().len());
-                println!("Vocab Table Position: {}", self.vocab_table[m * 2]);
                 term_length = vocab_list.metadata().unwrap().len() as u64 - self.vocab_table[m * 2];
-                println!("Term length when m is equal: {}", term_length);
             }
             else {
-                println!("Vocab List Pos: {}", vocab_list_position);
-                println!("Vocab Table Position: {}", self.vocab_table.get((m + 1) * 2).unwrap());
                 term_length = self.vocab_table.get((m + 1) * 2).unwrap() - vocab_list_position;
-                println!("Term length when m is not equal: {}", term_length);
             }
 
             vocab_list.seek(SeekFrom::Start(*vocab_list_position as u64)).unwrap();
@@ -260,34 +253,26 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         -1
     }
 
-    fn binary_search_doc_weights(&self, doc_id: u32) -> i64 {
-        let mut doc_weights_list = &self.doc_weights_list;
+    fn binary_search_doc_id(&self, doc_id: u32) -> i64 {
+        let mut doc_id_list = &self.doc_id_list;
         let mut i = 0;
-        let mut j = self.doc_weights_table.len() / 2 - 1;
+        let mut j = self.doc_id_table.len() / 2 - 1;
         while i <= j {
             let m = (i + j) / 2;
             println!("i: {}, j: {}, m: {}", i, j, m);
-            let doc_weights_list_position = self.doc_weights_table.get(m * 2).unwrap();
-            if m == self.doc_weights_table.len() / 2 - 1 {
-                println!("Vocab List File Length: {}", doc_weights_list.metadata().unwrap().len());
-                println!("Vocab Table Position: {}", self.doc_weights_table[m * 2]);
-            }
-            else {
-                println!("Vocab List Pos: {}", doc_weights_list_position);
-                println!("Vocab Table Position: {}", self.doc_weights_table.get((m + 1) * 2).unwrap());
-            }
+            let doc_id_list_position = self.doc_id_table.get(m * 2).unwrap();
 
-            doc_weights_list.seek(SeekFrom::Start(*doc_weights_list_position as u64)).unwrap();
+            doc_id_list.seek(SeekFrom::Start(*doc_id_list_position as u64)).unwrap();
 
-            let mut buffer = vec![0; 4];
-            doc_weights_list.read_exact(&mut buffer).expect("Error reading from file");
+            let mut buffer = vec![0; 8];
+            doc_id_list.read_exact(&mut buffer).expect("Error reading from file");
 
             let file_doc_id = (&buffer[..]).read_u32::<BigEndian>().unwrap();
 
             let compare_value = doc_id.cmp(&file_doc_id);
 
             match compare_value {
-                Ordering::Equal => return *(self.doc_weights_table.get(m * 2 + 1)).unwrap() as i64,
+                Ordering::Equal => return *(self.doc_id_table.get(m * 2 + 1)).unwrap() as i64,
                 Ordering::Less => j = m - 1,
                 Ordering::Greater => i = m + 1
             }
@@ -320,24 +305,26 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         vocab_table
     }
 
-    fn read_doc_weights_table(index_name: &str) -> Vec<u64> {
-        let mut table_file = File::open(format!("{}/{}", index_name, "doc_weights_table.bin")).unwrap();
-        let mut doc_weights_size_buffer= [0; 4];
-        table_file.read_exact(&mut doc_weights_size_buffer).expect("Error reading from file");
+    fn read_doc_id_table(index_name: &str) -> Vec<u64> {
+        let mut table_file = File::open(format!("{}/{}", index_name, "doc_id_table.bin")).unwrap();
+        let mut doc_id_size_buffer= [0; 4];
+        table_file.read_exact(&mut doc_id_size_buffer).expect("Error reading from file");
+        
         
         let mut table_index = 0;
-        let mut doc_weights_table = vec![0; (&doc_weights_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 2];
-        let mut doc_weights_pos_buffer = [0; 8];
+        let mut doc_id_table = vec![0; (&doc_id_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 2];
+        let mut doc_id_pos_buffer = [0; 8];
         loop {
-            match table_file.read_exact(&mut doc_weights_pos_buffer) {
+            match table_file.read_exact(&mut doc_id_pos_buffer) {
                 Ok(_) => {
-                    doc_weights_table.push((&doc_weights_pos_buffer[..]).read_u64::<BigEndian>().unwrap());
+                    doc_id_table.push((&doc_id_pos_buffer[..]).read_u64::<BigEndian>().unwrap());
+                    println!("Doc id pos: {:?}", (&doc_id_pos_buffer[..]).read_u64::<BigEndian>().unwrap());
                     table_index += 1;
                 },
                 Err(_) => break
             }
         }
-        doc_weights_table
+        doc_id_table
     }
 
     fn get_term_count(&self) -> u32 {
