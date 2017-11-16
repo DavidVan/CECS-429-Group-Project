@@ -169,12 +169,13 @@ pub fn process_query_bool(
                         if !index.contains_term(normalized_token.as_str()) {
                             break;
                         }
-                        let postings = index.get_postings(normalized_token.as_str()).unwrap();
+                        let postings = index.get_postings(normalized_token.as_str()).expect("Failed to get postings");
                         let mut and_inner_results = HashSet::new();
                         for posting in postings {
+                            let doc_id = posting.0;
                             if not_query {
                                 let file_path =
-                                    id_file.get(&posting).unwrap().to_string();
+                                    id_file.get(&doc_id).unwrap().to_string();
                                 let file: &Path = file_path.as_ref();
                                 let file_name = file.file_name();
                                 not_results.push(String::from(
@@ -182,7 +183,7 @@ pub fn process_query_bool(
                                 ));
                             } else {
                                 let file_path =
-                                    id_file.get(&posting).unwrap().to_string();
+                                    id_file.get(&doc_id).unwrap().to_string();
                                 let file: &Path = file_path.as_ref();
                                 let file_name = file.file_name();
                                 and_inner_results.insert(String::from(
@@ -338,22 +339,24 @@ fn process_query_rank(
             let normalized_tokens = document_parser::normalize_token(entry.to_string());  
             for normalized_token in normalized_tokens {
                 let wqt = get_wqt(scheme, number_of_docs as u32, &normalized_token, index);
-                let postings = index.get_postings(&normalized_token).unwrap();
+                let postings = index.get_postings_no_positions(&normalized_token).expect("Failed to get postings");
                 for posting in postings {
-                    let wdt = get_wdt(scheme, posting, &normalized_token, index);
+                    let doc_id = posting.0;
+                    let term_doc_frequency = posting.1;
+                    let wdt = get_wdt(scheme, doc_id, &normalized_token, term_doc_frequency);
                     let accumulator : f64 = wqt * wdt;
-                    if doc_accs.contains_key(&posting) {
-                        *doc_accs.get_mut(&posting).unwrap() += accumulator;
+                    if doc_accs.contains_key(&doc_id) {
+                        *doc_accs.get_mut(&doc_id).unwrap() += accumulator;
                     } else {
-                        doc_accs.insert(posting, accumulator); 
+                        doc_accs.insert(doc_id, accumulator); 
                     }
-                    if doc_lds.contains_key(&posting) {
+                    if doc_lds.contains_key(&doc_id) {
                         if scheme == "tfidf" {
-                            *doc_lds.get_mut(&posting).unwrap() += get_ld(scheme, posting, &normalized_token, index); 
+                            *doc_lds.get_mut(&doc_id).unwrap() += get_ld(scheme, doc_id, &normalized_token, index); 
                         }
                     } else {
-                        let ld = get_ld(scheme, posting, &normalized_token, index);
-                        doc_lds.insert(posting, ld); 
+                        let ld = get_ld(scheme, doc_id, &normalized_token, index);
+                        doc_lds.insert(doc_id, ld); 
                     }
                 }
             }
@@ -400,13 +403,13 @@ fn get_wqt(scheme: &str, number_of_docs: u32, token: &str, index: &DiskInvertedI
 }
 
 
-fn get_wdt(scheme: &str, doc_id: u32, token: &str, index: &DiskInvertedIndex) -> f64 {
+fn get_wdt(scheme: &str, doc_id: u32, token: &str, term_doc_frequency: u32) -> f64 {
     if scheme == "default" {
-        return 1.0 + (index.get_term_frequency(&token, doc_id).unwrap() as f64).ln();
+        return 1.0 + (term_doc_frequency as f64).ln();
     } else if scheme == "tfidf" {
-        return index.get_term_frequency(&token, doc_id).unwrap() as f64;
+        return term_doc_frequency as f64;
     } else if scheme == "okapi" {
-        return 2.2 * index.get_term_frequency(&token, doc_id).unwrap() as f64;
+        return 2.2 * term_doc_frequency as f64;
     } else if scheme == "wacky" {
         // return (1.0 + (index.get_term_frequency(&token, doc_id).unwrap() as f64).ln())/(1.0);
         return 1.0;
@@ -670,35 +673,28 @@ pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> 
     let max_distance = near.parse::<i32>().unwrap();
 
     println!("first term: {}", first_term);
-    let first_term_postings = index.get_postings(&first_term).unwrap();
-    let second_term_postings = index.get_postings(&second_term).unwrap();
 
-    let first_term_positions = index.get_positions(&first_term);
-    let second_term_positions= index.get_positions(&second_term);
-    let mut i = 0;
-    let mut j = 0;
-    let mut first_positions;
-    let mut second_positions;
     let mut documents: Vec<u32> = Vec::new();
     //iterate through postings lists until a common document ID is found
-    while i < first_term_postings.len() && j < second_term_postings.len() {
-        if first_term_postings[i] < second_term_postings[j] {
-            i = i + 1;
-        } else if first_term_postings[i] > second_term_postings[j] {
-            j = j + 1;
-        } else if first_term_postings[i] == second_term_postings[j] {
-            //if the two terms have a common document, retrieve the positions
-            first_positions = first_term_positions.get(&(i as u32)).unwrap();
-            second_positions = second_term_positions.get(&(j as u32)).unwrap();
+   
+    let first_term_postings = index.get_postings(&first_term).expect("Error getting postings");
+    for first_posting in first_term_postings {
+        let first_doc_id = first_posting.0;
+        let first_positions = first_posting.2;
+        let second_term_postings = index.get_postings(&second_term).expect("Error getting postings");
+        for second_posting in second_term_postings {
+            let second_doc_id = second_posting.0;
+            let second_positions= second_posting.2;
 
-            //check if the two terms are near each other
-            if is_near(first_positions, second_positions, max_distance) {
-                documents.push(first_term_postings[i]);
+            if first_doc_id == second_doc_id {
+                if is_near(&first_positions, &second_positions, max_distance) {
+                    documents.push(first_doc_id);
+                }
             }
-            i = i + 1;
-            j = j + 1;
-        }
+             
+        } 
     }
+
     documents
 }
 
@@ -747,79 +743,55 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
         normalized_literals.push(document_parser::normalize_token(word.to_string())[0].to_string());
     }
 
-    let mut current_postings:Vec<u32> = index.get_postings(&normalized_literals[0]).unwrap();
+    let mut current_postings = index.get_postings(&normalized_literals[0]).expect("Failed to get postings");
 
-    let current_term_positions = index.get_positions(&normalized_literals[0]);
+    let mut current_ids : Vec <u32> = Vec::new();
+    for posting in current_postings {
+        current_ids.push(posting.0);
+    }
 
-    for ind in 1..normalized_literals.len() {
-        let mut next = index.get_postings(&normalized_literals[ind]).unwrap();
-        let next_term_positions = index.get_positions(&normalized_literals[ind]);
-        let mut i : usize= 0;
-        let mut j : usize= 0;
+    for ind in 0..normalized_literals.len() - 1 {
+        let mut current_postings = index.get_postings(&normalized_literals[ind]).expect("Failed to get postings");
         // list of postings containing document ids that terms share in common and positions
-        let mut merged: Vec<u32> = Vec::new();
         //iterate through postings lists until a common document ID is found
         
-        current_postings.sort();
-        next.sort();
+        for current_posting in current_postings {
+            let current_id = current_posting.0;
+            let positions_of_current = current_posting.2; 
 
-        let max : u32 = *(current_postings.last()).max(next.last()).unwrap();
-        println!("Max: {}", max);
+            let mut next = index.get_postings(&normalized_literals[ind + 1]).unwrap();
 
-        while (i as u32) < max && (j as u32) < max {
-            println!("i: {} j: {}", i, j);
-            if i == j {
-                //if the two terms have a common document, retrieve the positions
-                
-                if !current_term_positions.contains_key(&(i as u32)) {
-                    i = i + 1;
-                    continue;
-                }
-                if !next_term_positions.contains_key(&(j as u32)) {
-                    j = j + 1;
-                    continue; 
-                }
-                let positions_of_current = current_term_positions.get(&(i as u32)).unwrap();
-                let positions_of_next = next_term_positions.get(&(j as u32)).unwrap();
-                //return all positions of the second term where the terms are adjacent to each other
-                //
-                println!("{:?}\n{:?}", positions_of_current, positions_of_next);
-                
-                let merged_positions = adjacent_positions(positions_of_next, positions_of_current);
-                //if none exist we can continue
-                if merged_positions.is_empty() {
-                    i = i + 1;
-                    j = j + 1;
-                    continue;
-                }
-                //create new positional posting to push to merged list of postings
-                let mut temp_posting = HashMap::new();
-                for j in merged_positions {
-                    temp_posting.insert(i, j);
-                }
-                println!("ADDING");
-                merged.push(i as u32);
-                // if positions.is_empty() {
-                //     return Vec::new();
-                // } else {
+            for next_posting in next {
+                let next_id = next_posting.0;
 
-                // }
-                i = i + 1;
-                j = j + 1;
+                if current_id == next_id {
+                    let positions_of_next = next_posting.2; 
+
+                    let merged_positions = adjacent_positions(&positions_of_next, &positions_of_current);
+
+                    if merged_positions.is_empty() {
+                        continue;
+                    }
+
+                    let mut merged: Vec<u32> = Vec::new();
+                    merged.push(current_posting.0);
+
+                    if ind == 1 {
+                        for doc in merged {
+                            current_ids.push(doc);
+                        }
+                    } else {
+                        current_ids = intersection(current_ids, merged); 
+                    }
+                }
             }
-            else if i < j {
-                i = i + 1;
-            } else if i > j {
-                j = j + 1;
-            } 
         }
-        current_postings = merged;
     }
 
     let mut documents:Vec<u32> = Vec::new();
     
-    for i in current_postings {
-        documents.push(i);
+    for id in current_ids{
+        documents.push(id);
     }
 
     return documents;
