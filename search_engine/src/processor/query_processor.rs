@@ -330,6 +330,7 @@ fn process_query_rank(
         let mut accumulators : BinaryHeap<DocumentAccumulator> = BinaryHeap::new(); 
 
         let mut doc_accs : HashMap <u32, f64> = HashMap::new();
+        let mut doc_lds : HashMap <u32, f64> = HashMap::new();
 
         let number_of_docs = id_file.len();
         println!("Number of docs: {}" , number_of_docs);
@@ -339,12 +340,20 @@ fn process_query_rank(
                 let wqt = get_wqt(scheme, number_of_docs as u32, &normalized_token, index);
                 let postings = index.get_postings(&normalized_token).unwrap();
                 for posting in postings {
-                    let wdt : f64 = index.get_term_frequency(&normalized_token, posting).unwrap() as f64;
+                    let wdt = get_wdt(scheme, posting, &normalized_token, index);
                     let accumulator : f64 = wqt * wdt;
                     if doc_accs.contains_key(&posting) {
                         *doc_accs.get_mut(&posting).unwrap() += accumulator;
                     } else {
                         doc_accs.insert(posting, accumulator); 
+                    }
+                    if doc_lds.contains_key(&posting) {
+                        if scheme == "tfidf" {
+                            *doc_lds.get_mut(&posting).unwrap() += get_ld(scheme, posting, &normalized_token, index); 
+                        }
+                    } else {
+                        let ld = get_ld(scheme, posting, &normalized_token, index);
+                        doc_lds.insert(posting, ld); 
                     }
                 }
             }
@@ -353,7 +362,8 @@ fn process_query_rank(
         for (doc, acc) in doc_accs {
             // TODO: Divide acc by Ld
             if acc > 0.0 {
-                let new_doc_acc : DocumentAccumulator = DocumentAccumulator::new(doc, acc); 
+                let new_acc = (acc)/(doc_lds.get(&doc).unwrap());
+                let new_doc_acc : DocumentAccumulator = DocumentAccumulator::new(doc, new_acc); 
                 accumulators.push(new_doc_acc);
             }
         }
@@ -382,18 +392,23 @@ fn get_wqt(scheme: &str, number_of_docs: u32, token: &str, index: &DiskInvertedI
         return (((number_of_docs)/index.get_document_frequency(&token)) as f64).ln();
     } else if scheme == "okapi" {
         return (0.1 as f64).max((((((number_of_docs - index.get_document_frequency(&token)) as f64) + 0.5)/((index.get_document_frequency(&token) as f64) + 0.5) as f64) as f64).ln());
-    } else {
+    } else if scheme == "wacky" {
         return (0.0 as f64).max(((((number_of_docs - index.get_document_frequency(&token)) as f64)/(index.get_document_frequency(&token) as f64)) as f64).ln());
+    } else {
+        return 1.0; 
     }
 }
 
 
 fn get_wdt(scheme: &str, doc_id: u32, token: &str, index: &DiskInvertedIndex) -> f64 {
     if scheme == "default" {
-        return 1.0;
+        return 1.0 + (index.get_term_frequency(&token, doc_id).unwrap() as f64).ln();
     } else if scheme == "tfidf" {
-        return 1.0;
+        return index.get_term_frequency(&token, doc_id).unwrap() as f64;
     } else if scheme == "okapi" {
+        return 2.2 * index.get_term_frequency(&token, doc_id).unwrap() as f64;
+    } else if scheme == "wacky" {
+        // return (1.0 + (index.get_term_frequency(&token, doc_id).unwrap() as f64).ln())/(1.0);
         return 1.0;
     } else {
         return 1.0;
