@@ -1,0 +1,20 @@
+Run query fire in yosemite in ranked mode
+    Run with Okapi
+    Run with tf idf
+
+Run query grand canyon hiking trails in ranked mode
+    
+
+
+Send file size of postings.bin
+
+
+Tasks
+    - docWeights.bin
+    - Fix phrase queries
+
+    - :vocab -> Terms
+
+    - :index DIRECToRY -> Change directory to new index
+
+    - b+ trees?
