@@ -147,6 +147,7 @@ pub fn build_index(
 
     // Build DiskInvertedIndex
     let index_writer = IndexWriter::new(directory.as_str());
+    index_writer.build_index_for_directory(index, directory.as_str());
     // Build doc_weights.bin
     index_writer.build_doc_weights_file(directory.as_str(), avg_doc_length as f64, &doc_weights);
 
