@@ -680,11 +680,11 @@ pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> 
     let first_term_postings = index.get_postings(&first_term).expect("Error getting postings");
     for first_posting in first_term_postings {
         let first_doc_id = first_posting.0;
-        let first_positions = first_posting.2;
+        let first_positions = first_posting.6;
         let second_term_postings = index.get_postings(&second_term).expect("Error getting postings");
         for second_posting in second_term_postings {
             let second_doc_id = second_posting.0;
-            let second_positions= second_posting.2;
+            let second_positions= second_posting.6;
 
             if first_doc_id == second_doc_id {
                 if is_near(&first_positions, &second_positions, max_distance) {
@@ -757,15 +757,15 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
         
         for current_posting in current_postings {
             let current_id = current_posting.0;
-            let positions_of_current = current_posting.2; 
+            let positions_of_current = current_posting.6; 
 
-            let mut next = index.get_postings(&normalized_literals[ind + 1]).unwrap();
+            let next = index.get_postings(&normalized_literals[ind + 1]).unwrap();
 
             for next_posting in next {
                 let next_id = next_posting.0;
 
                 if current_id == next_id {
-                    let positions_of_next = next_posting.2; 
+                    let positions_of_next = next_posting.6; 
 
                     let merged_positions = adjacent_positions(&positions_of_next, &positions_of_current);
 
