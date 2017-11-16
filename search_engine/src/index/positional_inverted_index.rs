@@ -14,7 +14,13 @@ pub struct PositionalPosting {
     /*
     * Score of term for the given document
     */
-    m_doc_score: f64,
+    m_term_score: f64,
+
+    m_tf_idf_term_score: f64,
+
+    m_okapi_term_score: f64,
+
+    m_wacky_term_score: f64,
 
     /*
      * The list of positions for each posting
@@ -42,7 +48,10 @@ impl PositionalPosting {
         PositionalPosting {
             m_doc_id: doc_id,
             m_positions: Vec::new(),
-            m_doc_score: 0.0_f64
+            m_term_score: 0.0_f64,
+            m_tf_idf_term_score: 0.0f64,
+            m_okapi_term_score: 0.0f64,
+            m_wacky_term_score: 0.0f64
         }
     }
 
@@ -64,10 +73,21 @@ impl PositionalPosting {
      *
      * The weight of the term for the document in the posting
      */
-    pub fn get_doc_score(&self) -> f64 {
-        self.m_doc_score.clone()
+    pub fn get_term_score(&self) -> f64 {
+        self.m_term_score.clone()
     }
-    
+
+    pub fn get_tf_idf_term_score(&self) -> f64 {
+        self.m_tf_idf_term_score.clone()
+    }
+
+    pub fn get_okapi_term_score(&self) -> f64 {
+        self.m_okapi_term_score.clone()
+    }
+
+    pub fn get_wacky_term_score(&self) -> f64 {
+        self.m_wacky_term_score.clone()
+    }
     /*
      * Returns positions of term for the posting.
      * 
@@ -176,7 +196,10 @@ impl PositionalInvertedIndex {
             let mut new_posting = PositionalPosting {
                 m_doc_id: doc_id,
                 m_positions: Vec::new(),
-                m_doc_score: 0.0f64
+                m_term_score: 0.0f64,
+                m_tf_idf_term_score: 0.0f64,
+                m_okapi_term_score: 0.0f64,
+                m_wacky_term_score: 0.0f64
             };
             new_posting.add_position(pos);
             let mut positional_postings = Vec::new();
@@ -242,9 +265,24 @@ impl PositionalInvertedIndex {
     }
 
 
-    pub fn add_score(&mut self, term: &str, weight:f64) {
+    pub fn set_score(&mut self, term: &str, weight:f64) {
         let m_index = &mut self.m_index;
-        m_index.get_mut(term).unwrap().iter_mut().last().unwrap().m_doc_score= weight;
+        m_index.get_mut(term).unwrap().iter_mut().last().unwrap().m_term_score = weight;
+    }
+
+    pub fn set_tf_idf_score(&mut self, term: &str, weight:f64) {
+        let m_index = &mut self.m_index;
+        m_index.get_mut(term).unwrap().iter_mut().last().unwrap().m_tf_idf_term_score = weight;
+    }
+
+    pub fn set_okapi_score(&mut self, term: &str, weight:f64) {
+        let m_index = &mut self.m_index;
+        m_index.get_mut(term).unwrap().iter_mut().last().unwrap().m_okapi_term_score = weight;
+    }
+
+    pub fn set_wacky_score(&mut self, term: &str, weight:f64) {
+        let m_index = &mut self.m_index;
+        m_index.get_mut(term).unwrap().iter_mut().last().unwrap().m_wacky_term_score = weight;
     }
     
 }

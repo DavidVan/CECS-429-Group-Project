@@ -2,6 +2,7 @@ use byteorder::{WriteBytesExt, BigEndian};
 use std::fs::File;
 use std::io::prelude::*;
 use index::positional_inverted_index::PositionalInvertedIndex;
+use parser::document_parser::DocumentWeight;
 
 pub struct IndexWriter<'a> {
     folder_path: &'a str
@@ -17,6 +18,7 @@ pub trait DiskIndex {
     fn build_index_for_directory(&self, index: &PositionalInvertedIndex, folder: &str);
     fn build_vocab_file(&self, folder: &str, dictionary: &Vec<&String>, vocab_positions: &mut Vec<u64>);
     fn build_postings_file(&self, folder: &str, index: &PositionalInvertedIndex, dictionary: &Vec<&String>, vocab_positions: &mut Vec<u64>);
+    fn build_doc_weights_file(&self, folder: &str, average_doc_length: f64, doc_weights: &Vec<DocumentWeight>);
 }
 
 impl<'a> IndexWriter<'a> {
@@ -50,7 +52,6 @@ impl<'a> DiskIndex for IndexWriter<'a> {
     fn build_postings_file(&self, folder: &str, index: &PositionalInvertedIndex, dictionary: &Vec<&String>, vocab_positions: &mut Vec<u64>) {
         let mut postings_file = File::create(format!("{}/{}", folder, "postings.bin")).unwrap();
         let mut vocab_table = File::create(format!("{}/{}", folder, "vocab_table.bin")).unwrap();
-        let mut document_weights = File::create(format!("{}/{}", folder, "doc_weights.bin")).unwrap();
 
         vocab_table.write_u32::<BigEndian>(dictionary.len() as u32).expect("Error writing to file");
         let mut vocab_index = 0;
@@ -61,13 +62,7 @@ impl<'a> DiskIndex for IndexWriter<'a> {
             let postings_file_metadata = postings_file.metadata().unwrap();
             let postings_file_size = postings_file_metadata.len();
 
-            let document_weights_file_metadata = document_weights.metadata().unwrap();
-            let document_weights_file_size = document_weights_file_metadata.len();
-
             vocab_table.write_u64::<BigEndian>(postings_file_size).expect("Error writing to file");
-            vocab_table.write_u64::<BigEndian>(document_weights_file_size);
-
-            let mut document_weight : f64 = 0.0; // Ld score accumulator
 
             let document_frequency = postings.len() as u32;
             postings_file.write_u32::<BigEndian>(document_frequency).expect("Error writing to file");
@@ -76,10 +71,17 @@ impl<'a> DiskIndex for IndexWriter<'a> {
                 let doc_id_location = doc_id.get_doc_id() - last_doc_id;
                 postings_file.write_u32::<BigEndian>(doc_id_location).expect("Error writing to file");
 
-                let document_score = doc_id.get_doc_score();
-                postings_file.write_f64::<BigEndian>(document_score).expect("Error writing to file"); //Wdt
+                let term_score = doc_id.get_term_score();
+                postings_file.write_f64::<BigEndian>(term_score).expect("Error writing to file"); //Wdt
 
-                document_weight += document_score.powi(2);
+                let tf_idf_term_score = doc_id.get_tf_idf_term_score();
+                postings_file.write_f64::<BigEndian>(tf_idf_term_score).expect("Error writing to file"); //Wdt
+
+                let okapi_term_score = doc_id.get_okapi_term_score();
+                postings_file.write_f64::<BigEndian>(okapi_term_score).expect("Error writing to file"); //Wdt
+
+                let wacky_term_score = doc_id.get_wacky_term_score();
+                postings_file.write_f64::<BigEndian>(wacky_term_score).expect("Error writing to file"); //Wdt
 
                 let positions = doc_id.get_positions(); // Get postings positions for every document
                 let term_frequency = positions.len() as u32;
@@ -90,14 +92,22 @@ impl<'a> DiskIndex for IndexWriter<'a> {
                     postings_file.write_u32::<BigEndian>(pos_location).expect("Error writing to file");
                     last_pos = pos;
                 }
-
-                // Store document length (Ld) values in doc_weights.bin
-                document_weights.write_f64::<BigEndian>(document_weight).expect("Error writing to file");
-
                 last_doc_id = doc_id.get_doc_id();
             }
             vocab_index += 1;
         }
         
     }
+
+    fn build_doc_weights_file(&self, folder: &str, average_doc_length: f64, doc_weights: &Vec<DocumentWeight>) {
+        let mut document_weights = File::create(format!("{}/{}", folder, "doc_weights.bin")).unwrap();
+        document_weights.write_f64::<BigEndian>(average_doc_length).expect("Error writing to file");
+        for weight in doc_weights {
+            document_weights.write_f64::<BigEndian>(weight.get_doc_weight()).expect("Error writing to file");
+            document_weights.write_u64::<BigEndian>(weight.get_doc_length()).expect("Error writing to file");
+            document_weights.write_u64::<BigEndian>(weight.get_byte_size()).expect("Error writing to file");
+            document_weights.write_f64::<BigEndian>(weight.get_avg_tftd()).expect("Error writing to file");
+        }
+    }
+
 }

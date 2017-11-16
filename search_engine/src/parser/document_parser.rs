@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::fs::{self};
 use std::time::SystemTime;
+use index::index_writer::IndexWriter;
+use index::index_writer::DiskIndex;
 use index::k_gram_index::KGramIndex;
 use index::positional_inverted_index::PositionalInvertedIndex;
 use reader::read_file;
@@ -19,12 +21,47 @@ use stemmer::Stemmer;
  *
  * A hashmap mapping document IDs to their actual file names
  */
+
+pub struct DocumentWeight {
+    doc_weight: f64,
+    doc_length: u64,
+    byte_size: u64,
+    avg_tftd: f64,
+}
+
+impl DocumentWeight {
+    fn new(doc_weight: f64, doc_length: u64, byte_size: u64, avg_tftd: f64) -> Self {
+        DocumentWeight {
+            doc_weight: doc_weight,
+            doc_length: doc_length,
+            byte_size: byte_size,
+            avg_tftd: avg_tftd,
+        }
+    }
+
+    pub fn get_doc_weight(&self) -> f64 {
+        self.doc_weight
+    }
+
+    pub fn get_doc_length(&self) -> u64 {
+        self.doc_length
+    }
+
+    pub fn get_byte_size(&self) -> u64 {
+        self.byte_size
+    }
+
+    pub fn get_avg_tftd(&self) -> f64 {
+        self.avg_tftd
+    }
+}
+
 pub fn build_index(
     directory: String,
     index: &mut PositionalInvertedIndex,
     k_gram_index: &mut KGramIndex,
-) -> HashMap<u32, String> {
-    let paths = fs::read_dir(directory).unwrap();
+    ) -> HashMap<u32, String> {
+    let paths = fs::read_dir(directory.clone()).unwrap();
     let mut files = Vec::new();
 
     // Add all files in path to vector
@@ -36,6 +73,8 @@ pub fn build_index(
 
     let now = SystemTime::now();
     println!("Indexing...");
+    let mut avg_doc_weight_accumulator = 0;
+    let mut doc_weights : Vec<DocumentWeight> = Vec::new();
     //iterate through all files in directory
     for (i, file) in files.iter().enumerate() {
         // println!("Indexing {} out of {}...", i, files.len());
@@ -51,7 +90,7 @@ pub fn build_index(
 
         //normalize each token in the file and add it to the index with its document id and position
         for (j, word) in iter.enumerate() {
-           
+
 
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
             let tokens = normalize_token(word.to_string());
@@ -60,8 +99,8 @@ pub fn build_index(
             }
             let tokens = normalize_token(word.to_string());
             for term in tokens {
-                 if !tftd.contains_key(&term) {
-                tftd.insert(term.to_string(),1);
+                if !tftd.contains_key(&term) {
+                    tftd.insert(term.to_string(),1);
                 } else {
                     *tftd.get_mut(&term).unwrap() = tftd.get(&term).unwrap() + 1;
                 }
@@ -70,18 +109,47 @@ pub fn build_index(
         }
 
         let mut wdt: HashMap<String,f64> = HashMap::new();
+        let mut wdt_tf_idf: HashMap<String,f64> = HashMap::new();
+        let mut wdt_okapi: HashMap<String,f64> = HashMap::new();
+        let mut wdt_wacky: HashMap<String,f64> = HashMap::new();
         for (term,value) in &tftd {
             let weight:f64 = 1.0f64 + (*value as f64).ln();
+            let tf_idf_weight: f64 = ((tftd.len() as f64/(*value)as f64)).ln();
+            let okapi_weight: f64 =2.2f64 * (*value as f64);
+            let wacky_weight = weight/(1.0f64 + ( ( (tftd.values().sum::<u32>() as f64) / (tftd.len() as f64) ).ln() ) );
             wdt.insert(term.to_string(),weight);
-            index.add_score(term,weight);
+            wdt_tf_idf.insert(term.to_string(),tf_idf_weight);
+            wdt_okapi.insert(term.to_string(),okapi_weight);
+            wdt_wacky.insert(term.to_string(),wacky_weight);
+            index.set_score(term,weight);
+            index.set_tf_idf_score(term,tf_idf_weight);
+            index.set_okapi_score(term,okapi_weight);
+            index.set_wacky_score(term,wacky_weight);
         }
-        // let mut ld: f64 = 0.0f64;
+
+        avg_doc_weight_accumulator += tftd.len();
+
+
         let mut sum_weights_squared: f64 = 0.0f64;
         for val in wdt.values() {
             sum_weights_squared = sum_weights_squared + val.powi(2);
         }
-        // ld = sum_weights_squared.sqrt();
+
+        let euclidian_doc_weights = sum_weights_squared.sqrt();
+        let doc_length = tftd.len() as u64;
+        let byte_size = fs::metadata(file).unwrap().len();
+        let avg_tftd = (tftd.values().sum::<u32>() as f64) / (tftd.len() as f64);
+
+        doc_weights.push(DocumentWeight::new(euclidian_doc_weights, doc_length, byte_size, avg_tftd));
     }
+
+    let avg_doc_length = avg_doc_weight_accumulator / doc_weights.len();
+
+    // Build DiskInvertedIndex
+    let index_writer = IndexWriter::new(directory.as_str());
+    // Build doc_weights.bin
+    index_writer.build_doc_weights_file(directory.as_str(), avg_doc_length as f64, &doc_weights);
+
 
     println!("Indexing complete!\n");
 
