@@ -1,3 +1,4 @@
+use index::positional_inverted_index::PositionalPosting;
 use index::disk_inverted_index::DiskInvertedIndex;
 use index::disk_inverted_index::IndexReader;
 use index::k_gram_index::KGramIndex;
@@ -363,7 +364,6 @@ fn process_query_rank(
         }
 
         for (doc, acc) in doc_accs {
-            // TODO: Divide acc by Ld
             if acc > 0.0 {
                 let new_acc = (acc)/(doc_lds.get(&doc).unwrap());
                 let new_doc_acc : DocumentAccumulator = DocumentAccumulator::new(doc, new_acc); 
@@ -750,57 +750,88 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
         normalized_literals.push(document_parser::normalize_token(word.to_string())[0].to_string());
     }
 
-    let mut current_postings = index.get_postings(&normalized_literals[0]).expect("Failed to get postings");
+    // vec![(docID, weight, weight, weight, ...., positions in doc), ...]
+    let temp_current_postings = index.get_postings(&normalized_literals[0]).expect("Failed to get postings");
 
-    let mut current_ids : Vec <u32> = Vec::new();
-    for posting in current_postings {
-        current_ids.push(posting.0);
-    }
+    let mut current_postings : Vec<PositionalPosting> = Vec::new();
 
-    for ind in 0..normalized_literals.len() - 1 {
-        let mut current_postings = index.get_postings(&normalized_literals[ind]).expect("Failed to get postings");
-        // list of postings containing document ids that terms share in common and positions
-        //iterate through postings lists until a common document ID is found
-        
-        for current_posting in current_postings {
-            let current_id = current_posting.0;
-            let positions_of_current = current_posting.6; 
-
-            let next = index.get_postings(&normalized_literals[ind + 1]).unwrap();
-
-            for next_posting in next {
-                let next_id = next_posting.0;
-
-                if current_id == next_id {
-                    let positions_of_next = next_posting.6; 
-
-                    let merged_positions = adjacent_positions(&positions_of_next, &positions_of_current);
-
-                    if merged_positions.is_empty() {
-                        continue;
-                    }
-
-                    let mut merged: Vec<u32> = Vec::new();
-                    merged.push(current_posting.0);
-
-                    if ind == 1 {
-                        for doc in merged {
-                            current_ids.push(doc);
-                        }
-                    } else {
-                        current_ids = intersection(current_ids, merged); 
-                    }
-                }
-            }
+    for posting in temp_current_postings {
+        let new_post_id = posting.0;
+        let new_post_positions = posting.6;
+        let mut new_posting = PositionalPosting::new(new_post_id);
+        for position in new_post_positions {
+            new_posting.add_position(position);
         }
     }
 
-    let mut documents:Vec<u32> = Vec::new();
-    
-    for id in current_ids{
-        documents.push(id);
+
+    for ind in 1..normalized_literals.len() {
+
+        // vec![docID, weight, weight, weight, ...., positions in doc]
+        let temp_next_postings = index.get_postings(&normalized_literals[ind]).expect("Failed to get postings");
+        // list of postings containing document ids that terms share in common and positions
+        //iterate through postings lists until a common document ID is found
+        //
+        
+        let next_postings : Vec<PositionalPosting> = Vec::new();
+
+        for posting in temp_next_postings {
+            let new_post_id = posting.0;
+            let new_post_positions = posting.6;
+            let mut new_posting = PositionalPosting::new(new_post_id);
+            for position in new_post_positions {
+                new_posting.add_position(position);
+            }
+        }
+        
+        let mut merged : Vec<PositionalPosting> = Vec::new();
+       
+        let mut i = 0;
+        let mut j = 0;
+
+
+        while i < current_postings.len() && j < next_postings.len() {
+            let current_id = &current_postings[i].get_doc_id();
+            let next_id = &next_postings[j].get_doc_id();
+
+            if current_id == next_id {
+                let current_positions = &current_postings[i].get_positions();
+                let next_positions = &next_postings[j].get_positions();
+
+
+                let merged_positions = adjacent_positions(&next_positions, &current_positions);
+
+                if merged_positions.is_empty() {
+                    i += 1;
+                    j += 1;
+                    continue; 
+                }
+
+                let mut temp_posting = PositionalPosting::new(*current_id);
+
+                for i in merged_positions {
+                    temp_posting.add_position(i);
+                }
+                merged.push(temp_posting);
+
+                i += 1;
+                j += 1;
+            
+            } else if current_id < next_id {
+                i += 1;
+            } else if current_id > next_id {
+                j += 1;
+            }
+        }
+        current_postings = merged;
     }
 
+    let mut documents:Vec<u32> = Vec::new();
+
+    for posting in current_postings {
+        documents.push(posting.get_doc_id());
+    }
+    
     return documents;
 }
 
