@@ -4,6 +4,7 @@ extern crate serde_json;
 extern crate stemmer;
 
 use search_engine::index::disk_inverted_index::DiskInvertedIndex;
+use search_engine::index::disk_inverted_index::IndexReader;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
@@ -104,6 +105,9 @@ fn main() {
     if query_index {
         let disk_inverted_index_path = index_path.clone();
         let disk_inverted_index = DiskInvertedIndex::new(&disk_inverted_index_path.to_str().unwrap());
+        println!("QUERY DAVID");
+        disk_inverted_index.get_document_weights(4).unwrap();
+        println!("END QUERY DAVID");
 
         let id_file_filename = format!("{}/{}", index_path.display(), "id_file.bin");
         let kgram_filename = format!("{}/{}", index_path.display(), "kgram.bin");

@@ -117,19 +117,12 @@ impl<'a> DiskIndex for IndexWriter<'a> {
 
     fn build_doc_weights_file(&self, folder: &str, average_doc_length: f64, doc_weights: &Vec<DocumentWeight>, doc_id_positions: &mut Vec<u64>) {
         let mut document_weights = File::create(format!("{}/{}", folder, "doc_weights.bin")).unwrap();
-        let mut document_id_table = File::create(format!("{}/{}", folder, "doc_id_table.bin")).unwrap();
-        document_id_table.write_u32::<BigEndian>(doc_weights.len() as u32).expect("Error writin to file");
         document_weights.write_f64::<BigEndian>(average_doc_length).expect("Error writing to file");
-        let mut document_weights_index = 0;
         for weight in doc_weights {
-            let document_weights_file_size = fs::metadata(format!("{}/{}", folder, "doc_weights.bin")).unwrap().len();
-            document_id_table.write_u64::<BigEndian>(document_weights_index);
-            document_id_table.write_u64::<BigEndian>(document_weights_file_size);
             document_weights.write_f64::<BigEndian>(weight.get_doc_weight()).expect("Error writing to file");
             document_weights.write_u64::<BigEndian>(weight.get_doc_length()).expect("Error writing to file");
             document_weights.write_u64::<BigEndian>(weight.get_byte_size()).expect("Error writing to file");
             document_weights.write_f64::<BigEndian>(weight.get_avg_tftd()).expect("Error writing to file");
-            document_weights_index += 1;
         }
     }
 
