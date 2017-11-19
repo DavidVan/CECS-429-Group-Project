@@ -5,8 +5,13 @@ pub fn vb_encode(number:u32) -> Vec<u8> {
     }
     
     loop {
-
+        bytes = prepend(bytes,vec![(n % 128) as u8]);
+        if n < 128 {
+            break;
+        }
+        n = n/128;
     }
+    bytes.last() = bytes.last() + 128;
     return bytes;
 }
 
