@@ -25,13 +25,13 @@ use stemmer::Stemmer;
 pub struct DocumentWeight {
     doc_id: u32,
     doc_weight: f64,
-    doc_length: u64,
-    byte_size: u64,
+    doc_length: u32,
+    byte_size: u32,
     avg_tftd: f64,
 }
 
 impl DocumentWeight {
-    fn new(doc_id: u32, doc_weight: f64, doc_length: u64, byte_size: u64, avg_tftd: f64) -> Self {
+    fn new(doc_id: u32, doc_weight: f64, doc_length: u32, byte_size: u32, avg_tftd: f64) -> Self {
         DocumentWeight {
             doc_id: doc_id,
             doc_weight: doc_weight,
@@ -49,11 +49,11 @@ impl DocumentWeight {
         self.doc_weight
     }
 
-    pub fn get_doc_length(&self) -> u64 {
+    pub fn get_doc_length(&self) -> u32 {
         self.doc_length
     }
 
-    pub fn get_byte_size(&self) -> u64 {
+    pub fn get_byte_size(&self) -> u32 {
         self.byte_size
     }
 
@@ -141,8 +141,8 @@ pub fn build_index(
         }
 
         let euclidian_doc_weights = sum_weights_squared.sqrt();
-        let doc_length = tftd.len() as u64;
-        let byte_size = fs::metadata(file).unwrap().len();
+        let doc_length = tftd.len() as u32;
+        let byte_size = fs::metadata(file).unwrap().len() as u32;
         let avg_tftd = (tftd.values().sum::<u32>() as f64) / (tftd.len() as f64);
 
         doc_weights.push(DocumentWeight::new(i as u32, euclidian_doc_weights, doc_length, byte_size, avg_tftd));

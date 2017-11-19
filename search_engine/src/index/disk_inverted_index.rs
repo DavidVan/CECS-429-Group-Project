@@ -17,11 +17,11 @@ pub struct DiskInvertedIndex<'a> {
 pub trait IndexReader {
     fn read_postings_from_file(&self, postings: &File, postings_position: i64) -> Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>; // Document ID, tf_td, regular term score, tf_idf term score, okapi term score, wacky term score, Positions
     fn read_postings_from_file_no_positions(&self, postings: &File, postings_position: i64) -> Vec<(u32, u32, f64, f64, f64, f64)>; // Document ID, tf_td, regular term score, tf_idf term score, okapi term score, wacky term score
-    fn read_doc_weights_from_file(&self, doc_weights: &File, doc_id: u32) -> (f64, f64, u64, u64, f64); // Average Document Length, Document Weight, Document Length, Document Byte Size, Document Average tf-td
+    fn read_doc_weights_from_file(&self, doc_weights: &File, doc_id: u32) -> (f64, f64, u32, u32, f64); // Average Document Length, Document Weight, Document Length, Document Byte Size, Document Average tf-td
     fn get_path(&self) -> String;
     fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>, &'static str>;
     fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64)>, &'static str>;
-    fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u64, u64, f64), &'static str>;
+    fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u32, u32, f64), &'static str>;
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
@@ -142,7 +142,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         results 
     }
 
-    fn read_doc_weights_from_file(&self, mut doc_weights: &File, doc_id: u32) -> (f64, f64, u64, u64, f64) {
+    fn read_doc_weights_from_file(&self, mut doc_weights: &File, doc_id: u32) -> (f64, f64, u32, u32, f64) {
         doc_weights.seek(SeekFrom::Start(0));
         let mut avg_doc_length_buffer = [0; 8];
         doc_weights.read_exact(&mut avg_doc_length_buffer).unwrap();
@@ -158,12 +158,12 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
         let mut doc_length_buffer = [0; 8];
         doc_weights.read_exact(&mut doc_length_buffer).unwrap();
-        let doc_length = (&doc_length_buffer[..]).read_u64::<BigEndian>().unwrap();
+        let doc_length = (&doc_length_buffer[..]).read_u32::<BigEndian>().unwrap();
         println!("Doc length: {}", doc_length);
 
         let mut byte_size_buffer = [0; 8];
         doc_weights.read_exact(&mut byte_size_buffer).unwrap();
-        let byte_size = (&byte_size_buffer[..]).read_u64::<BigEndian>().unwrap();
+        let byte_size = (&byte_size_buffer[..]).read_u32::<BigEndian>().unwrap();
         println!("Byte size: {}", byte_size);
 
         let mut avg_tftd_buffer = [0; 8];
@@ -203,7 +203,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         }
     }
 
-    fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u64, u64, f64), &'static str> {
+    fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u32, u32, f64), &'static str> {
         match doc_id >= 0 {
             true => Ok(self.read_doc_weights_from_file(&self.doc_weights, doc_id)),
             false => Err("Document id not found."),
