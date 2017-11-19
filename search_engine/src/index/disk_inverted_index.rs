@@ -1,5 +1,4 @@
 use byteorder::{ReadBytesExt, BigEndian};
-use btree::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::SeekFrom;
@@ -10,7 +9,6 @@ pub struct DiskInvertedIndex<'a> {
     path: &'a str,
     vocab_list: File,
     doc_weights: File,
-    btree_map: BTree<String, i64>,
     pub postings: File,
     vocab_table: Vec<u64>,
 }
@@ -26,7 +24,6 @@ pub trait IndexReader {
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
-    fn btree_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
     fn get_term_count(&self) -> u32;
 }
@@ -37,7 +34,6 @@ impl<'a> DiskInvertedIndex<'a> {
             path: path.clone(),
             vocab_list: File::open(format!("{}/{}", path, "vocab.bin")).unwrap(),
             doc_weights: File::open(format!("{}/{}", path, "doc_weights.bin")).unwrap(),
-            btree_map: BTree::new(&String::from(format!("{}/{}", path, "btree")), size_of::<String>(), size_of::<(i64, i64)>()).unwrap(),
             postings: File::open(format!("{}/{}", path, "postings.bin")).unwrap(),
             vocab_table: DiskInvertedIndex::read_vocab_table(path),
         }
@@ -247,11 +243,6 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
                 Ordering::Greater => i = m + 1
             }
         }
-        -1
-    }
-
-    fn btree_search_vocabulary(&self, term: &str) -> i64 {
-        // self.btree_map.get(&String::from(term))
         -1
     }
 
