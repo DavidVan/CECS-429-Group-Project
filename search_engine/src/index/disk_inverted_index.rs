@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::io::SeekFrom;
 use std::mem::size_of;
 use std::cmp::Ordering;
+use index::variable_byte;
 
 pub struct DiskInvertedIndex<'a> {
     path: &'a str,
