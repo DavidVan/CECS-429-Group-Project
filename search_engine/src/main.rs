@@ -4,7 +4,6 @@ extern crate serde_json;
 extern crate stemmer;
 
 use search_engine::index::disk_inverted_index::DiskInvertedIndex;
-use search_engine::index::disk_inverted_index::IndexReader;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
@@ -105,9 +104,6 @@ fn main() {
     if query_index {
         let disk_inverted_index_path = index_path.clone();
         let disk_inverted_index = DiskInvertedIndex::new(&disk_inverted_index_path.to_str().unwrap());
-        println!("QUERY DAVID");
-        disk_inverted_index.get_document_weights(4).unwrap();
-        println!("END QUERY DAVID");
 
         let id_file_filename = format!("{}/{}", index_path.display(), "id_file.bin");
         let kgram_filename = format!("{}/{}", index_path.display(), "kgram.bin");
@@ -183,7 +179,7 @@ fn main() {
                 } else if input == ":scheme w" || input == ":scheme wacky" {
                     scheme = "wacky"; 
                 } else if input == ":v" || input == ":vocab" {
-                    print_vocab(&index);
+                    print_vocab(&disk_inverted_index);
                 } else if input == ":k" || input == ":kgram" {
                     print_kgram(&k_gram_index);
                 } else if input == ":h" || input == ":help" {
@@ -330,16 +326,10 @@ fn open_file(
  * *`index` - The Positional Inverted Index containing the terms
  */
 fn print_vocab(
-    index: &PositionalInvertedIndex) {
+    index: &DiskInvertedIndex) {
     
     println!("Vocabulary");
 
-    let dictionary = index.get_dictionary();
-
-    for term in dictionary.iter() {
-        println!("{}", term);
-    }
-    println!("Total terms: {}", dictionary.len());
 }
 
 fn print_kgram(
