@@ -1,3 +1,5 @@
+use std::fs::File;
+
 pub fn vb_encode(mut number: u32) -> Vec<u8> {
     let mut bytes : Vec<u8> = Vec::new(); 
     if number == 0 {
@@ -17,6 +19,10 @@ pub fn vb_encode(mut number: u32) -> Vec<u8> {
 pub fn prepend(stuff_to_prepend: &mut Vec<u8>, prepend: &mut Vec<u8>) {
     stuff_to_prepend.append(prepend);
     prepend.append(stuff_to_prepend);
+}
+
+pub fn decode(mut file: &File) -> u32 {
+    0
 }
 
 // Example Usage:
