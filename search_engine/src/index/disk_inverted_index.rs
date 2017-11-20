@@ -54,7 +54,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             println!("Before Decode: {:?}", postings.seek(SeekFrom::Current(0)));
             let (doc_id_vbe, doc_id_offset) = variable_byte::decode(postings).unwrap();
             println!("After Decode: {:?}", postings.seek(SeekFrom::Current(0)));
-            postings.seek(SeekFrom::Current(-(doc_id_offset as i64)));
+            postings.seek(SeekFrom::Current(-(5 - doc_id_offset as i64)));
 
             doc_id += doc_id_vbe;
 
