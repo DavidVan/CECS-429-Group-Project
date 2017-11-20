@@ -853,7 +853,7 @@ pub fn adjacent_positions(term_positions: &Vec<u32>, positions: &Vec<u32>) -> Ve
             i = i + 1;
         }
     }
-    println!("{:?}", off_by_one_positions);
+    //println!("{:?}", off_by_one_positions);
     off_by_one_positions
 }
 

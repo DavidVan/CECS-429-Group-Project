@@ -114,7 +114,6 @@ impl<'a> DiskIndex for IndexWriter<'a> {
                 last_doc_id = doc_id.get_doc_id();
             }
             vocab_index += 1;
-            println!("postings file size change? {}", postings_file_size);
         }
         
     }

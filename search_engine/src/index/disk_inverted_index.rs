@@ -47,13 +47,10 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         postings.seek(SeekFrom::Start(postings_position as u64)).unwrap();
         let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
         postings.read_exact(&mut doc_freq_buffer).unwrap();
-        println!("Document Frequency: {}", (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap());
         let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
         let mut doc_id = 0;
         for _ in 0..document_frequency {
-            println!("Before Decode: {:?}", postings.seek(SeekFrom::Current(0)));
             let (doc_id_vbe, doc_id_offset) = variable_byte::decode(postings).unwrap();
-            println!("After Decode: {:?}", postings.seek(SeekFrom::Current(0)));
             postings.seek(SeekFrom::Current(-(5 - doc_id_offset as i64)));
 
             doc_id += doc_id_vbe;
@@ -61,26 +58,21 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             let mut term_score_buffer = [0; 8];
             postings.read_exact(&mut term_score_buffer).expect("Error reading buffer");
             let term_score = (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
-            println!("Term Score: {}", (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut tf_idf_term_score_buffer = [0; 8];
             postings.read_exact(&mut tf_idf_term_score_buffer).expect("Error reading buffer");
             let tf_idf_term_score = (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
-            println!("tf-idf Term Score: {}", (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut okapi_term_score_buffer = [0; 8];
             postings.read_exact(&mut okapi_term_score_buffer).expect("Error reading buffer");
             let okapi_term_score = (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
-            println!("Okapi Term Score: {}", (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut wacky_term_score_buffer = [0; 8];
             postings.read_exact(&mut wacky_term_score_buffer).expect("Error reading buffer");
             let wacky_term_score = (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
-            println!("Wacky Term Score: {}", (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let (term_frequency_vbe, term_freq_offset) = variable_byte::decode(postings).unwrap();
             postings.seek(SeekFrom::Current(-(5 - term_freq_offset as i64)));
-            println!("Term Frequency: {}", term_frequency_vbe);
 
             let mut postings_accumulator = 0;
             let mut positions = Vec::new();
@@ -89,7 +81,6 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
                 postings.seek(SeekFrom::Current(-(5 - postings_pos_offset as i64)));
 
                 postings_accumulator += postings_pos_vbe;
-                println!("Current position: {} for term frequency occurange {}", postings_accumulator, j);
 
                 positions.push(postings_accumulator);
             }
@@ -104,39 +95,32 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         postings.seek(SeekFrom::Start(postings_position as u64)).unwrap();
         let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
         postings.read_exact(&mut doc_freq_buffer).unwrap();
-        println!("Document Frequency: {}", (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap());
         let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().unwrap();
         let mut doc_id = 0;
         for _ in 0..document_frequency {
             let (doc_id_vbe, doc_id_offset) = variable_byte::decode(postings).unwrap();
             postings.seek(SeekFrom::Current(-(5 - doc_id_offset as i64)));
-            println!("Document Id: {}", doc_id_vbe);
 
             doc_id += doc_id_vbe;
 
             let mut term_score_buffer = [0; 8];
             postings.read_exact(&mut term_score_buffer).expect("Error reading buffer");
             let term_score = (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
-            println!("Term Score: {}", (&term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut tf_idf_term_score_buffer = [0; 8];
             postings.read_exact(&mut tf_idf_term_score_buffer).expect("Error reading buffer");
             let tf_idf_term_score = (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
-            println!("tf-idf Term Score: {}", (&tf_idf_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut okapi_term_score_buffer = [0; 8];
             postings.read_exact(&mut okapi_term_score_buffer).expect("Error reading buffer");
             let okapi_term_score = (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
-            println!("Okapi Term Score: {}", (&okapi_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let mut wacky_term_score_buffer = [0; 8];
             postings.read_exact(&mut wacky_term_score_buffer).expect("Error reading buffer");
             let wacky_term_score = (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap();
-            println!("Wacky Term Score: {}", (&wacky_term_score_buffer[..]).read_f64::<BigEndian>().unwrap());
 
             let (term_frequency_vbe, term_freq_offset) = variable_byte::decode(postings).unwrap();
             postings.seek(SeekFrom::Current(-(5 - term_freq_offset as i64)));
-            println!("Term Frequency: {}", term_frequency_vbe);
 
             results.push((doc_id, term_frequency_vbe, term_score, tf_idf_term_score, okapi_term_score, wacky_term_score));
             
@@ -153,29 +137,24 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         let mut avg_doc_length_buffer = [0; 8];
         doc_weights.read_exact(&mut avg_doc_length_buffer).unwrap();
         let avg_doc_length = (&avg_doc_length_buffer[..]).read_f64::<BigEndian>().unwrap();
-        println!("Avg doc length: {}", avg_doc_length);
 
         doc_weights.seek(SeekFrom::Start(doc_id as u64 * 4 * 8 + 8)).unwrap(); // Doc ids are written in increasing order. We write four 8 byte values for each document id. First 8 bytes of the file is used for all documents.
 
         let mut doc_weight_buffer = [0; 8];
         doc_weights.read_exact(&mut doc_weight_buffer).unwrap();
         let doc_weight = (&doc_weight_buffer[..]).read_f64::<BigEndian>().unwrap();
-        println!("Doc weight: {}", doc_weight);
 
         let mut doc_length_buffer = [0; 8];
         doc_weights.read_exact(&mut doc_length_buffer).unwrap();
         let doc_length = (&doc_length_buffer[..]).read_u64::<BigEndian>().unwrap();
-        println!("Doc length: {}", doc_length);
 
         let mut byte_size_buffer = [0; 8];
         doc_weights.read_exact(&mut byte_size_buffer).unwrap();
         let byte_size = (&byte_size_buffer[..]).read_u64::<BigEndian>().unwrap();
-        println!("Byte size: {}", byte_size);
 
         let mut avg_tftd_buffer = [0; 8];
         doc_weights.read_exact(&mut avg_tftd_buffer).unwrap();
         let avg_tftd = (&avg_tftd_buffer[..]).read_f64::<BigEndian>().unwrap();
-        println!("Avg tftd: {}", avg_tftd);
 
         (avg_doc_length, doc_weight, doc_length, byte_size, avg_tftd)
     }
@@ -186,7 +165,6 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
     fn get_document_frequency(&self, term: &str) -> u32 {
         let postings_position = self.binary_search_vocabulary(term);
-        println!("Postings Position for doc freq: {}", postings_position);
         (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error Seeking from Buffer");
         let mut doc_freq_buffer = [0; 4];
         (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error Seeking from Buffer");
