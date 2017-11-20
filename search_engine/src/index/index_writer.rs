@@ -5,6 +5,7 @@ use std::fs;
 use std::mem;
 use index::positional_inverted_index::PositionalInvertedIndex;
 use parser::document_parser::DocumentWeight;
+use index::variable_byte;
 
 pub struct IndexWriter<'a> {
     folder_path: &'a str
@@ -84,7 +85,8 @@ impl<'a> DiskIndex for IndexWriter<'a> {
             let mut last_doc_id = 0;
             for doc_id in postings {
                 let doc_id_location = doc_id.get_doc_id() - last_doc_id;
-                postings_file.write_u32::<BigEndian>(doc_id_location).expect("Error writing to file");
+                let doc_id_location_vbe = variable_byte::encode(doc_id_location);
+                postings_file.write_all(&doc_id_location_vbe[..]).expect("Error writing to file");
 
                 let term_score = doc_id.get_term_score();
                 postings_file.write_f64::<BigEndian>(term_score).expect("Error writing to file"); //Wdt
@@ -100,11 +102,13 @@ impl<'a> DiskIndex for IndexWriter<'a> {
 
                 let positions = doc_id.get_positions(); // Get postings positions for every document
                 let term_frequency = positions.len() as u32;
-                postings_file.write_u32::<BigEndian>(term_frequency).expect("Error writing to file");
+                let term_frequency_vbe = variable_byte::encode(term_frequency);
+                postings_file.write_all(&term_frequency_vbe[..]).expect("Error writing to file");
                 let mut last_pos = 0;
                 for pos in positions {
                     let pos_location = pos - last_pos;
-                    postings_file.write_u32::<BigEndian>(pos_location).expect("Error writing to file");
+                    let pos_location_vbe = variable_byte::encode(pos_location);
+                    postings_file.write_all(&pos_location_vbe[..]).expect("Error writing to file");
                     last_pos = pos;
                 }
                 last_doc_id = doc_id.get_doc_id();
@@ -120,8 +124,8 @@ impl<'a> DiskIndex for IndexWriter<'a> {
         document_weights.write_f64::<BigEndian>(average_doc_length).expect("Error writing to file");
         for weight in doc_weights {
             document_weights.write_f64::<BigEndian>(weight.get_doc_weight()).expect("Error writing to file");
-            document_weights.write_u32::<BigEndian>(weight.get_doc_length()).expect("Error writing to file");
-            document_weights.write_u32::<BigEndian>(weight.get_byte_size()).expect("Error writing to file");
+            document_weights.write_u64::<BigEndian>(weight.get_doc_length()).expect("Error writing to file");
+            document_weights.write_u64::<BigEndian>(weight.get_byte_size()).expect("Error writing to file");
             document_weights.write_f64::<BigEndian>(weight.get_avg_tftd()).expect("Error writing to file");
         }
     }
