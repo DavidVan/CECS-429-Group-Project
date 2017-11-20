@@ -132,7 +132,7 @@ pub fn process_query_bool(
             }
         } else {
             for entry in new_and_entries {
-                // println!("AND ENTRY DAVID {}", entry);
+                println!("AND ENTRY DAVID {}", entry);
                 let not_query = entry.starts_with("-");
                 let phrase_literal_vec: Vec<&str> = entry.split_whitespace().collect();
                 let phrase_literal = phrase_literal_vec.len() > 1;
@@ -143,6 +143,17 @@ pub fn process_query_bool(
                     // strip out "-" letter... then split whitespace maybe... or not if function
                     // takes a string
                     // call function to get doc id. get file name, add to not list...
+                    let phrase : String = entry.chars().skip(1).collect();
+                    let results_to_remove = phrase_query(phrase, index);
+                    for doc_id in results_to_remove {
+                        let file_path =
+                            id_file.get(&doc_id).unwrap().to_string();
+                        let file: &Path = file_path.as_ref();
+                        let file_name = file.file_name();
+                        not_results.push(String::from(
+                            file_name.unwrap().to_str().unwrap(),
+                        ));
+                    }
                 }
                 else if phrase_literal && !not_query {
                     // call function to process
