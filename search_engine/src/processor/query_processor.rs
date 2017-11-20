@@ -762,32 +762,34 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
         current_postings.push(temp_posting);
     }
 
+    println!("{}", &normalized_literals[0]);
+
 
     for ind in 1..normalized_literals.len() {
         let next_disk_postings = index.get_postings(&normalized_literals[ind]).expect("Failed to get postings");
 
+        println!("{}", &normalized_literals[ind]);
+
         let mut next: Vec<PositionalPosting> = Vec::new();
         
-    for disk_posting in next_disk_postings{
-        let mut temp_posting = PositionalPosting::new(disk_posting.0);
-        for position in disk_posting.6 {
-            &temp_posting.add_position(position);
+        for disk_posting in next_disk_postings{
+            let mut temp_posting = PositionalPosting::new(disk_posting.0);
+            for position in disk_posting.6 {
+                &temp_posting.add_position(position);
+            }
+            next.push(temp_posting);
         }
-        next.push(temp_posting);
-    }
-
-
-
-
-
-
         let mut i = 0;
         let mut j = 0;
+
         // list of postings containing document ids that terms share in common and positions
         let mut merged:Vec<PositionalPosting> = Vec::new();
+
         //iterate through postings lists until a common document ID is found
+        
         while i < current_postings.len() && j < next.len() {
             if current_postings[i].get_doc_id() == next[j].get_doc_id() {
+                
                 //if the two terms have a common document, retrieve the positions
                 let positions_of_current = current_postings[i].get_positions();
                 let positions_of_next = next[j].get_positions();
@@ -802,25 +804,21 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
                 }
                 //create new positional posting to push to merged list of postings
                 let mut temp_posting = PositionalPosting::new(current_postings[i].get_doc_id());
-                for i in merged_positions {
-                    temp_posting.add_position(i);
+                for pos in merged_positions {
+                    temp_posting.add_position(pos);
                 }
                 merged.push(temp_posting);
-                // if positions.is_empty() {
-                //     return Vec::new();
-                // } else {
-
-                // }
+                
                 i = i + 1;
                 j = j + 1;
-            }
-            else if current_postings[i].get_doc_id() < next[j].get_doc_id() {
+
+            } else if current_postings[i].get_doc_id() < next[j].get_doc_id() {
                 i = i + 1;
             } else if current_postings[i].get_doc_id() > next[j].get_doc_id() {
                 j = j + 1;
             } 
         }
-        current_postings = merged;
+        current_postings = intersection(current_postings, merged);
     }
 
     let mut documents:Vec<u32> = Vec::new();
@@ -842,7 +840,7 @@ pub fn adjacent_positions(term_positions: &Vec<u32>, positions: &Vec<u32>) -> Ve
         let difference = (term_positions[j]as i32) - (positions[i] as i32);
         //if the distance is within the max_distance then we return true
         if difference == 1 {
-            off_by_one_positions.push(term_positions[j]);
+            off_by_one_positions.push(positions[j]);
             i = i + 1;
             j = j + 1;
         // if the first position comes before the second then we increment the second position vector

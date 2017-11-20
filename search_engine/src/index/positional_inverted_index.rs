@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 /*
@@ -126,6 +127,26 @@ impl PositionalPosting {
     }
 }
 
+impl Ord for PositionalPosting {
+    fn cmp(&self, other: &PositionalPosting) -> Ordering {
+        self.m_doc_id.cmp(&other.m_doc_id)    
+    }
+}
+
+impl Eq for PositionalPosting {
+}
+
+impl PartialOrd for PositionalPosting{
+    fn partial_cmp(&self, other: &PositionalPosting) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for PositionalPosting{
+    fn eq(&self, other: &PositionalPosting) -> bool {
+        self.m_doc_id == other.m_doc_id
+    }
+}
 /*
  * Representation of a Positional Inverted Index
  */
