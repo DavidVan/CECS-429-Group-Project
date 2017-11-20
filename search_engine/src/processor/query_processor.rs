@@ -829,7 +829,7 @@ pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32
                 j = j + 1;
             } 
         }
-        current_postings = intersection(current_postings, merged);
+        current_postings = merged;
     }
 
     let mut documents:Vec<u32> = Vec::new();
@@ -851,7 +851,7 @@ pub fn adjacent_positions(term_positions: &Vec<u32>, positions: &Vec<u32>) -> Ve
         let difference = (term_positions[j]as i32) - (positions[i] as i32);
         //if the distance is within the max_distance then we return true
         if difference == 1 {
-            off_by_one_positions.push(positions[j]);
+            off_by_one_positions.push(term_positions[j]);
             i = i + 1;
             j = j + 1;
         // if the first position comes before the second then we increment the second position vector
