@@ -34,8 +34,8 @@ $ cargo run --release
 
 **:q** or **:quit** - Quits Program
 
-**:o** *FILE* or **:open** *FILE* - Opens a specified file in the current
-working directory
+**:o** *FILE* or **:open** *FILE* - Opens and reads a specified file in the 
+current working directory
 
 **:s** *TERM* or **:stem** *TERM* - Normalizes and applies a stemmer on a term
 before printing its result
@@ -44,6 +44,8 @@ before printing its result
 specified directory and indexes files in new directory
 
 **:v** or **:vocab** - Views vocabulary in index in sorted order
+
+**:k** or **:kgram** - Views kgrams in index
 
 **:enable k** or **:enable kgram** - Enables K Gram Index when indexing
 directories
