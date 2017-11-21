@@ -100,9 +100,9 @@ pub fn build_index(
 
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
             let tokens = normalize_token(word.to_string());
-            // if k_gram_index.is_enabled() {
-                // k_gram_index.check_terms(&tokens);
-            // }
+            if k_gram_index.is_enabled() {
+                k_gram_index.check_terms(&tokens);
+            }
             for term in tokens {
                 if !tftd.contains_key(&term) {
                     tftd.insert(term.to_string(),1);

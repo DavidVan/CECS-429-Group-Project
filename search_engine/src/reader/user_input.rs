@@ -74,3 +74,19 @@ pub fn read_number_range(low: i32, high: i32) -> i32 {
     }
 
 }
+
+pub fn read_yes_no() -> bool {
+    loop {
+        let mut input = String::new();
+        stdin().read_line(&mut input).expect("Failed to read from stdin");
+
+        let final_input= (input.trim()).to_lowercase();
+        
+        if final_input == "y" {
+            return true; 
+        } else if final_input == "n" {
+            return false; 
+        }
+        println!("Invalid input, try again");
+    }
+}

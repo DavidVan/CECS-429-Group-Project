@@ -13,6 +13,8 @@ use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
 use search_engine::index::k_gram_index::KGramIndex;
 use std::collections::HashMap;
 use std::fs::File;
+use std::fs::read_dir;
+use std::fs::remove_file;
 use std::io::prelude::*;
 use std::path::*;
 
@@ -71,6 +73,27 @@ fn main() {
 
     
     if !query_index {
+        println!("Use KGrams? (y/n)");
+        let yes_no = user_input::read_yes_no();
+        if yes_no {
+            k_gram_index.enable_k_gram();
+        } else {
+            k_gram_index.disable_k_gram();
+        }
+        
+        let directory = read_dir(index_path.clone());
+        if let Ok(dir) = directory {
+            for entry in dir {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+                    let extension = "bin";
+                    if path.extension().unwrap() == extension {
+                        remove_file(path).unwrap();
+                    }
+                }
+            }
+        }
+
         println!("Building Index...");
         // Builds new index if directory was changed
         

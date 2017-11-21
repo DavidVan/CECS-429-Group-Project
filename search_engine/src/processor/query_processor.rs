@@ -19,11 +19,14 @@ pub fn process_query(
     id_file: &HashMap<u32, String>,
 ) -> HashSet<String> {
 
+    let result : HashSet<String>;
     if ranked_retrieval {
-        return process_query_rank(scheme, input, index, kgram, id_file);
+        result = process_query_rank(scheme, input, index, kgram, id_file);
     } else { 
-        return process_query_bool(input,  index, kgram, id_file); 
+        result = process_query_bool(input,  index, kgram, id_file); 
     }
+    println!("Results Size: {}", result.len());
+    result
 
 }
 
@@ -100,22 +103,15 @@ pub fn process_query_bool(
 
         let mut new_and_entries : Vec<String> = Vec::new();
 
-        if kgram.is_enabled() {
-            for entry in and_entries {
-                if entry.contains("*") {
-                    let mut results = get_wildcards(&entry, kgram);
-                    new_and_entries.append(&mut results);
-                } else {
-                    println!("NOT WILDCARD: {}", entry);
-                    new_and_entries.push(entry); 
-                }
+        for entry in and_entries {
+            if entry.contains("*") {
+                let mut results = get_wildcards(&entry, kgram);
+                new_and_entries.append(&mut results);
+            } else {
+                println!("NOT WILDCARD: {}", entry);
+                new_and_entries.push(entry); 
             }
-        } else {
-            for entry in and_entries {
-                new_and_entries.push(entry);
-            } 
         }
-
         println!("Full Query: {:?}", new_and_entries);
 
         if query.contains("NEAR/") {
@@ -132,14 +128,14 @@ pub fn process_query_bool(
             }
         } else {
             for entry in new_and_entries {
-                println!("AND ENTRY DAVID {}", entry);
+                // println!("AND ENTRY DAVID {}", entry);
                 let not_query = entry.starts_with("-");
                 let phrase_literal_vec: Vec<&str> = entry.split_whitespace().collect();
                 let phrase_literal = phrase_literal_vec.len() > 1;
-                println!("Phrase literal for {}? {}", entry, phrase_literal);
-                println!("Not query for {}? {}", entry, not_query);
+                // println!("Phrase literal for {}? {}", entry, phrase_literal);
+                // println!("Not query for {}? {}", entry, not_query);
                 if phrase_literal && not_query {
-                    println!("Handling phrase literal and not query");
+                    // println!("Handling phrase literal and not query");
                     // strip out "-" letter... then split whitespace maybe... or not if function
                     // takes a string
                     // call function to get doc id. get file name, add to not list...
@@ -204,6 +200,7 @@ pub fn process_query_bool(
                             }
                         }
                         if !not_query {
+                            println!("Adding - {:?}", and_inner_results);
                             and_results.push(and_inner_results);
                         }
                     }
@@ -255,6 +252,7 @@ pub fn process_query_bool(
         }
     }
     for x in union {
+        println!("Inserting {}", x);
         results.insert(x);
     }
     results
