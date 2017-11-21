@@ -684,9 +684,9 @@ pub fn get_wildcards(entry: &str, kgram: &KGramIndex) -> Vec<String> {
 pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
-    let first_term = document_parser::normalize_token(literals[0].to_string())[0].to_string();
+    let first_term = document_parser::stem_terms(document_parser::normalize_token(literals[0].to_string()))[0].to_string();
     let mut near = literals[1].clone().to_string();
-    let second_term = document_parser::normalize_token(literals[2].to_string())[0].to_string();
+    let second_term = document_parser::stem_terms(document_parser::normalize_token(literals[2].to_string()))[0].to_string();
 
     near = near.replace("NEAR/", "");
     //extract the maximum distance
@@ -757,10 +757,10 @@ pub fn is_near(first_positions: &Vec<u32>, second_positions: &Vec<u32>, max_dist
 pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
-    let mut normalized_literals:Vec<String> = Vec::new();
+    let mut normalized_literals:Vec<String> = Vec::new(); // Also stemmed...
     //normalize the literals
     for word in literals.iter() {
-        normalized_literals.push(document_parser::normalize_token(word.to_string())[0].to_string());
+        normalized_literals.push(document_parser::stem_terms(document_parser::normalize_token(word.to_string()))[0].to_string());
     }
 
     let mut current_disk_postings = index.get_postings(&normalized_literals[0]).expect("Failed to get postings");
