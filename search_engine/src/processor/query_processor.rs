@@ -25,7 +25,6 @@ pub fn process_query(
     } else { 
         result = process_query_bool(input,  index, kgram, id_file); 
     }
-    println!("Results Size: {}", result.len());
     result
 
 }
@@ -202,7 +201,6 @@ pub fn process_query_bool(
                             }
                         }
                         if !not_query {
-                            println!("Adding - {:?}", and_inner_results);
                             and_results.push(and_inner_results);
                         }
                     }
@@ -222,7 +220,6 @@ pub fn process_query_bool(
         while let Some(and_result) = and_results_iter.next() {
             let intersection_result: HashSet<_> =
                 and_result.intersection(&intersection).cloned().collect();
-            intersection.clear();
             for item in intersection_result {
                 intersection.insert(item);
             }
@@ -254,7 +251,6 @@ pub fn process_query_bool(
         }
     }
     for x in union {
-        println!("Inserting {}", x);
         results.insert(x);
     }
     results
@@ -346,7 +342,7 @@ fn process_query_rank(
         let mut doc_lds : HashMap <u32, f64> = HashMap::new();
 
         let number_of_docs = id_file.len();
-        println!("Number of docs: {}" , number_of_docs);
+        // println!("Number of docs: {}" , number_of_docs);
         for entry in new_and_entries {
             let normalized_tokens = document_parser::normalize_token(entry.to_string());
             let stemmed_tokens = document_parser::stem_terms(normalized_tokens);
@@ -382,6 +378,7 @@ fn process_query_rank(
                 accumulators.push(new_doc_acc);
             }
         }
+        println!("Number of docs: {}", accumulators.len());
 
         let mut counter = 0;
 
