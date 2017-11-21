@@ -140,7 +140,7 @@ pub fn process_query_bool(
                     // takes a string
                     // call function to get doc id. get file name, add to not list...
                     let phrase : String = entry.chars().skip(1).collect();
-                    let results_to_remove = phrase_query(phrase, index);
+                    let results_to_remove: Vec<u32> = phrase_query(phrase, index);
                     for doc_id in results_to_remove {
                         let file_path =
                             id_file.get(&doc_id).unwrap().to_string();
@@ -154,7 +154,7 @@ pub fn process_query_bool(
                 else if phrase_literal && !not_query {
                     // call function to process
                     // read results into and results vec (might have to get file name)
-                    let phrase_literal_results : Vec<u32> = phrase_query(entry.clone(), &index);
+                    let phrase_literal_results: Vec<u32> = phrase_query(entry.clone(), &index);
                     let mut phrase_literal_inner_results = HashSet::new();
                     for result in phrase_literal_results {
                         let file_path = id_file.get(&result).unwrap().to_string();
@@ -173,11 +173,13 @@ pub fn process_query_bool(
                 }
                 else {
                     let normalized_tokens = document_parser::normalize_token(entry.to_string());
-                    for normalized_token in normalized_tokens {
-                        if !index.contains_term(normalized_token.as_str()) {
+                    let stemmed_tokens = document_parser::stem_terms(normalized_tokens);
+                    for stemmed_token in stemmed_tokens {
+                        if !index.contains_term(stemmed_token.as_str()) {
+                            println!("Breaking because index does not contain term: {}", stemmed_token);
                             break;
                         }
-                        let postings = index.get_postings(normalized_token.as_str()).expect("Failed to get postings");
+                        let postings = index.get_postings(stemmed_token.as_str()).expect("Failed to get postings");
                         let mut and_inner_results = HashSet::new();
                         for posting in postings {
                             let doc_id = posting.0;
@@ -680,9 +682,9 @@ pub fn get_wildcards(entry: &str, kgram: &KGramIndex) -> Vec<String> {
 pub fn near_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
-    let first_term = document_parser::normalize_token(literals[0].to_string())[0].to_string();
+    let first_term = document_parser::stem_terms(document_parser::normalize_token(literals[0].to_string()))[0].to_string();
     let mut near = literals[1].clone().to_string();
-    let second_term = document_parser::normalize_token(literals[2].to_string())[0].to_string();
+    let second_term = document_parser::stem_terms(document_parser::normalize_token(literals[2].to_string()))[0].to_string();
 
     near = near.replace("NEAR/", "");
     //extract the maximum distance
@@ -753,10 +755,10 @@ pub fn is_near(first_positions: &Vec<u32>, second_positions: &Vec<u32>, max_dist
 pub fn phrase_query(query_literal: String, index: &DiskInvertedIndex) -> Vec<u32> {
     //extract the terms from the literal
     let literals: Vec<&str> = query_literal.split(' ').collect();
-    let mut normalized_literals:Vec<String> = Vec::new();
+    let mut normalized_literals:Vec<String> = Vec::new(); // Also stemmed...
     //normalize the literals
     for word in literals.iter() {
-        normalized_literals.push(document_parser::normalize_token(word.to_string())[0].to_string());
+        normalized_literals.push(document_parser::stem_terms(document_parser::normalize_token(word.to_string()))[0].to_string());
     }
 
     let mut current_disk_postings = index.get_postings(&normalized_literals[0]).expect("Failed to get postings");
