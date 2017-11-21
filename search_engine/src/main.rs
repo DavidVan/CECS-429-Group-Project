@@ -357,5 +357,11 @@ fn print_help(){
     println!(":stem TERM - Normalizes and applies the stemmer on a specified term");
     println!(":enable kgram || :enable k - Enables K Gram Index when indexing");
     println!(":disable kgram || :disable k - Disables K Gram Index when indexing");
+    println!(":mode b || :mode boolean - Use Boolean Retrieval Method");
+    println!(":mode r || :mode ranked - Use Ranked Retrieval Method");
+    println!(":scheme d || :scheme default - Use Default Weight Scheme in Ranked Retrieval");
+    println!(":scheme t || :scheme tdidf - Use 'td-idf' Weight Scheme in Ranked Retrieval");
+    println!(":scheme o || :scheme okapi - Use Okapi BM25 Weight Scheme in Ranked Retrieval");
+    println!(":scheme w || :scheme wacky - Use Wacky Weight Scheme in Ranked Retrieval");
     println!();
 }
