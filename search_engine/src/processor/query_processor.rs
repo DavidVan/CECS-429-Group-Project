@@ -348,14 +348,15 @@ fn process_query_rank(
         let number_of_docs = id_file.len();
         println!("Number of docs: {}" , number_of_docs);
         for entry in new_and_entries {
-            let normalized_tokens = document_parser::normalize_token(entry.to_string());  
-            for normalized_token in normalized_tokens {
-                let wqt = get_wqt(scheme, number_of_docs as u32, &normalized_token, index);
-                let postings = index.get_postings_no_positions(&normalized_token).expect("Failed to get postings");
+            let normalized_tokens = document_parser::normalize_token(entry.to_string());
+            let stemmed_tokens = document_parser::stem_terms(normalized_tokens);
+            for stemmed_token in stemmed_tokens {
+                let wqt = get_wqt(scheme, number_of_docs as u32, &stemmed_token, index);
+                let postings = index.get_postings_no_positions(&stemmed_token).expect("Failed to get postings");
                 for posting in postings {
                     let doc_id = posting.0;
                     let term_doc_frequency = posting.1;
-                    let wdt = get_wdt(scheme, doc_id, &normalized_token, term_doc_frequency, index);
+                    let wdt = get_wdt(scheme, doc_id, &stemmed_token, term_doc_frequency, index);
                     let accumulator : f64 = wqt * wdt;
                     if doc_accs.contains_key(&doc_id) {
                         *doc_accs.get_mut(&doc_id).unwrap() += accumulator;
@@ -364,10 +365,10 @@ fn process_query_rank(
                     }
                     if doc_lds.contains_key(&doc_id) {
                         if scheme == "tfidf" {
-                            *doc_lds.get_mut(&doc_id).unwrap() += get_ld(scheme, doc_id, &normalized_token, term_doc_frequency, index); 
+                            *doc_lds.get_mut(&doc_id).unwrap() += get_ld(scheme, doc_id, &stemmed_token, term_doc_frequency, index); 
                         }
                     } else {
-                        let ld = get_ld(scheme, doc_id, &normalized_token, term_doc_frequency, index);
+                        let ld = get_ld(scheme, doc_id, &stemmed_token, term_doc_frequency, index);
                         doc_lds.insert(doc_id, ld); 
                     }
                 }
