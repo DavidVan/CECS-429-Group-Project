@@ -1,3 +1,4 @@
+------------------------------------------
 Run query fire in yosemite in ranked mode
     Run with Okapi
     Run with tf idf
