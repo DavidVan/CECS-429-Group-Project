@@ -165,16 +165,18 @@ fn main() {
             break;
         }
 
-        // Loop that drives program after initial setup
-        if ranked_retrieval {
-            println!("Using Ranked Retrieval"); 
-        } else {
-            println!("Using Boolean Retrieval"); 
-        }
         loop {
-            println!("{}", index_path.display());
+            println!("Current Working Directory: {}", index_path.display());
+            print!("Retrieval Method: ");
+            if ranked_retrieval {
+                println!("Ranked"); 
+                println!("Weighting Scheme: {}",scheme);
+            } else {
+                println!("Boolean"); 
+            }
             print!("Input a Query: ");
             input = user_input::read_input_line();
+            println!();
 
             if !input.starts_with(":") {
                 process_query(ranked_retrieval, scheme, &input, &disk_inverted_index, &k_gram_index, &id_file);
@@ -188,17 +190,15 @@ fn main() {
                 } else if input.starts_with(":i ") || input.starts_with(":index ") {
                     index_directory(&mut index_path, input.clone());
                 } else if input == ":mode r" || input == ":mode ranked" {
-                    println!("Switching to Ranked Retrieval");
                     ranked_retrieval = true; 
                 } else if input == ":mode b" || input == ":mode boolean" {
-                    println!("Switching to Boolean Retrieval");
                     ranked_retrieval = false; 
                 } else if input == ":scheme d" || input == ":scheme default" {
                     scheme = "default"; 
                 } else if input == ":scheme t" || input == ":scheme tfidf" {
                     scheme = "tfidf"; 
-                } else if input == ":scheme o" || input == ":scheme okami" {
-                    scheme = "okami"; 
+                } else if input == ":scheme o" || input == ":scheme okapi" {
+                    scheme = "okapi"; 
                 } else if input == ":scheme w" || input == ":scheme wacky" {
                     scheme = "wacky"; 
                 } else if input == ":v" || input == ":vocab" {

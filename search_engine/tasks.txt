@@ -1,12 +1,218 @@
 Run query fire in yosemite in ranked mode
     Run with Okapi
     Run with tf idf
+------------------------------------------
 
+harold@ACEHunter3-ArchVM: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine  (master)
+$ cargo run --release
+    Finished release [optimized] target(s) in 0.0 secs
+     Running `target/release/search_engine`
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets
+
+Select directory to access: articles
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+
+Select Mode: 
+1. Build Index
+2. Query Index
+
+3. Quit
+2
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+
+Choose Retrieval Method: 
+1. Boolean Retrieval
+2. Ranked Retrieval 
+
+3. Quit
+2
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: default
+Input a Query: fire in yosemite
+
+
+Processed Query: ["fire in yosemite"]
+Query For: fire in yosemite
+NOT WILDCARD: fire
+NOT WILDCARD: in
+NOT WILDCARD: yosemite
+Full Query: ["fire", "in", "yosemite"]
+Number of docs: 29731
+article12993.json - 1.6716934925576195
+article13303.json - 1.59335873061355
+article12977.json - 1.4829166437749493
+article12830.json - 1.4475291604315466
+article13146.json - 1.4417329945890756
+article12983.json - 1.4405383138737915
+article33218.json - 1.3844254812386705
+article12970.json - 1.383167862910502
+article13154.json - 1.3776799887794824
+article13083.json - 1.3254571358872438
+
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: default
+Input a Query: :scheme okapi
+
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: okapi
+Input a Query: fire in yosemite
+
+
+Processed Query: ["fire in yosemite"]
+Query For: fire in yosemite
+NOT WILDCARD: fire
+NOT WILDCARD: in
+NOT WILDCARD: yosemite
+Full Query: ["fire", "in", "yosemite"]
+Number of docs: 29731
+article13385.json - 134.87476341991615
+article13469.json - 122.05531761373297
+article13266.json - 91.11887306020947
+article13346.json - 84.21002132611048
+article13177.json - 80.94411898028277
+article13244.json - 68.3335085272126
+article13246.json - 59.25894379852137
+article13267.json - 57.14034806318042
+article13315.json - 56.13927155272344
+article13162.json - 53.99623503050954
+
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: okapi
+Input a Query: :scheme tfidf
+
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: tfidf
+Input a Query: fire in yosemite
+
+
+Processed Query: ["fire in yosemite"]
+Query For: fire in yosemite
+NOT WILDCARD: fire
+NOT WILDCARD: in
+NOT WILDCARD: yosemite
+Full Query: ["fire", "in", "yosemite"]
+Number of docs: 3821
+article13267.json - 16.283727370765245
+article13181.json - 12.423437139529872
+article13365.json - 4.083618512019159
+article13469.json - 3.632325585399274
+article30021.json - 3.5874889871502114
+article13234.json - 3.384306846751905
+article2513.json - 3.302667723951815
+article13266.json - 3.158045165133309
+article12754.json - 3.1518714851129874
+article13001.json - 3.0662623312788466
+
+
+------------------------------------------
 Run query grand canyon hiking trails in ranked mode
+------------------------------------------
     
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: default
+Input a Query: grand canyon hiking trails
 
+
+Processed Query: ["grand canyon hiking trails"]
+Query For: grand canyon hiking trails
+NOT WILDCARD: grand
+NOT WILDCARD: canyon
+NOT WILDCARD: hiking
+NOT WILDCARD: trails
+Full Query: ["grand", "canyon", "hiking", "trails"]
+Number of docs: 11661
+article24336.json - 1.7916729008186139
+article2500.json - 1.6956767706071352
+article2510.json - 1.599131361171467
+article2525.json - 1.554506033615803
+article2461.json - 1.4799813770626078
+article2405.json - 1.4513402372132946
+article2553.json - 1.435344077743496
+article2548.json - 1.4253262888602733
+article2373.json - 1.4094866887187818
+article2403.json - 1.3804176025271473
+
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: default
+Input a Query: :scheme okapi
+
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: okapi
+Input a Query: grand canyon hiking trails
+
+
+Processed Query: ["grand canyon hiking trails"]
+Query For: grand canyon hiking trails
+NOT WILDCARD: grand
+NOT WILDCARD: canyon
+NOT WILDCARD: hiking
+NOT WILDCARD: trails
+Full Query: ["grand", "canyon", "hiking", "trails"]
+Number of docs: 11661
+article3550.json - 101.0331759476036
+article116.json - 98.21860803955381
+article31660.json - 94.16958234436456
+article33240.json - 74.35031403192919
+article2848.json - 72.96902630262235
+article35603.json - 70.81546139314814
+article24839.json - 69.93927946792896
+article22852.json - 69.38978968733645
+article35070.json - 64.88964586164472
+article33081.json - 64.19318290181754
+
+
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: okapi
+Input a Query: :scheme tfidf
+
+Current Working Directory: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles
+Retrieval Method: Ranked
+Weighting Scheme: tfidf
+Input a Query: grand canyon hiking trails
+
+
+Processed Query: ["grand canyon hiking trails"]
+Query For: grand canyon hiking trails
+NOT WILDCARD: grand
+NOT WILDCARD: canyon
+NOT WILDCARD: hiking
+NOT WILDCARD: trails
+Full Query: ["grand", "canyon", "hiking", "trails"]
+Number of docs: 11661
+article2513.json - 13.11307998505845
+article2523.json - 4.215839998291186
+article2509.json - 3.744081037705539
+article2512.json - 3.4663144443692215
+article4867.json - 3.435495757330181
+article11042.json - 3.3982542654436036
+article5171.json - 3.3854440403983794
+article21081.json - 3.3100630491563683
+article33028.json - 3.2746405521275834
+article11069.json - 3.2536610527576992
+
+
+------------------------------------------
 
 Send file size of postings.bin
+
+------------------------------------------
+
+harold@ACEHunter3-ArchVM: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles  (master)
+$ ls -l postings.bin
+-rw-r--r-- 1 harold harold 225554209 Nov 20 23:14 postings.bin
+
+harold@ACEHunter3-ArchVM: /home/harold/Fall_2017_Work/CECS-429-Group-Project/search_engine/assets/articles  (master)
+$ ls -l --block-size=1M postings.bin
+-rw-r--r-- 1 harold harold 216 Nov 20 23:14 postings.bin
 
 
 Tasks
