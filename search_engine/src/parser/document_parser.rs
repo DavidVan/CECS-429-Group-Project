@@ -99,11 +99,12 @@ pub fn build_index(
 
 
             // println!("File {} / {} - Indexing token {} out of {}...", i, files.len(), j, iter_length);
-            let tokens = normalize_token(word.to_string());
+            let normalized_tokens = normalize_token(word.to_string());
+            let stemmed_tokens = stem_terms(normalized_tokens);
             // if k_gram_index.is_enabled() {
                 // k_gram_index.check_terms(&tokens);
             // }
-            for term in tokens {
+            for term in stemmed_tokens {
                 if !tftd.contains_key(&term) {
                     tftd.insert(term.to_string(),1);
                 } else {
