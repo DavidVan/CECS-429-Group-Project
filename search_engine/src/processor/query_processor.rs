@@ -339,7 +339,6 @@ fn process_query_rank(
         let mut accumulators : BinaryHeap<DocumentAccumulator> = BinaryHeap::new(); 
 
         let mut doc_accs : HashMap <u32, f64> = HashMap::new();
-        let mut doc_lds : HashMap <u32, f64> = HashMap::new();
 
         let number_of_docs = id_file.len();
         // println!("Number of docs: {}" , number_of_docs);
@@ -359,21 +358,14 @@ fn process_query_rank(
                     } else {
                         doc_accs.insert(doc_id, accumulator); 
                     }
-                    if doc_lds.contains_key(&doc_id) {
-                        if scheme == "tfidf" {
-                            *doc_lds.get_mut(&doc_id).unwrap() += get_ld(scheme, doc_id, &stemmed_token, term_doc_frequency, index); 
-                        }
-                    } else {
-                        let ld = get_ld(scheme, doc_id, &stemmed_token, term_doc_frequency, index);
-                        doc_lds.insert(doc_id, ld); 
-                    }
                 }
             }
         }
 
         for (doc, acc) in doc_accs {
             if acc > 0.0 {
-                let new_acc = (acc)/(doc_lds.get(&doc).unwrap());
+                let ld = get_ld(scheme, doc, index);
+                let new_acc = (acc)/(ld);
                 let new_doc_acc : DocumentAccumulator = DocumentAccumulator::new(doc, new_acc); 
                 accumulators.push(new_doc_acc);
             }
@@ -399,7 +391,7 @@ fn process_query_rank(
 
 fn get_wqt(scheme: &str, number_of_docs: u32, token: &str, index: &DiskInvertedIndex ) -> f64 {
     if scheme == "default" {
-        return ((1 + ((number_of_docs as u32)/index.get_document_frequency(&token))) as f64).ln();
+        return ((1.0 + ((number_of_docs as f64)/index.get_document_frequency(&token) as f64))).ln();
     } else if scheme == "tfidf" {
         return (((number_of_docs)/index.get_document_frequency(&token)) as f64).ln();
     } else if scheme == "okapi" {
@@ -429,18 +421,16 @@ fn get_wdt(scheme: &str, doc_id: u32, token: &str, term_doc_frequency: u32, inde
     }
 }
 
-fn get_ld(scheme: &str, doc_id: u32, token: &str, term_doc_frequency: u32, index:&DiskInvertedIndex) -> f64 {
+fn get_ld(scheme: &str, doc_id: u32, index:&DiskInvertedIndex) -> f64 {
     let doc_weights = index.get_document_weights(doc_id).unwrap();
     let doc_weight = doc_weights.1;
-    let doc_length_a = doc_weights.0;
-    let doc_length = doc_weights.2;
     let byte_size = doc_weights.3;
     if scheme == "default" {
         return doc_weight;
     } else if scheme == "tfidf" {
         return doc_weight;
     } else if scheme == "okapi" {
-        return 1.2 * (0.25 + (0.75 * (doc_length as f64)/(doc_length_a as f64) + term_doc_frequency as f64));
+        return 1.0;
     } else {
         return (byte_size as f64).sqrt();
     }
