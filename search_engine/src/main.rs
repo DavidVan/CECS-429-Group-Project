@@ -73,14 +73,16 @@ fn main() {
 
     
     if !query_index {
-        println!("Use KGrams? (y/n)");
-        let yes_no = user_input::read_yes_no();
-        if yes_no {
-            k_gram_index.enable_k_gram();
-        } else {
-            k_gram_index.disable_k_gram();
-        }
+        // println!("Use KGrams? (y/n)");
+        // let yes_no = user_input::read_yes_no();
+        // if yes_no {
+            // k_gram_index.enable_k_gram();
+        // } else {
+            // k_gram_index.disable_k_gram();
+        // }
         
+        k_gram_index.enable_k_gram();
+
         let directory = read_dir(index_path.clone());
         if let Ok(dir) = directory {
             for entry in dir {
@@ -349,7 +351,7 @@ fn open_file(
  * *`index` - The Positional Inverted Index containing the terms
  */
 fn print_vocab(
-    index: &DiskInvertedIndex) {
+    _index: &DiskInvertedIndex) {
     
     println!("Vocabulary");
 
