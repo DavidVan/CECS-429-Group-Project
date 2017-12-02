@@ -6,5 +6,5 @@
 **/*.orig
 **/*.bin
 **/*.swp
-search_engine/assets/**/*txt
-search_engine/assets/**/*json
+**/*.txt
+**/*.json
