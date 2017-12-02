@@ -14,7 +14,7 @@ impl<'a> Bayesian<'a> {
 }
 
 impl<'a> Classifier<'a> for Bayesian<'a> {
-    fn classify() -> &'a str {
+    fn classify(&self) -> &'a str {
         "hello"
     }
 }
