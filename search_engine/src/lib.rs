@@ -10,3 +10,4 @@ pub mod parser;
 pub mod paths;
 pub mod processor;
 pub mod reader;
+pub mod classifier;
