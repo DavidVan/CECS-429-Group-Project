@@ -1,10 +1,11 @@
 use byteorder::{ReadBytesExt, BigEndian};
 use std::fs::File;
+use std::io::BufReader;
 use std::io::prelude::*;
 use std::io::SeekFrom;
-use std::mem::size_of;
 use std::cmp::Ordering;
 use index::variable_byte;
+use reader::read_file::read_n;
 
 pub struct DiskInvertedIndex<'a> {
     path: &'a str,
@@ -22,6 +23,7 @@ pub trait IndexReader {
     fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>, &'static str>;
     fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64)>, &'static str>;
     fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u64, u64, f64), &'static str>;
+    fn get_vocab(&self, index_name: &str) -> Vec<String>;
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
@@ -192,6 +194,44 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             true => Ok(self.read_doc_weights_from_file(&self.doc_weights, doc_id)),
             false => Err("Document id not found."),
         }
+    }
+
+    fn get_vocab(&self, index_name: &str) -> Vec<String> {
+
+        let mut vocab_file = File::open(format!("{}/{}", index_name, "vocab.bin")).unwrap();
+
+        let mut vocab_file_bytes = vocab_file.bytes();
+
+        let mut vocab_dict : Vec <String> = Vec::new();
+
+        let vocab_table = &self.vocab_table;
+
+        let mut index = 0;
+
+        let last_element = vocab_table.last().expect("No element found");
+        for position in vocab_table {
+            if position != last_element {
+                let bytes_to_read = position - vocab_table.get(index + 1).expect("No element found");
+
+                let mut buffer = vec![];
+
+                let mut position_copy : usize = position.clone() as usize;
+
+                for i in {0..bytes_to_read} {
+                    let byte = vocab_file_bytes.nth(position_copy + i as usize ).expect("Error reading bytes");
+                    println!("{:?}", buffer);
+                    println!("{}", i);
+                    buffer.push(byte);
+                }
+
+                // let term = String::from_utf8_lossy(buffer);
+                println!("{:?}", buffer);
+                
+            }
+        }
+
+        vocab_dict
+
     }
 
     fn contains_term(&self, term: &str) -> bool {

@@ -4,6 +4,7 @@ extern crate serde_json;
 extern crate stemmer;
 
 use search_engine::index::disk_inverted_index::DiskInvertedIndex;
+use search_engine::index::disk_inverted_index::IndexReader;
 use search_engine::parser::document_parser;
 use search_engine::paths::search_engine_paths;
 use search_engine::processor::query_processor;
@@ -204,7 +205,7 @@ fn main() {
                 } else if input == ":scheme w" || input == ":scheme wacky" {
                     scheme = "wacky"; 
                 } else if input == ":v" || input == ":vocab" {
-                    print_vocab(&disk_inverted_index);
+                    print_vocab(&disk_inverted_index, &index_path);
                 } else if input == ":k" || input == ":kgram" {
                     print_kgram(&k_gram_index);
                 } else if input == ":h" || input == ":help" {
@@ -351,7 +352,10 @@ fn open_file(
  * *`index` - The Positional Inverted Index containing the terms
  */
 fn print_vocab(
-    _index: &DiskInvertedIndex) {
+    index: &DiskInvertedIndex, index_path: &PathBuf) {
+
+    let index_name = index_path.to_str().expect("Not a valid path");
+    index.get_vocab(index_name);
     
     println!("Vocabulary");
 
