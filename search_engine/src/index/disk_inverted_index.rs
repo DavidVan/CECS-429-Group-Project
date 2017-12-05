@@ -1,10 +1,11 @@
 use byteorder::{ReadBytesExt, BigEndian};
 use std::fs::File;
+use std::io::BufReader;
 use std::io::prelude::*;
 use std::io::SeekFrom;
-use std::mem::size_of;
 use std::cmp::Ordering;
 use index::variable_byte;
+use reader::read_file::read_n;
 
 pub struct DiskInvertedIndex<'a> {
     path: &'a str,
@@ -22,6 +23,7 @@ pub trait IndexReader {
     fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>, &'static str>;
     fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64)>, &'static str>;
     fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u64, u64, f64), &'static str>;
+    fn get_vocab(&self, index_name: &str) -> Vec<String>;
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
@@ -194,6 +196,42 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         }
     }
 
+    fn get_vocab(&self, index_name: &str) -> Vec<String> {
+
+        let mut vocab_file = File::open(format!("{}/{}", index_name, "vocab.bin")).unwrap();
+
+        let mut vocab_dict : Vec<String> = Vec::new();
+
+        let mut contents = String::new();
+
+        vocab_file.read_to_string(&mut contents).expect("Error reading file");
+
+        let vocab_table = &self.vocab_table;
+
+        let mut first_pos : u64 = 0;
+        let mut second_pos : u64 = 0;
+        for (index, position) in vocab_table.iter().enumerate() {
+            if index % 2 != 0 {
+                continue; 
+            }
+
+            if index == 0 {
+                continue;
+            }
+
+            first_pos = second_pos;
+            second_pos = *position;
+
+            let term = &contents[first_pos as usize..second_pos as usize];
+            vocab_dict.push(term.to_string());
+        }
+        let term = &contents[second_pos as usize..];
+        vocab_dict.push(term.to_string());
+
+        vocab_dict
+
+    }
+
     fn contains_term(&self, term: &str) -> bool {
         return self.binary_search_vocabulary(term) != -1; 
     }
@@ -237,7 +275,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         table_file.read_exact(&mut vocab_size_buffer).expect("Error reading from file");
         
         let mut table_index = 0;
-        let mut vocab_table = vec![0; (&vocab_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 2];
+        let mut vocab_table : Vec<u64> = Vec::new(); 
         let mut vocab_pos_buffer = [0; 8];
         loop {
             match table_file.read_exact(&mut vocab_pos_buffer) {
