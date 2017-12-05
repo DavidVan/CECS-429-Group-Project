@@ -200,35 +200,33 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
         let mut vocab_file = File::open(format!("{}/{}", index_name, "vocab.bin")).unwrap();
 
-        let mut vocab_file_bytes = vocab_file.bytes();
+        let mut vocab_dict : Vec<String> = Vec::new();
 
-        let mut vocab_dict : Vec <String> = Vec::new();
+        let mut contents = String::new();
+
+        vocab_file.read_to_string(&mut contents).expect("Error reading file");
 
         let vocab_table = &self.vocab_table;
 
-        let mut index = 0;
-
-        let last_element = vocab_table.last().expect("No element found");
-        for position in vocab_table {
-            if position != last_element {
-                let bytes_to_read = position - vocab_table.get(index + 1).expect("No element found");
-
-                let mut buffer = vec![];
-
-                let mut position_copy : usize = position.clone() as usize;
-
-                for i in {0..bytes_to_read} {
-                    let byte = vocab_file_bytes.nth(position_copy + i as usize ).expect("Error reading bytes");
-                    println!("{:?}", buffer);
-                    println!("{}", i);
-                    buffer.push(byte);
-                }
-
-                // let term = String::from_utf8_lossy(buffer);
-                println!("{:?}", buffer);
-                
+        let mut first_pos : u64 = 0;
+        let mut second_pos : u64 = 0;
+        for (index, position) in vocab_table.iter().enumerate() {
+            if index % 2 != 0 {
+                continue; 
             }
+
+            if index == 0 {
+                continue;
+            }
+
+            first_pos = second_pos;
+            second_pos = *position;
+
+            let term = &contents[first_pos as usize..second_pos as usize];
+            vocab_dict.push(term.to_string());
         }
+        let term = &contents[second_pos as usize..];
+        vocab_dict.push(term.to_string());
 
         vocab_dict
 
@@ -277,7 +275,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         table_file.read_exact(&mut vocab_size_buffer).expect("Error reading from file");
         
         let mut table_index = 0;
-        let mut vocab_table = vec![0; (&vocab_size_buffer[..]).read_u32::<BigEndian>().unwrap() as usize * 2];
+        let mut vocab_table : Vec<u64> = Vec::new(); 
         let mut vocab_pos_buffer = [0; 8];
         loop {
             match table_file.read_exact(&mut vocab_pos_buffer) {

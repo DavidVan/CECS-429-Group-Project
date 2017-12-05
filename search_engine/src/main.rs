@@ -355,9 +355,13 @@ fn print_vocab(
     index: &DiskInvertedIndex, index_path: &PathBuf) {
 
     let index_name = index_path.to_str().expect("Not a valid path");
-    index.get_vocab(index_name);
+    let vocab_dict = index.get_vocab(index_name);
+
+    for term in &vocab_dict {
+        println!("{}", term); 
+    }
     
-    println!("Vocabulary");
+    println!("Vocabulary Size : {}", vocab_dict.len());
 
 }
 
