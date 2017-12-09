@@ -12,7 +12,7 @@ pub struct Bayesian<'a> {
 }
 
 impl<'a> Bayesian<'a> {
-    fn new(index_disputed: &'a DiskInvertedIndex, index_hamilton: &'a DiskInvertedIndex, index_jay: &'a DiskInvertedIndex, index_madison: &'a DiskInvertedIndex) -> Bayesian<'a> {
+    pub fn new(index_disputed: &'a DiskInvertedIndex, index_hamilton: &'a DiskInvertedIndex, index_jay: &'a DiskInvertedIndex, index_madison: &'a DiskInvertedIndex) -> Bayesian<'a> {
         Bayesian {
             index_disputed: index_disputed,
             index_hamilton: index_hamilton,
@@ -21,8 +21,12 @@ impl<'a> Bayesian<'a> {
         }
     }
 
-    fn build_discriminating_vocab_set(&self) -> HashMap<&str, Vec<(u32, u32, u32, u32)>> {
-
+    pub fn build_discriminating_vocab_set(&self) -> HashMap<&str, Vec<(u32, u32, u32, u32)>> {
+        let test = self.get_all_vocab();
+        for x in &test {
+            println!("test: {}", x);
+        }
+        println!("Size of all vocab: {}", test.len());
         HashMap::new()
     }
 }
