@@ -24,7 +24,7 @@ pub trait IndexReader {
     fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>, &'static str>;
     fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64)>, &'static str>;
     fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u64, u64, f64), &'static str>;
-    fn get_vocab(&self) -> HashSet<&str>;
+    fn get_vocab(&self) -> HashSet<String>;
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
@@ -197,11 +197,11 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         }
     }
 
-    fn get_vocab(&self) -> HashSet<&str> {
+    fn get_vocab(&self) -> HashSet<String> {
 
         let mut vocab_file = File::open(format!("{}/{}", self.path, "vocab.bin")).unwrap();
 
-        let mut vocab_dict : HashSet<&str> = HashSet::new();
+        let mut vocab_dict : HashSet<String> = HashSet::new();
 
         let mut contents = String::new();
 
@@ -224,10 +224,10 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             second_pos = *position;
 
             let term = &contents[first_pos as usize..second_pos as usize];
-            vocab_dict.insert(term);
+            vocab_dict.insert(term.to_owned());
         }
         let term = &contents[second_pos as usize..];
-        vocab_dict.insert(term);
+        vocab_dict.insert(term.to_owned());
 
         vocab_dict
 

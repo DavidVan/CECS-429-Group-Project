@@ -31,28 +31,28 @@ impl<'a> Classifier<'a> for Bayesian<'a> {
     fn classify(&self) -> &'a str {
         "hello"
     }
-    fn get_all_vocab(&self) -> HashSet<&'a str> {
+    fn get_all_vocab(&self) -> HashSet<String> {
         let vocabulary_disputed = self.index_disputed.get_vocab();
         let vocabulary_hamilton = self.index_hamilton.get_vocab();
         let vocabulary_jay = self.index_jay.get_vocab();
         let vocabulary_madison = self.index_madison.get_vocab();
 
         let first_union: HashSet<_> = vocabulary_disputed.union(&vocabulary_hamilton).collect();
-        let mut first_union_final: HashSet<&str> = HashSet::new();
+        let mut first_union_final: HashSet<String> = HashSet::new();
         for vocab in first_union {
-            first_union_final.insert(vocab);
+            first_union_final.insert(vocab.clone());
         }
 
         let second_union: HashSet<_> = first_union_final.union(&vocabulary_jay).collect();
-        let mut second_union_final: HashSet<&str> = HashSet::new();
+        let mut second_union_final: HashSet<String> = HashSet::new();
         for vocab in second_union {
-            second_union_final.insert(vocab);
+            second_union_final.insert(vocab.clone());
         }
 
         let third_union: HashSet<_> = second_union_final.union(&vocabulary_madison).collect();
-        let mut third_union_final: HashSet<&str> = HashSet::new();
+        let mut third_union_final: HashSet<String> = HashSet::new();
         for vocab in third_union {
-            third_union_final.insert(vocab);
+            third_union_final.insert(vocab.clone());
         }
 
         third_union_final

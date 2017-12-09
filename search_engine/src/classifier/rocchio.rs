@@ -66,7 +66,7 @@ impl<'a> Classifier<'a> for Rocchio<'a> {
     fn classify(&self) -> &'a str {
         "hello"
     }
-    fn get_all_vocab(&self) -> HashSet<&'a str> {
+    fn get_all_vocab(&self) -> HashSet<String> {
         HashSet::new()
     }
 }
