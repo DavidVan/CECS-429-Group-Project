@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::io::SeekFrom;
+use std::collections::HashSet;
 use std::cmp::Ordering;
 use index::variable_byte;
 use reader::read_file::read_n;
@@ -23,7 +24,7 @@ pub trait IndexReader {
     fn get_postings(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64, Vec<u32>)>, &'static str>;
     fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64)>, &'static str>;
     fn get_document_weights(&self, doc_id: u32) -> Result<(f64, f64, u64, u64, f64), &'static str>;
-    fn get_vocab(&self, index_name: &str) -> Vec<String>;
+    fn get_vocab(&self) -> HashSet<&str>;
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
@@ -196,11 +197,11 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         }
     }
 
-    fn get_vocab(&self, index_name: &str) -> Vec<String> {
+    fn get_vocab(&self) -> HashSet<&str> {
 
-        let mut vocab_file = File::open(format!("{}/{}", index_name, "vocab.bin")).unwrap();
+        let mut vocab_file = File::open(format!("{}/{}", self.path, "vocab.bin")).unwrap();
 
-        let mut vocab_dict : Vec<String> = Vec::new();
+        let mut vocab_dict : HashSet<&str> = HashSet::new();
 
         let mut contents = String::new();
 
@@ -223,10 +224,10 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             second_pos = *position;
 
             let term = &contents[first_pos as usize..second_pos as usize];
-            vocab_dict.push(term.to_string());
+            vocab_dict.push(term);
         }
         let term = &contents[second_pos as usize..];
-        vocab_dict.push(term.to_string());
+        vocab_dict.push(term);
 
         vocab_dict
 
