@@ -128,5 +128,4 @@ impl<'a> DiskIndex for IndexWriter<'a> {
             document_weights.write_f64::<BigEndian>(weight.get_avg_tftd()).expect("Error writing to file");
         }
     }
-
 }

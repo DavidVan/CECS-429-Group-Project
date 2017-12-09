@@ -224,10 +224,10 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
             second_pos = *position;
 
             let term = &contents[first_pos as usize..second_pos as usize];
-            vocab_dict.push(term);
+            vocab_dict.insert(term);
         }
         let term = &contents[second_pos as usize..];
-        vocab_dict.push(term);
+        vocab_dict.insert(term);
 
         vocab_dict
 
