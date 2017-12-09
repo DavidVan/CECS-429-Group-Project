@@ -57,4 +57,23 @@ impl<'a> Classifier<'a> for Bayesian<'a> {
 
         third_union_final
     }
+
+    fn get_total_num_documents(&self) -> Result<u32, &'static str> {
+        let hamilton_num = self.index_hamilton.get_num_documents().expect("No Documents found!"); 
+        let madison_num= self.index_madison.get_num_documents().expect("No Documents found!"); 
+        let jay_num = self.index_jay.get_num_documents().expect("No Documents found!"); 
+        let disputed_num = self.index_disputed.get_num_documents().expect("No Documents found!");
+
+        let mut total_num = 0;
+        total_num += hamilton_num;
+        total_num += madison_num;
+        total_num += jay_num;
+        total_num += disputed_num;
+
+        match total_num > 0 {
+            true => Ok(total_num),
+            false => Err("Error: No Documents Found in Index"),
+        }
+    }
+
 }

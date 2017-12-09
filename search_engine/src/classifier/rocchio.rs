@@ -69,4 +69,12 @@ impl<'a> Classifier<'a> for Rocchio<'a> {
     fn get_all_vocab(&self) -> HashSet<String> {
         HashSet::new()
     }
+
+    fn get_total_num_documents(&self) -> Result<u32, &'static str> {
+        match 1 == 1 {
+            true => Ok(1),
+            false => Err("Error"),
+        }
+    
+    }
 }

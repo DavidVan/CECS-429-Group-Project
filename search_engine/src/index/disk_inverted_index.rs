@@ -1,9 +1,11 @@
+extern crate serde_json;
 use byteorder::{ReadBytesExt, BigEndian};
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::io::SeekFrom;
 use std::collections::HashSet;
+use std::collections::HashMap;
 use std::cmp::Ordering;
 use index::variable_byte;
 use reader::read_file::read_n;
@@ -30,6 +32,7 @@ pub trait IndexReader {
     fn binary_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
     fn get_term_count(&self) -> u32;
+    fn get_num_documents(&self) -> Result<u32, &'static str>;
 }
 
 impl<'a> DiskInvertedIndex<'a> {
@@ -292,5 +295,23 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
     fn get_term_count(&self) -> u32 {
         return self.vocab_table.len() as u32 / 2;
+    }
+    fn get_num_documents(&self) -> Result<u32, &'static str> {
+        let path = self.get_path();
+        let id_file_filename = format!("{}/{}", path, "id_file.bin");
+
+        let mut id_file_file = File::open(id_file_filename).unwrap();
+
+        let mut id_file_contents = String::new();
+        id_file_file.read_to_string(&mut id_file_contents).expect("Failed to read id file");
+
+        let id_file : HashMap<u32, String> = serde_json::from_str(&id_file_contents).unwrap();
+
+        let num_documents = id_file.len();
+
+        match num_documents > 0 {
+            true => Ok(num_documents as u32),
+            false => Err("Error: No documents found"),
+        }
     }
 }
