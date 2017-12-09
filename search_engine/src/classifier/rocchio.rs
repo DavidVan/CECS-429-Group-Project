@@ -18,7 +18,7 @@ impl<'a> Rocchio<'a> {
         Rocchio { index: index }
     }
 
-    fn rocchio_calculation_for_class(&self) -> Vec<f64> {
+    fn calculate_centroid(&self) -> Vec<f64> {
         let doc_ids = self.retrieve_doc_ids();
         let number_of_documents_in_class = doc_ids.len() as f64;
         let mut sum_of_docs = Vec::new();
@@ -87,7 +87,7 @@ fn add_vector_components(vec_1: Vec<f64>, vec_2: Vec<f64>) -> Vec<f64> {
     return res;
 }
 
-fn calculate_euclidian_distance(vec_1: Vec<f64>, vec_2: Vec<f64>) ->f64 {
+fn calculate_euclidian_distance(vec_1: &Vec<f64>, vec_2: &Vec<f64>) ->f64 {
     let mut distance = 0f64;
     for (x,y) in vec_1.iter().zip(vec_2.iter()) {
        distance += (y-x).powi(2);
@@ -95,9 +95,41 @@ fn calculate_euclidian_distance(vec_1: Vec<f64>, vec_2: Vec<f64>) ->f64 {
     return distance.sqrt();
 }
     
-impl<'a> Classifier<'a> for Rocchio<'a> {
+pub struct RocchioClassifier<'a> {
+    index_disputed: &'a DiskInvertedIndex<'a>,
+    index_hamilton: &'a DiskInvertedIndex<'a>,
+    index_jay: &'a DiskInvertedIndex<'a>,
+    index_madison: &'a DiskInvertedIndex<'a>,
+}
+
+impl<'a> Classifier<'a> for RocchioClassifier<'a> {
     fn classify(&self) -> &'a str {
-        "hello"
+        let rocchio_for_disputed = Rocchio::new(self.index_disputed);
+        let rocchio_for_hamilton = Rocchio::new(self.index_hamilton);
+        let rocchio_for_jay = Rocchio::new(self.index_jay);
+        let rocchio_for_madison = Rocchio::new(self.index_madison);
+
+        let disputed_centroid = rocchio_for_disputed.calculate_centroid();
+        let hamilton_centroid = rocchio_for_hamilton.calculate_centroid();
+        let jay_centroid = rocchio_for_jay.calculate_centroid();
+        let madison_centroid = rocchio_for_madison.calculate_centroid();
+
+        let distance_disputed_hamilton = calculate_euclidian_distance(&disputed_centroid,&hamilton_centroid);
+        let distance_disputed_jay = calculate_euclidian_distance(&disputed_centroid,&jay_centroid);
+        let distance_disputed_madison = calculate_euclidian_distance(&disputed_centroid,&madison_centroid);
+
+        let min = distance_disputed_hamilton.min(distance_disputed_jay.min(distance_disputed_madison));
+        if min == distance_disputed_hamilton{
+            return "Hamilton";
+        }
+        else if min == distance_disputed_jay {
+            return "Jay";
+        }
+        else if min == distance_disputed_madison {
+            return "Madison";
+        } else {
+            return "Error";
+        }
     }
     fn get_all_vocab(&self) -> HashSet<String> {
         // let vocabulary_disputed = self.index_disputed.get_vocab();
