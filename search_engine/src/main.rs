@@ -12,6 +12,8 @@ use search_engine::reader::read_file;
 use search_engine::reader::user_input;
 use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
 use search_engine::index::k_gram_index::KGramIndex;
+use search_engine::classifier::bayesian_classifier::Bayesian;
+use search_engine::classifier::classifier::Classifier;
 use std::collections::HashMap;
 use std::fs::File;
 use std::fs::read_dir;
@@ -362,7 +364,28 @@ fn print_vocab(
     }
     
     println!("Vocabulary Size : {}", vocab_dict.len());
+    // Remove later
+    let mut index_path_copy = index_path.clone();
+    index_path_copy.pop();
+    index_path_copy.push("Disputed");
+    let disputed_path = String::from(index_path_copy.to_str().unwrap());
+    index_path_copy.pop();
+    index_path_copy.push("Hamilton");
+    let hamilton_path = String::from(index_path_copy.to_str().unwrap());
+    index_path_copy.pop();
+    index_path_copy.push("Jay");
+    let jay_path = String::from(index_path_copy.to_str().unwrap());
+    index_path_copy.pop();
+    index_path_copy.push("Madison");
+    let madison_path = String::from(index_path_copy.to_str().unwrap());
 
+    let disputed_index = DiskInvertedIndex::new(&disputed_path);
+    let hamilton_index = DiskInvertedIndex::new(&hamilton_path);
+    let jay_index = DiskInvertedIndex::new(&jay_path);
+    let madison_index = DiskInvertedIndex::new(&madison_path);
+
+    let classifier = Bayesian::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
+    classifier.build_discriminating_vocab_set();
 }
 
 fn print_kgram(
