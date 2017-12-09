@@ -158,14 +158,6 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
         // third_union_final
         HashSet::new()
     }
-
-    fn get_total_num_documents(&self) -> Result<u32, &'static str> {
-        match 1 == 1 {
-            true => Ok(1),
-            false => Err("Error"),
-        }
-    
-    }
 }
     
 
