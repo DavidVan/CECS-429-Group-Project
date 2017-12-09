@@ -4,6 +4,7 @@ extern crate serde_json;
 use index::disk_inverted_index::DiskInvertedIndex;
 use index::disk_inverted_index::IndexReader;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::prelude::*;
 use classifier::classifier::Classifier;
@@ -64,5 +65,8 @@ impl<'a> Rocchio<'a> {
 impl<'a> Classifier<'a> for Rocchio<'a> {
     fn classify(&self) -> &'a str {
         "hello"
+    }
+    fn get_all_vocab(&self) -> HashSet<&'a str> {
+        HashSet::new()
     }
 }
