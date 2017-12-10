@@ -1,3 +1,3 @@
 pub mod classifier;
-pub mod rocchio;
+pub mod rocchio_classifier;
 pub mod bayesian_classifier;
