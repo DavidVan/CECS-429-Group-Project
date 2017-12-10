@@ -103,7 +103,7 @@ fn calculate_euclidian_distance(vec_1: &Vec<f64>, vec_2: &Vec<f64>) ->f64 {
 }
 
 impl<'a> Classifier<'a> for RocchioClassifier<'a> {
-    fn classify(&self) -> &'a str {
+    fn classify(&self, doc_id: u32) -> &'a str {
         /**
          * Perhaps should be void or take in a single doc id and classify that document only?
          * Code needs to be changed in order to support either cahnge as it currently will return after
