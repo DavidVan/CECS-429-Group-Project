@@ -245,7 +245,13 @@ fn main() {
         // println!("Building Madison disk index from {}", madison_path);
         let madison_index = DiskInvertedIndex::new(&madison_path);
 
-        let bayesian_classifier = BayesianClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
+        let bayesian_classifier = BayesianClassifier::new(&hamilton_index, &jay_index, &madison_index);
+        // Remove later
+        let discriminating_vocab = bayesian_classifier.build_discriminating_vocab_set(10);
+        for x in &discriminating_vocab {
+            println!("Discriminating Vocab: {:?}", x);
+        }
+        ///////////////
         let rocchio_classifier = RocchioClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
 
         let id_file_filename = format!("{}/{}", index_path.display(), "id_file.bin");
