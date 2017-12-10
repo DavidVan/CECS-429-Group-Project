@@ -30,11 +30,11 @@ impl<'a> BayesianClassifier<'a> {
         HashMap::new()
     }
 
-    fn get_total_num_documents(&self) -> Result<u32, &'static str> {
-        let hamilton_num = self.index_hamilton.get_num_documents().expect("No Documents found!"); 
-        let madison_num= self.index_madison.get_num_documents().expect("No Documents found!"); 
-        let jay_num = self.index_jay.get_num_documents().expect("No Documents found!"); 
-        let disputed_num = self.index_disputed.get_num_documents().expect("No Documents found!");
+    fn get_total_num_documents(&self) -> Result<u32, &'static str> { // Nt (or just N), total number of documents for training set.
+        let hamilton_num = self.index_hamilton.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class 
+        let madison_num= self.index_madison.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class 
+        let jay_num = self.index_jay.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class 
+        let disputed_num = self.index_disputed.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class
 
         let mut total_num = 0;
         total_num += hamilton_num;
@@ -50,7 +50,7 @@ impl<'a> BayesianClassifier<'a> {
 }
 
 impl<'a> Classifier<'a> for BayesianClassifier<'a> {
-    fn classify(&self) -> &'a str {
+    fn classify(&self, doc_id: u32) -> &'a str {
         "hello"
     }
     fn get_all_vocab(&self) -> HashSet<String> {
