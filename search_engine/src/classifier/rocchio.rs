@@ -104,21 +104,12 @@ fn calculate_euclidian_distance(vec_1: &Vec<f64>, vec_2: &Vec<f64>) ->f64 {
 
 impl<'a> Classifier<'a> for RocchioClassifier<'a> {
     fn classify(&self, doc_id: u32) -> &'a str {
-        /**
-         * Perhaps should be void or take in a single doc id and classify that document only?
-         * Code needs to be changed in order to support either cahnge as it currently will return after
-         * the first document in the disputed list is classified
-         */
-
+        
         let hamilton_centroid = self.calculate_centroid(self.index_hamilton);
         let jay_centroid = self.calculate_centroid(self.index_jay);
         let madison_centroid = self.calculate_centroid(self.index_madison);
 
-        let docs = self.retrieve_doc_ids(self.index_disputed);
-
-        for doc in docs {
-
-            let x = self.calculate_normalized_vector_for_document(doc, self.index_disputed);
+            let x = self.calculate_normalized_vector_for_document(doc_id, self.index_disputed);
 
             let distance_disputed_hamilton = calculate_euclidian_distance(&x,&hamilton_centroid);
             let distance_disputed_jay = calculate_euclidian_distance(&x,&jay_centroid);
@@ -136,10 +127,7 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
             } else {
                 return "Error";
             }
-        }
-
         
-        "placeholder"
     }
     fn get_all_vocab(&self) -> HashSet<String> {
 
