@@ -12,7 +12,7 @@ use search_engine::reader::read_file;
 use search_engine::reader::user_input;
 use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
 use search_engine::index::k_gram_index::KGramIndex;
-use search_engine::classifier::bayesian_classifier::Bayesian;
+use search_engine::classifier::bayesian_classifier::BayesianClassifier;
 use search_engine::classifier::classifier::Classifier;
 use std::collections::HashMap;
 use std::fs::File;
@@ -384,7 +384,7 @@ fn print_vocab(
     let jay_index = DiskInvertedIndex::new(&jay_path);
     let madison_index = DiskInvertedIndex::new(&madison_path);
 
-    let classifier = Bayesian::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
+    let classifier = BayesianClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
     classifier.build_discriminating_vocab_set();
 }
 

@@ -4,16 +4,16 @@ use index::disk_inverted_index::DiskInvertedIndex;
 use index::disk_inverted_index::IndexReader;
 use classifier::classifier::Classifier;
 
-pub struct Bayesian<'a> {
+pub struct BayesianClassifier<'a> {
     index_disputed: &'a DiskInvertedIndex<'a>,
     index_hamilton: &'a DiskInvertedIndex<'a>,
     index_jay: &'a DiskInvertedIndex<'a>,
     index_madison: &'a DiskInvertedIndex<'a>,
 }
 
-impl<'a> Bayesian<'a> {
-    pub fn new(index_disputed: &'a DiskInvertedIndex, index_hamilton: &'a DiskInvertedIndex, index_jay: &'a DiskInvertedIndex, index_madison: &'a DiskInvertedIndex) -> Bayesian<'a> {
-        Bayesian {
+impl<'a> BayesianClassifier<'a> {
+    pub fn new(index_disputed: &'a DiskInvertedIndex, index_hamilton: &'a DiskInvertedIndex, index_jay: &'a DiskInvertedIndex, index_madison: &'a DiskInvertedIndex) -> BayesianClassifier<'a> {
+        BayesianClassifier {
             index_disputed: index_disputed,
             index_hamilton: index_hamilton,
             index_jay: index_jay,
@@ -49,7 +49,7 @@ impl<'a> Bayesian<'a> {
     }
 }
 
-impl<'a> Classifier<'a> for Bayesian<'a> {
+impl<'a> Classifier<'a> for BayesianClassifier<'a> {
     fn classify(&self) -> &'a str {
         "hello"
     }
