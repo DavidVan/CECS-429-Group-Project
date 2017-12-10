@@ -13,6 +13,7 @@ use search_engine::reader::user_input;
 use search_engine::index::positional_inverted_index::PositionalInvertedIndex;
 use search_engine::index::k_gram_index::KGramIndex;
 use search_engine::classifier::bayesian_classifier::BayesianClassifier;
+use search_engine::classifier::rocchio_classifier::RocchioClassifier;
 use search_engine::classifier::classifier::Classifier;
 use std::collections::HashMap;
 use std::fs::File;
@@ -28,8 +29,9 @@ fn main() {
     let mut menu: i32;
     let mut input: String;
     let mut change: bool;
-    let mut query_index : bool = false;
+    let mut function = "";
     let mut ranked_retrieval : bool = false;
+    let mut classifier = "rocchio";
 
     let mut index = PositionalInvertedIndex::new();
     let mut k_gram_index = KGramIndex::new();
@@ -59,31 +61,26 @@ fn main() {
 
         println!("Select Mode: ");
         println!("1. Build Index");
-        println!("2. Query Index\n");
-        println!("3. Quit");
+        println!("2. Query Index");
+        println!("3. Classify\n");
+        println!("4. Quit");
 
         menu = user_input::read_number_range(1,3);
 
         if menu == 1 {
-            query_index = false;
+            function = "build";
         } else if menu == 2 {
-            query_index = true;
+            function = "query";
         } else if menu == 3 {
+            function = "classify"
+        } else if menu == 4 {
             return; 
         }
         break;
     }
 
     
-    if !query_index {
-        // println!("Use KGrams? (y/n)");
-        // let yes_no = user_input::read_yes_no();
-        // if yes_no {
-            // k_gram_index.enable_k_gram();
-        // } else {
-            // k_gram_index.disable_k_gram();
-        // }
-        
+    if function == "build" {
         k_gram_index.enable_k_gram();
 
         let directory = read_dir(index_path.clone());
@@ -129,7 +126,7 @@ fn main() {
 
     }
     
-    if query_index {
+    if function == "query" {
         let disk_inverted_index_path = index_path.clone();
         let disk_inverted_index = DiskInvertedIndex::new(&disk_inverted_index_path.to_str().unwrap());
 
@@ -207,13 +204,83 @@ fn main() {
                 } else if input == ":scheme w" || input == ":scheme wacky" {
                     scheme = "wacky"; 
                 } else if input == ":v" || input == ":vocab" {
-                    print_vocab(&disk_inverted_index, &index_path);
+                    print_vocab(&disk_inverted_index);
                 } else if input == ":k" || input == ":kgram" {
                     print_kgram(&k_gram_index);
                 } else if input == ":h" || input == ":help" {
                     print_help(); 
                 } else {
                     println!("Invalid command - Use ':help' to view commands");
+                }
+            }
+        }
+    }
+
+    if function == "classify" {
+        let index_name = index_path.file_name().expect("Error retrieving index name");
+        if index_name != "disputed" {
+            println!("Cannot use documents that are already classified");
+            return;
+        }
+        let mut index_path_copy = index_path.clone();
+        index_path_copy.pop();
+        index_path_copy.push("disputed");
+        let disputed_path = String::from(index_path_copy.to_str().unwrap());
+        index_path_copy.pop();
+        index_path_copy.push("hamilton");
+        let hamilton_path = String::from(index_path_copy.to_str().unwrap());
+        index_path_copy.pop();
+        index_path_copy.push("jay");
+        let jay_path = String::from(index_path_copy.to_str().unwrap());
+        index_path_copy.pop();
+        index_path_copy.push("madison");
+        let madison_path = String::from(index_path_copy.to_str().unwrap());
+
+        // println!("Building disputed disk index from {}", disputed_path);
+        let disputed_index = DiskInvertedIndex::new(&disputed_path);
+        // println!("Building Hamilton disk index from {}", hamilton_path);
+        let hamilton_index = DiskInvertedIndex::new(&hamilton_path);
+        // println!("Building Jay disk index from {}", jay_path);
+        let jay_index = DiskInvertedIndex::new(&jay_path);
+        // println!("Building Madison disk index from {}", madison_path);
+        let madison_index = DiskInvertedIndex::new(&madison_path);
+
+        let bayesian_classifier = BayesianClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
+        let rocchio_classifier = RocchioClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
+
+        let id_file_filename = format!("{}/{}", index_path.display(), "id_file.bin");
+        let mut id_file_file = File::open(id_file_filename).unwrap();
+
+        let mut id_file_contents = String::new();
+        id_file_file.read_to_string(&mut id_file_contents).expect("Failed to read id file");
+
+        let id_file_map : HashMap<u32, String> = serde_json::from_str(&id_file_contents).unwrap();
+
+        let mut file_id_map : HashMap<String, u32> = HashMap::new();
+
+        for id_file in id_file_map {
+            let file_name = id_file.1;
+            let doc_id = id_file.0;
+
+            file_id_map.insert(file_name, doc_id);
+        }
+
+        loop {
+            print!("Input Document to Classify: ");
+            input = user_input::read_input_line();
+            println!();
+
+            if !input.starts_with(":") {
+                classify_document(classifier, &bayesian_classifier, &rocchio_classifier, &input, &file_id_map);
+            } else {
+                if input == ":q" || input == ":quit" {
+                   return (); 
+                } else if input.starts_with(":o ") || input.starts_with(":open ") {
+                    open_file(&index_path, &input);
+                } else if input == ":c rocchio" || input == ":classifier rocchio" {
+                    classifier = "rocchio"; 
+                } else if input == ":c bayesian" || input == ":classifier bayesian" {
+                    classifier = "bayesian"; 
                 }
             }
         }
@@ -346,6 +413,15 @@ fn open_file(
     }
 }
 
+fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier, file_name: &str, file_id_map: &HashMap<String, u32>) -> String {
+    let doc_id = file_id_map.get(file_name).expect("Doc id not found");
+    if classifier == "rocchio" {
+        return rocchio_classifier.classify(*doc_id).to_string();
+    } else {
+        return bayesian_classifier.classify(*doc_id).to_string();
+    }
+}
+
 /*
  * Prints out all vocabulary terms in the index
  *
@@ -354,9 +430,8 @@ fn open_file(
  * *`index` - The Positional Inverted Index containing the terms
  */
 fn print_vocab(
-    index: &DiskInvertedIndex, index_path: &PathBuf) {
+    index: &DiskInvertedIndex) {
 
-    let index_name = index_path.to_str().expect("Not a valid path");
     let vocab_dict = index.get_vocab();
 
     for term in &vocab_dict {
@@ -364,28 +439,6 @@ fn print_vocab(
     }
     
     println!("Vocabulary Size : {}", vocab_dict.len());
-    // Remove later
-    let mut index_path_copy = index_path.clone();
-    index_path_copy.pop();
-    index_path_copy.push("Disputed");
-    let disputed_path = String::from(index_path_copy.to_str().unwrap());
-    index_path_copy.pop();
-    index_path_copy.push("Hamilton");
-    let hamilton_path = String::from(index_path_copy.to_str().unwrap());
-    index_path_copy.pop();
-    index_path_copy.push("Jay");
-    let jay_path = String::from(index_path_copy.to_str().unwrap());
-    index_path_copy.pop();
-    index_path_copy.push("Madison");
-    let madison_path = String::from(index_path_copy.to_str().unwrap());
-
-    let disputed_index = DiskInvertedIndex::new(&disputed_path);
-    let hamilton_index = DiskInvertedIndex::new(&hamilton_path);
-    let jay_index = DiskInvertedIndex::new(&jay_path);
-    let madison_index = DiskInvertedIndex::new(&madison_path);
-
-    let classifier = BayesianClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
-    classifier.build_discriminating_vocab_set();
 }
 
 fn print_kgram(

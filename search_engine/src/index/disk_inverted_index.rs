@@ -39,9 +39,9 @@ impl<'a> DiskInvertedIndex<'a> {
     pub fn new(path: &'a str) -> DiskInvertedIndex {
         DiskInvertedIndex {
             path: path.clone(),
-            vocab_list: File::open(format!("{}/{}", path, "vocab.bin")).unwrap(),
-            doc_weights: File::open(format!("{}/{}", path, "doc_weights.bin")).unwrap(),
-            postings: File::open(format!("{}/{}", path, "postings.bin")).unwrap(),
+            vocab_list: File::open(format!("{}/{}", path, "vocab.bin")).expect("Failed to open vocab.bin"),
+            doc_weights: File::open(format!("{}/{}", path, "doc_weights.bin")).expect("Failed to open doc_weights.bin"),
+            postings: File::open(format!("{}/{}", path, "postings.bin")).expect("Failed to open postings.bin"),
             vocab_table: DiskInvertedIndex::read_vocab_table(path),
         }
     }

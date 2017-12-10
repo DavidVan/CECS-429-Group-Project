@@ -109,24 +109,24 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
         let jay_centroid = self.calculate_centroid(self.index_jay);
         let madison_centroid = self.calculate_centroid(self.index_madison);
 
-            let x = self.calculate_normalized_vector_for_document(doc_id, self.index_disputed);
+        let x = self.calculate_normalized_vector_for_document(doc_id, self.index_disputed);
 
-            let distance_disputed_hamilton = calculate_euclidian_distance(&x,&hamilton_centroid);
-            let distance_disputed_jay = calculate_euclidian_distance(&x,&jay_centroid);
-            let distance_disputed_madison = calculate_euclidian_distance(&x,&madison_centroid);
+        let distance_disputed_hamilton = calculate_euclidian_distance(&x,&hamilton_centroid);
+        let distance_disputed_jay = calculate_euclidian_distance(&x,&jay_centroid);
+        let distance_disputed_madison = calculate_euclidian_distance(&x,&madison_centroid);
 
-            let min = distance_disputed_hamilton.min(distance_disputed_jay.min(distance_disputed_madison));
-            if min == distance_disputed_hamilton{
-                return "Hamilton";
-            }
-            else if min == distance_disputed_jay {
-                return "Jay";
-            }
-            else if min == distance_disputed_madison {
-                return "Madison";
-            } else {
-                return "Error";
-            }
+        let min = distance_disputed_hamilton.min(distance_disputed_jay.min(distance_disputed_madison));
+        if min == distance_disputed_hamilton{
+            return "Hamilton";
+        }
+        else if min == distance_disputed_jay {
+            return "Jay";
+        }
+        else if min == distance_disputed_madison {
+            return "Madison";
+        } else {
+            return "Error";
+        }
         
     }
     fn get_all_vocab(&self) -> HashSet<String> {
