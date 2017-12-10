@@ -57,6 +57,7 @@ impl<'a> Rocchio<'a> {
     }
 
     fn retrieve_id_file(&self) -> HashMap<u32, String> {
+        //read and deserialize the id file for an index
         let id_file_filename = format!("{}/{}", self.index.get_path(), "id_file.bin");
         let mut id_file_file = File::open(id_file_filename).unwrap();
         let mut id_file_contents = String::new();
@@ -70,6 +71,7 @@ impl<'a> Rocchio<'a> {
     fn retrieve_doc_ids(&self) -> Vec<u32> {
         let id_file = self.retrieve_id_file();
         let mut ids: Vec<u32> = Vec::new();
+        //unsure if i retrieved the right ids needed for the index
         for key in id_file.keys() {
             ids.push(*key);
         }
@@ -104,59 +106,78 @@ pub struct RocchioClassifier<'a> {
 
 impl<'a> Classifier<'a> for RocchioClassifier<'a> {
     fn classify(&self) -> &'a str {
+        /**
+         * Perhaps should be void or take in a single doc id and classify that document only?
+         * Code needs to be changed in order to support either cahnge as it currently will return after
+         * the first document in the disputed list is classified
+         */
         let rocchio_for_disputed = Rocchio::new(self.index_disputed);
         let rocchio_for_hamilton = Rocchio::new(self.index_hamilton);
         let rocchio_for_jay = Rocchio::new(self.index_jay);
         let rocchio_for_madison = Rocchio::new(self.index_madison);
-
-        let disputed_centroid = rocchio_for_disputed.calculate_centroid();
+       
         let hamilton_centroid = rocchio_for_hamilton.calculate_centroid();
         let jay_centroid = rocchio_for_jay.calculate_centroid();
         let madison_centroid = rocchio_for_madison.calculate_centroid();
 
-        let distance_disputed_hamilton = calculate_euclidian_distance(&disputed_centroid,&hamilton_centroid);
-        let distance_disputed_jay = calculate_euclidian_distance(&disputed_centroid,&jay_centroid);
-        let distance_disputed_madison = calculate_euclidian_distance(&disputed_centroid,&madison_centroid);
+        let docs = rocchio_for_disputed.retrieve_doc_ids();
 
-        let min = distance_disputed_hamilton.min(distance_disputed_jay.min(distance_disputed_madison));
-        if min == distance_disputed_hamilton{
-            return "Hamilton";
+        for doc in docs {
+
+            let x = rocchio_for_disputed.calculate_normalized_vector_for_document(doc);
+
+            let distance_disputed_hamilton = calculate_euclidian_distance(&x,&hamilton_centroid);
+            let distance_disputed_jay = calculate_euclidian_distance(&x,&jay_centroid);
+            let distance_disputed_madison = calculate_euclidian_distance(&x,&madison_centroid);
+
+            let min = distance_disputed_hamilton.min(distance_disputed_jay.min(distance_disputed_madison));
+            if min == distance_disputed_hamilton{
+                return "Hamilton";
+            }
+            else if min == distance_disputed_jay {
+                return "Jay";
+            }
+            else if min == distance_disputed_madison {
+                return "Madison";
+            } else {
+                return "Error";
+            }
         }
-        else if min == distance_disputed_jay {
-            return "Jay";
-        }
-        else if min == distance_disputed_madison {
-            return "Madison";
-        } else {
-            return "Error";
-        }
+
+        
+        "placeholder"
     }
     fn get_all_vocab(&self) -> HashSet<String> {
-        // let vocabulary_disputed = self.index_disputed.get_vocab();
-        // let vocabulary_hamilton = self.index_hamilton.get_vocab();
-        // let vocabulary_jay = self.index_jay.get_vocab();
-        // let vocabulary_madison = self.index_madison.get_vocab();
+        /**
+         * function will work but need a way to do this inside the Rocchio class
+         * perhaps the global vocab file we discussed. I attempted to port this function inside
+         * the Rocchio class but because the get_vocab method of the disk index class makes a call to 
+         * the vocab table member variable I wasn't able to port it
+         */
+        let vocabulary_disputed = self.index_disputed.get_vocab();
+        let vocabulary_hamilton = self.index_hamilton.get_vocab();
+        let vocabulary_jay = self.index_jay.get_vocab();
+        let vocabulary_madison = self.index_madison.get_vocab();
 
-        // let first_union: HashSet<_> = vocabulary_disputed.union(&vocabulary_hamilton).collect();
-        // let mut first_union_final: HashSet<String> = HashSet::new();
-        // for vocab in first_union {
-        //     first_union_final.insert(vocab.clone());
-        // }
+        let first_union: HashSet<_> = vocabulary_disputed.union(&vocabulary_hamilton).collect();
+        let mut first_union_final: HashSet<String> = HashSet::new();
+        for vocab in first_union {
+            first_union_final.insert(vocab.clone());
+        }
 
-        // let second_union: HashSet<_> = first_union_final.union(&vocabulary_jay).collect();
-        // let mut second_union_final: HashSet<String> = HashSet::new();
-        // for vocab in second_union {
-        //     second_union_final.insert(vocab.clone());
-        // }
+        let second_union: HashSet<_> = first_union_final.union(&vocabulary_jay).collect();
+        let mut second_union_final: HashSet<String> = HashSet::new();
+        for vocab in second_union {
+            second_union_final.insert(vocab.clone());
+        }
 
-        // let third_union: HashSet<_> = second_union_final.union(&vocabulary_madison).collect();
-        // let mut third_union_final: HashSet<String> = HashSet::new();
-        // for vocab in third_union {
-        //     third_union_final.insert(vocab.clone());
-        // }
+        let third_union: HashSet<_> = second_union_final.union(&vocabulary_madison).collect();
+        let mut third_union_final: HashSet<String> = HashSet::new();
+        for vocab in third_union {
+            third_union_final.insert(vocab.clone());
+        }
 
-        // third_union_final
-        HashSet::new()
+        third_union_final
     }
 }
     
