@@ -259,10 +259,15 @@ fn main() {
         let mut file_id_map : HashMap<String, u32> = HashMap::new();
 
         for id_file in id_file_map {
-            let file_name = id_file.1;
+            let mut full_file_path = PathBuf::new();
+            full_file_path.push(id_file.1);
             let doc_id = id_file.0;
 
-            file_id_map.insert(file_name, doc_id);
+            let file_name = full_file_path.file_name().expect("File not found");
+
+            let file_name_string = file_name.to_str().expect("Error converting to string");
+
+            file_id_map.insert(file_name_string.to_string(), doc_id);
         }
 
         loop {
@@ -413,13 +418,15 @@ fn open_file(
     }
 }
 
-fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier, file_name: &str, file_id_map: &HashMap<String, u32>) -> String {
+fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier, file_name: &str, file_id_map: &HashMap<String, u32>) {
     let doc_id = file_id_map.get(file_name).expect("Doc id not found");
+    let classification : String; 
     if classifier == "rocchio" {
-        return rocchio_classifier.classify(*doc_id).to_string();
+        classification = rocchio_classifier.classify(*doc_id).to_string();
     } else {
-        return bayesian_classifier.classify(*doc_id).to_string();
+        classification = bayesian_classifier.classify(*doc_id).to_string();
     }
+    println!("This document was writtend by {}", classification);
 }
 
 /*
