@@ -9,35 +9,40 @@ use std::fs::File;
 use std::io::prelude::*;
 use classifier::classifier::Classifier;
 
-pub struct Rocchio<'a> {
-    index: &'a DiskInvertedIndex<'a>,
+pub struct RocchioClassifier<'a> {
+    index_disputed: &'a DiskInvertedIndex<'a>,
+    index_hamilton: &'a DiskInvertedIndex<'a>,
+    index_jay: &'a DiskInvertedIndex<'a>,
+    index_madison: &'a DiskInvertedIndex<'a>,
 }
 
-impl<'a> Rocchio<'a> {
-    fn new(index: &'a DiskInvertedIndex) -> Rocchio<'a> {
-        Rocchio { index: index }
+impl<'a> RocchioClassifier<'a> {
+    pub fn new(index_disputed: &'a DiskInvertedIndex, index_hamilton: &'a DiskInvertedIndex, index_jay: &'a DiskInvertedIndex, index_madison: &'a DiskInvertedIndex) -> RocchioClassifier<'a> {
+        RocchioClassifier {
+            index_disputed: index_disputed,
+            index_hamilton: index_hamilton,
+            index_jay: index_jay,
+            index_madison: index_madison,
+        }
     }
 
-    fn calculate_centroid(&self) -> Vec<f64> {
-        let doc_ids = self.retrieve_doc_ids();
+    fn calculate_centroid(&self, index: &DiskInvertedIndex) -> Vec<f64> {
+        let doc_ids = self.retrieve_doc_ids(index);
         let number_of_documents_in_class = doc_ids.len() as f64;
         let mut sum_of_docs = Vec::new();
         for doc in doc_ids {
-            sum_of_docs = add_vector_components(self.calculate_normalized_vector_for_document(doc),sum_of_docs);
+            sum_of_docs = add_vector_components(self.calculate_normalized_vector_for_document(doc, index),sum_of_docs);
         }
         return sum_of_docs.iter().map(|&x| x/number_of_documents_in_class).collect::<Vec<_>>();
     }
 
-    fn calculate_normalized_vector_for_document(&self,doc_id: u32) -> Vec<f64> {
-        let document_weight = self.index.get_document_weights(doc_id).unwrap().1;
-        /*
-        TODO: change get_vocab function to retreive global vocab, 
-              currently only retrieves vocab of the index
-        */
-        let vocab = self.index.get_vocab();
+    fn calculate_normalized_vector_for_document(&self,doc_id: u32, index: &DiskInvertedIndex) -> Vec<f64> {
+        let document_weight = index.get_document_weights(doc_id).unwrap().1;
+
+        let vocab = self.get_all_vocab();
         let mut document_vector: Vec<f64> = Vec::new();
         for term in vocab {
-            let res = self.index.get_postings_no_positions(&term);
+            let res = index.get_postings_no_positions(&term);
             let term_exists = res.is_ok();
             if !term_exists {
                 document_vector.push(0f64);
@@ -56,9 +61,9 @@ impl<'a> Rocchio<'a> {
         return document_vector;
     }
 
-    fn retrieve_id_file(&self) -> HashMap<u32, String> {
+    fn retrieve_id_file(&self, index: &DiskInvertedIndex) -> HashMap<u32, String> {
         //read and deserialize the id file for an index
-        let id_file_filename = format!("{}/{}", self.index.get_path(), "id_file.bin");
+        let id_file_filename = format!("{}/{}", index.get_path(), "id_file.bin");
         let mut id_file_file = File::open(id_file_filename).unwrap();
         let mut id_file_contents = String::new();
         id_file_file
@@ -68,8 +73,8 @@ impl<'a> Rocchio<'a> {
         return id_file;
     }
 
-    fn retrieve_doc_ids(&self) -> Vec<u32> {
-        let id_file = self.retrieve_id_file();
+    fn retrieve_doc_ids(&self, index: &DiskInvertedIndex) -> Vec<u32> {
+        let id_file = self.retrieve_id_file(index);
         let mut ids: Vec<u32> = Vec::new();
         //unsure if i retrieved the right ids needed for the index
         for key in id_file.keys() {
@@ -96,13 +101,6 @@ fn calculate_euclidian_distance(vec_1: &Vec<f64>, vec_2: &Vec<f64>) ->f64 {
     }
     return distance.sqrt();
 }
-    
-pub struct RocchioClassifier<'a> {
-    index_disputed: &'a DiskInvertedIndex<'a>,
-    index_hamilton: &'a DiskInvertedIndex<'a>,
-    index_jay: &'a DiskInvertedIndex<'a>,
-    index_madison: &'a DiskInvertedIndex<'a>,
-}
 
 impl<'a> Classifier<'a> for RocchioClassifier<'a> {
     fn classify(&self) -> &'a str {
@@ -111,20 +109,16 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
          * Code needs to be changed in order to support either cahnge as it currently will return after
          * the first document in the disputed list is classified
          */
-        let rocchio_for_disputed = Rocchio::new(self.index_disputed);
-        let rocchio_for_hamilton = Rocchio::new(self.index_hamilton);
-        let rocchio_for_jay = Rocchio::new(self.index_jay);
-        let rocchio_for_madison = Rocchio::new(self.index_madison);
-       
-        let hamilton_centroid = rocchio_for_hamilton.calculate_centroid();
-        let jay_centroid = rocchio_for_jay.calculate_centroid();
-        let madison_centroid = rocchio_for_madison.calculate_centroid();
 
-        let docs = rocchio_for_disputed.retrieve_doc_ids();
+        let hamilton_centroid = self.calculate_centroid(self.index_hamilton);
+        let jay_centroid = self.calculate_centroid(self.index_jay);
+        let madison_centroid = self.calculate_centroid(self.index_madison);
+
+        let docs = self.retrieve_doc_ids(self.index_disputed);
 
         for doc in docs {
 
-            let x = rocchio_for_disputed.calculate_normalized_vector_for_document(doc);
+            let x = self.calculate_normalized_vector_for_document(doc, self.index_disputed);
 
             let distance_disputed_hamilton = calculate_euclidian_distance(&x,&hamilton_centroid);
             let distance_disputed_jay = calculate_euclidian_distance(&x,&jay_centroid);
@@ -148,12 +142,7 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
         "placeholder"
     }
     fn get_all_vocab(&self) -> HashSet<String> {
-        /**
-         * function will work but need a way to do this inside the Rocchio class
-         * perhaps the global vocab file we discussed. I attempted to port this function inside
-         * the Rocchio class but because the get_vocab method of the disk index class makes a call to 
-         * the vocab table member variable I wasn't able to port it
-         */
+
         let vocabulary_disputed = self.index_disputed.get_vocab();
         let vocabulary_hamilton = self.index_hamilton.get_vocab();
         let vocabulary_jay = self.index_jay.get_vocab();
