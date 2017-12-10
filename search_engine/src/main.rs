@@ -247,7 +247,7 @@ fn main() {
 
         let bayesian_classifier = BayesianClassifier::new(&hamilton_index, &jay_index, &madison_index);
         // Remove later
-        let discriminating_vocab = bayesian_classifier.build_discriminating_vocab_set(10);
+        let discriminating_vocab = bayesian_classifier.build_discriminating_vocab_set(100);
         for x in &discriminating_vocab {
             println!("Discriminating Vocab: {:?}", x);
         }

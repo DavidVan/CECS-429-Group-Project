@@ -94,7 +94,7 @@ impl<'a> BayesianClassifier<'a> {
                 Err(error) => panic!("There was an error calculating the score for term {}. The error is: {}", term, error),
             };
         }
-        println!("Time taken to build discriminating vocab: {}", time.elapsed().as_secs());
+        println!("Time taken to build discriminating vocab: {} seconds. Total number of things in priority_queue: {}", time.elapsed().as_secs(), priority_queue.len());
         let mut discriminating_vocab = Vec::new();
         for i in 0..k {
             match priority_queue.pop() {
