@@ -293,7 +293,10 @@ impl<'a> BayesianClassifier<'a> {
     }
 
     fn calculate_mutual_information_score(&self, term: String) -> Result<(f64, f64, f64), &'static str> {
-        let n = self.get_all_vocab().len() as u32;
+        let n_hamilton = self.index_hamilton.get_num_documents().expect("No Documents found!"); 
+        let n_jay = self.index_jay.get_num_documents().expect("No Documents found!"); 
+        let n_madison = self.index_madison.get_num_documents().expect("No Documents found!"); 
+        let n = n_hamilton + n_jay + n_madison;
 
         let (n_0X_hamilton, n_0X_jay, n_0X_madison, n_00, n_01) = match self.get_n_0X(&term) {
             Ok(value) => value,
@@ -316,6 +319,25 @@ impl<'a> BayesianClassifier<'a> {
         let (n_01_hamilton, n_01_jay, n_01_madison) = n_01;
         let (n_10_hamilton, n_10_jay, n_10_madison) = n_10;
         let (n_11_hamilton, n_11_jay, n_11_madison) = n_11;
+        
+        // Debug Purposes
+        
+        let n_0X = (n_0X_hamilton, n_0X_jay, n_0X_madison);
+        let n_X0 = (n_X0_hamilton, n_X0_jay, n_X0_madison);
+        let n_1X = (n_1X_hamilton, n_1X_jay, n_1X_madison);
+        let n_X1 = (n_X1_hamilton, n_X1_jay, n_X1_madison);
+
+        println!("N: {:?}", n);
+        println!("N00: {:?}", n_00);
+        println!("N01: {:?}", n_01);
+        println!("N10: {:?}", n_10);
+        println!("N11: {:?}", n_11);
+        println!("N0X: {:?}", n_0X);
+        println!("NX0: {:?}", n_X0);
+        println!("N1X: {:?}", n_1X);
+        println!("NX1: {:?}", n_X1);
+
+        /////////////////
 
         let first_term_hamilton = (n_11_hamilton as f64 / n as f64) * ((n * n_11_hamilton) as f64 / (n_1X_hamilton * n_X1_hamilton) as f64).log2();
         let second_term_hamilton = (n_10_hamilton as f64 / n as f64) * ((n * n_10_hamilton) as f64 / (n_1X_hamilton * n_X0_hamilton) as f64).log2();
