@@ -129,27 +129,15 @@ impl<'a> BayesianClassifier<'a> {
         let jay_total_num = self.index_jay.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
         let madison_total_num = self.index_madison.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
 
-        let hamilton_postings_for_term = self.index_hamilton.get_postings_no_positions(term);
-        let num_in_hamilton_for_term = match hamilton_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
 
-        let jay_postings_for_term = self.index_jay.get_postings_no_positions(term);
-        let num_in_jay_for_term = match jay_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
 
-        let madison_postings_for_term = self.index_madison.get_postings_no_positions(term);
-        let num_in_madison_for_term = match madison_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        let hamilton_num_without_term = hamilton_total_num - num_in_hamilton_for_term; 
-        let jay_num_without_term = jay_total_num - num_in_jay_for_term;
-        let madison_num_without_term = madison_total_num - num_in_madison_for_term;
+        let hamilton_num_without_term = hamilton_total_num - hamilton_doc_freq_for_term; 
+        let jay_num_without_term = jay_total_num - jay_doc_freq_for_term;
+        let madison_num_without_term = madison_total_num - madison_doc_freq_for_term;
 
         let n_00_hamilton = jay_num_without_term + madison_num_without_term;
         let n_00_jay = hamilton_num_without_term + madison_num_without_term;
@@ -161,27 +149,15 @@ impl<'a> BayesianClassifier<'a> {
     }
 
     fn get_n_01(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // N01, total number of documents that DO contain term t and NOT in class c.
-        let hamilton_postings_for_term = self.index_hamilton.get_postings_no_positions(term);
-        let num_in_hamilton_for_term = match hamilton_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
 
-        let jay_postings_for_term = self.index_jay.get_postings_no_positions(term);
-        let num_in_jay_for_term = match jay_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
 
-        let madison_postings_for_term = self.index_madison.get_postings_no_positions(term);
-        let num_in_madison_for_term = match madison_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        let n_01_hamilton = num_in_jay_for_term + num_in_madison_for_term;
-        let n_01_jay = num_in_hamilton_for_term + num_in_madison_for_term;
-        let n_01_madison = num_in_hamilton_for_term + num_in_jay_for_term;
+        let n_01_hamilton = jay_doc_freq_for_term + madison_doc_freq_for_term;
+        let n_01_jay = hamilton_doc_freq_for_term + madison_doc_freq_for_term;
+        let n_01_madison = madison_doc_freq_for_term + jay_doc_freq_for_term;
 
         let n_01 = (n_01_hamilton, n_01_jay, n_01_madison);
 
@@ -193,27 +169,15 @@ impl<'a> BayesianClassifier<'a> {
         let jay_total_num = self.index_jay.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
         let madison_total_num = self.index_madison.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
 
-        let hamilton_postings_for_term = self.index_hamilton.get_postings_no_positions(term);
-        let num_in_hamilton_for_term = match hamilton_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
 
-        let jay_postings_for_term = self.index_jay.get_postings_no_positions(term);
-        let num_in_jay_for_term = match jay_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
 
-        let madison_postings_for_term = self.index_madison.get_postings_no_positions(term);
-        let num_in_madison_for_term = match madison_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        let hamilton_num_without_term = hamilton_total_num - num_in_hamilton_for_term; 
-        let jay_num_without_term = jay_total_num - num_in_jay_for_term;
-        let madison_num_without_term = madison_total_num - num_in_madison_for_term;
+        let hamilton_num_without_term = hamilton_total_num - hamilton_doc_freq_for_term; 
+        let jay_num_without_term = jay_total_num - jay_doc_freq_for_term;
+        let madison_num_without_term = madison_total_num - madison_doc_freq_for_term;
 
         let n_10_hamilton = hamilton_num_without_term;
         let n_10_jay = jay_num_without_term;
@@ -225,27 +189,15 @@ impl<'a> BayesianClassifier<'a> {
     }
 
     fn get_n_11(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // N11, total number of documents that DO contain term t and IS in class c.
-        let hamilton_postings_for_term = self.index_hamilton.get_postings_no_positions(term);
-        let num_in_hamilton_for_term = match hamilton_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
 
-        let jay_postings_for_term = self.index_jay.get_postings_no_positions(term);
-        let num_in_jay_for_term = match jay_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
 
-        let madison_postings_for_term = self.index_madison.get_postings_no_positions(term);
-        let num_in_madison_for_term = match madison_postings_for_term {
-            Ok(postings) => postings.len() as u32,
-            Err(_) => 0,
-        };
+        let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        let n_11_hamilton = num_in_hamilton_for_term;
-        let n_11_jay = num_in_jay_for_term;
-        let n_11_madison = num_in_madison_for_term;
+        let n_11_hamilton = hamilton_doc_freq_for_term;
+        let n_11_jay = jay_doc_freq_for_term;
+        let n_11_madison = madison_doc_freq_for_term;
 
         let n_11 = (n_11_hamilton, n_11_jay, n_11_madison);
 

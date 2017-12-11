@@ -171,6 +171,9 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
 
     fn get_document_frequency(&self, term: &str) -> u32 {
         let postings_position = self.binary_search_vocabulary(term);
+        if postings_position == -1 {
+            return 0;
+        }
         (&self.postings).seek(SeekFrom::Start(postings_position as u64)).expect("Error Seeking from Buffer");
         let mut doc_freq_buffer = [0; 4];
         (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error Seeking from Buffer");
