@@ -62,16 +62,15 @@ impl<'a> BayesianClassifier<'a> {
     }
 
     pub fn build_discriminating_vocab_set(&self, k: u32) -> Vec<String> {
-        let all_vocabulary = self.get_all_vocab();
-        println!("Length of all vocabulary: {}", all_vocabulary.len());
-
         let mut priority_queue: BinaryHeap<TermClassScore> = BinaryHeap::new();
+
         let time = Instant::now();
-        for term in &all_vocabulary {
-            match self.calculate_mutual_information_score(term.clone()) {
+
+        let hamilton_vocabulary = self.index_hamilton.get_vocab();
+        for term in &hamilton_vocabulary {
+            match self.calculate_mutual_information_score(term.clone(), DocumentClass::Hamilton) {
                 Ok(score) => {
-                    let (score_hamilton, score_jay, score_madison) = score;
-                    match TermClassScore::new(score_hamilton, term.clone(), DocumentClass::Hamilton) {
+                    match TermClassScore::new(score, term.clone(), DocumentClass::Hamilton) {
                         Some(score) => {
                             priority_queue.push(score);
                         },
@@ -79,7 +78,15 @@ impl<'a> BayesianClassifier<'a> {
                             // Do nothing.
                         },
                     };
-                    match TermClassScore::new(score_jay, term.clone(), DocumentClass::Jay) {
+                },
+                Err(error) => panic!("There was an error calculating the score for term {}. The error is: {}", term, error),
+            };
+        }
+        let jay_vocabulary = self.index_jay.get_vocab();
+        for term in &jay_vocabulary {
+            match self.calculate_mutual_information_score(term.clone(), DocumentClass::Jay) {
+                Ok(score) => {
+                    match TermClassScore::new(score, term.clone(), DocumentClass::Jay) {
                         Some(score) => {
                             priority_queue.push(score);
                         },
@@ -87,7 +94,15 @@ impl<'a> BayesianClassifier<'a> {
                             // Do nothing.
                         },
                     };
-                    match TermClassScore::new(score_madison, term.clone(), DocumentClass::Madison) {
+                },
+                Err(error) => panic!("There was an error calculating the score for term {}. The error is: {}", term, error),
+            };
+        }
+        let madison_vocabulary = self.index_madison.get_vocab();
+        for term in &madison_vocabulary {
+            match self.calculate_mutual_information_score(term.clone(), DocumentClass::Madison) {
+                Ok(score) => {
+                    match TermClassScore::new(score, term.clone(), DocumentClass::Madison) {
                         Some(score) => {
                             priority_queue.push(score);
                         },
@@ -131,292 +146,256 @@ impl<'a> BayesianClassifier<'a> {
         }
     }
 
-    fn get_n_00(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // N00, total number of documents that DO NOT contain term t and NOT in class c.
-        let hamilton_total_num = self.index_hamilton.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
-        let jay_total_num = self.index_jay.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
-        let madison_total_num = self.index_madison.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
+    fn get_n_00(&self, term: &str, class: &DocumentClass) -> Result<u32, &'static str> { // N00, total number of documents that DO NOT contain term t and NOT in class c.
+        match *class {
+            DocumentClass::Hamilton => {
+                let jay_total_num = self.index_jay.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
+                let madison_total_num = self.index_madison.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
 
-        let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
+                let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
+                let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
+                let jay_num_without_term = jay_total_num - jay_doc_freq_for_term;
+                let madison_num_without_term = madison_total_num - madison_doc_freq_for_term;
 
-        let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
+                let n_00_hamilton = jay_num_without_term + madison_num_without_term;
 
-        let hamilton_num_without_term = hamilton_total_num - hamilton_doc_freq_for_term; 
-        let jay_num_without_term = jay_total_num - jay_doc_freq_for_term;
-        let madison_num_without_term = madison_total_num - madison_doc_freq_for_term;
+                Ok(n_00_hamilton)
+            },
+            DocumentClass::Jay => {
+                let hamilton_total_num = self.index_hamilton.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
+                let madison_total_num = self.index_madison.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
 
-        let n_00_hamilton = jay_num_without_term + madison_num_without_term;
-        let n_00_jay = hamilton_num_without_term + madison_num_without_term;
-        let n_00_madison = hamilton_num_without_term + jay_num_without_term;
+                let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
+                let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        let n_00 = (n_00_hamilton, n_00_jay, n_00_madison);
+                let hamilton_num_without_term = hamilton_total_num - hamilton_doc_freq_for_term;
+                let madison_num_without_term = madison_total_num - madison_doc_freq_for_term;
 
-        Ok(n_00)
+                let n_00_jay = hamilton_num_without_term + madison_num_without_term;
+
+                Ok(n_00_jay)
+            },
+            DocumentClass::Madison => {
+                let hamilton_total_num = self.index_hamilton.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
+                let jay_total_num = self.index_jay.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
+
+                let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
+                let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
+
+                let hamilton_num_without_term = hamilton_total_num - hamilton_doc_freq_for_term;
+                let jay_num_without_term = jay_total_num - jay_doc_freq_for_term;
+
+                let n_00_madison = hamilton_num_without_term + jay_num_without_term;
+
+                Ok(n_00_madison)
+            },
+        }
     }
 
-    fn get_n_01(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // N01, total number of documents that DO contain term t and NOT in class c.
-        let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
+    fn get_n_01(&self, term: &str, class: &DocumentClass) -> Result<u32, &'static str> { // N01, total number of documents that DO contain term t and NOT in class c.
+        match *class {
+            DocumentClass::Hamilton => {
+                let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
 
-        let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
+                let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
+                let n_01_hamilton = jay_doc_freq_for_term + madison_doc_freq_for_term;
 
-        let n_01_hamilton = jay_doc_freq_for_term + madison_doc_freq_for_term;
-        let n_01_jay = hamilton_doc_freq_for_term + madison_doc_freq_for_term;
-        let n_01_madison = hamilton_doc_freq_for_term + jay_doc_freq_for_term;
+                Ok(n_01_hamilton)
+            },
+            DocumentClass::Jay => {
+                let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
 
-        let n_01 = (n_01_hamilton, n_01_jay, n_01_madison);
+                let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        Ok(n_01)
+                let n_01_jay = hamilton_doc_freq_for_term + madison_doc_freq_for_term;
+
+                Ok(n_01_jay)
+            },
+            DocumentClass::Madison => {
+                let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
+
+                let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
+
+                let n_01_madison = hamilton_doc_freq_for_term + jay_doc_freq_for_term;
+
+                Ok(n_01_madison)
+            },
+        }
     }
 
-    fn get_n_10(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // N10, total number of documents that DO NOT contain term t but IS in class c.
-        let hamilton_total_num = self.index_hamilton.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
-        let jay_total_num = self.index_jay.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
-        let madison_total_num = self.index_madison.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
+    fn get_n_10(&self, term: &str, class: &DocumentClass) -> Result<u32, &'static str> { // N10, total number of documents that DO NOT contain term t but IS in class c.
+        match *class {
+            DocumentClass::Hamilton => {
+                let hamilton_total_num = self.index_hamilton.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
 
-        let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
+                let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
 
-        let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
+                let hamilton_num_without_term = hamilton_total_num - hamilton_doc_freq_for_term; 
 
-        let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
+                let n_10_hamilton = hamilton_num_without_term;
 
-        let hamilton_num_without_term = hamilton_total_num - hamilton_doc_freq_for_term; 
-        let jay_num_without_term = jay_total_num - jay_doc_freq_for_term;
-        let madison_num_without_term = madison_total_num - madison_doc_freq_for_term;
+                Ok(n_10_hamilton)
+            },
+            DocumentClass::Jay => {
+                let jay_total_num = self.index_jay.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
 
-        let n_10_hamilton = hamilton_num_without_term;
-        let n_10_jay = jay_num_without_term;
-        let n_10_madison = madison_num_without_term;
+                let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
 
-        let n_10 = (n_10_hamilton, n_10_jay, n_10_madison);
+                let jay_num_without_term = jay_total_num - jay_doc_freq_for_term;
 
-        Ok(n_10)
+                let n_10_jay = jay_num_without_term;
+
+                Ok(n_10_jay)
+            },
+            DocumentClass::Madison => {
+                let madison_total_num = self.index_madison.get_num_documents().expect("No Documents found!"); // Nc, total number of documents for class. 
+
+                let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
+
+                let madison_num_without_term = madison_total_num - madison_doc_freq_for_term;
+
+                let n_10_madison = madison_num_without_term;
+
+                Ok(n_10_madison)
+            },
+        }
     }
 
-    fn get_n_11(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // N11, total number of documents that DO contain term t and IS in class c.
-        let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
+    fn get_n_11(&self, term: &str, class: &DocumentClass) -> Result<u32, &'static str> { // N11, total number of documents that DO contain term t and IS in class c.
+        match *class {
+            DocumentClass::Hamilton => {
+                let hamilton_doc_freq_for_term = self.index_hamilton.get_document_frequency(term);
 
-        let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
+                let n_11_hamilton = hamilton_doc_freq_for_term;
 
-        let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
+                Ok(n_11_hamilton)
+            },
+            DocumentClass::Jay => {
+                let jay_doc_freq_for_term = self.index_jay.get_document_frequency(term);
 
-        let n_11_hamilton = hamilton_doc_freq_for_term;
-        let n_11_jay = jay_doc_freq_for_term;
-        let n_11_madison = madison_doc_freq_for_term;
+                let n_11_jay = jay_doc_freq_for_term;
 
-        let n_11 = (n_11_hamilton, n_11_jay, n_11_madison);
+                Ok(n_11_jay)
+            },
+            DocumentClass::Madison => {
+                let madison_doc_freq_for_term = self.index_madison.get_document_frequency(term);
 
-        Ok(n_11)
+                let n_11_madison = madison_doc_freq_for_term;
+
+                Ok(n_11_madison)
+            },
+        }
     }
 
-    fn get_n_0X(&self, term: &str) -> Result<(u32, u32, u32, (u32, u32, u32), (u32, u32, u32)), &'static str> { // N0X, N00 + N01
-        let n_00 = match self.get_n_00(term) {
+    fn get_n_0X(&self, term: &str, class: &DocumentClass) -> Result<(u32, u32, u32), &'static str> { // N0X, N00 + N01
+        let n_00 = match self.get_n_00(term, class) {
             Ok(n_00) => n_00,
             Err(_) => panic!("Something happened when calculating N00!"),
         };
-        let n_01 = match self.get_n_01(term) {
+        let n_01 = match self.get_n_01(term, class) {
             Ok(n_01) => n_01,
             Err(_) => panic!("Something happened when calculating N01!"),
         };
 
-        let (n_00_hamilton, n_00_jay, n_00_madison) = n_00;
-        let (n_01_hamilton, n_01_jay, n_01_madison) = n_01;
+        let n_0X = n_00 + n_01;
 
-        let n_0X_hamilton = n_00_hamilton + n_01_hamilton;
-        let n_0X_jay = n_00_jay + n_01_jay;
-        let n_0X_madison = n_00_madison + n_01_madison;
-
-        let n_0X = (n_0X_hamilton, n_0X_jay, n_0X_madison, n_00, n_01);
-
-        Ok(n_0X)
+        Ok((n_0X, n_00, n_01))
     }
 
-    fn get_n_X0(&self, term: &str) -> Result<(u32, u32, u32, (u32, u32, u32), (u32, u32, u32)), &'static str> { // NX0, N00 + N10
-        let n_00 = match self.get_n_00(term) {
+    fn get_n_X0(&self, term: &str, class: &DocumentClass) -> Result<(u32, u32, u32), &'static str> { // NX0, N00 + N10
+        let n_00 = match self.get_n_00(term, class) {
             Ok(n_00) => n_00,
             Err(_) => panic!("Something happened when calculating N00!"),
         };
-        let n_10 = match self.get_n_10(term) {
+        let n_10 = match self.get_n_10(term, class) {
             Ok(n_10) => n_10,
             Err(_) => panic!("Something happened when calculating N10!"),
         };
+        
+        let n_X0 = n_00 + n_10;
 
-        let (n_00_hamilton, n_00_jay, n_00_madison) = n_00;
-        let (n_10_hamilton, n_10_jay, n_10_madison) = n_10;
-
-        let n_X0_hamilton = n_00_hamilton + n_10_hamilton;
-        let n_X0_jay = n_00_jay + n_10_jay;
-        let n_X0_madison = n_00_madison + n_10_madison;
-
-        let n_X0 = (n_X0_hamilton, n_X0_jay, n_X0_madison, n_00, n_10);
-
-        Ok(n_X0)
+        Ok((n_X0, n_00, n_10))
     }
 
-    fn get_n_1X(&self, term: &str) -> Result<(u32, u32, u32, (u32, u32, u32), (u32, u32, u32)), &'static str> { // N1X, N10 + N11
-        let n_10 = match self.get_n_10(term) {
+    fn get_n_1X(&self, term: &str, class: &DocumentClass) -> Result<(u32, u32, u32), &'static str> { // N1X, N10 + N11
+        let n_10 = match self.get_n_10(term, class) {
             Ok(n_10) => n_10,
             Err(_) => panic!("Something happened when calculating N10!"),
         };
-        let n_11 = match self.get_n_11(term) {
+        let n_11 = match self.get_n_11(term, class) {
             Ok(n_11) => n_11,
             Err(_) => panic!("Something happened when calculating N11!"),
         };
 
-        let (n_10_hamilton, n_10_jay, n_10_madison) = n_10;
-        let (n_11_hamilton, n_11_jay, n_11_madison) = n_11;
+        let n_1X = n_10 + n_11;
 
-        let n_1X_hamilton = n_10_hamilton + n_11_hamilton;
-        let n_1X_jay = n_10_jay + n_11_jay;
-        let n_1X_madison = n_10_madison + n_11_madison;
-
-        let n_1X = (n_1X_hamilton, n_1X_jay, n_1X_madison, n_10, n_11);
-
-        Ok(n_1X)
+        Ok((n_1X, n_10, n_11))
     }
 
-    fn get_n_X1(&self, term: &str) -> Result<(u32, u32, u32, (u32, u32, u32), (u32, u32, u32)), &'static str> { // NX1, N01 + N11
-        let n_01 = match self.get_n_01(term) {
+    fn get_n_X1(&self, term: &str, class: &DocumentClass) -> Result<(u32, u32, u32), &'static str> { // NX1, N01 + N11
+        let n_01 = match self.get_n_01(term, class) {
             Ok(n_01) => n_01,
             Err(_) => panic!("Something happened when calculating N01!"),
         };
-        let n_11 = match self.get_n_11(term) {
+        let n_11 = match self.get_n_11(term, class) {
             Ok(n_11) => n_11,
             Err(_) => panic!("Something happened when calculating N11!"),
         };
 
-        let (n_01_hamilton, n_01_jay, n_01_madison) = n_01;
-        let (n_11_hamilton, n_11_jay, n_11_madison) = n_11;
+        let n_X1 = n_01 + n_11;
 
-        let n_X1_hamilton = n_01_hamilton + n_11_hamilton;
-        let n_X1_jay = n_01_jay + n_11_jay;
-        let n_X1_madison = n_01_madison + n_11_madison;
-
-        let n_X1 = (n_X1_hamilton, n_X1_jay, n_X1_madison, n_01, n_11);
-
-        Ok(n_X1)
+        Ok((n_X1, n_01, n_11))
     }
 
-    fn calculate_mutual_information_score(&self, term: String) -> Result<(f64, f64, f64), &'static str> {
+    fn calculate_mutual_information_score(&self, term: String, class: DocumentClass) -> Result<f64, &'static str> {
         let n_hamilton = self.index_hamilton.get_num_documents().expect("No Documents found!"); 
         let n_jay = self.index_jay.get_num_documents().expect("No Documents found!"); 
         let n_madison = self.index_madison.get_num_documents().expect("No Documents found!"); 
         let n = n_hamilton + n_jay + n_madison;
 
-        let (n_0X_hamilton, n_0X_jay, n_0X_madison, n_00, n_01) = match self.get_n_0X(&term) {
+
+        let (n_0X, n_00, n_01) = match self.get_n_0X(&term, &class) {
             Ok(value) => value,
             Err(error) => panic!("Something happened when calculating N_0X! Error: {}", error),
         };
-        let (n_X0_hamilton, n_X0_jay, n_X0_madison, _, n_10) = match self.get_n_X0(&term) {
+        let (n_X0, _, n_10) = match self.get_n_X0(&term, &class) {
             Ok(value) => value,
             Err(error) => panic!("Something happened when calculating N_X0! Error: {}", error),
         };
-        let (n_1X_hamilton, n_1X_jay, n_1X_madison, _, n_11) = match self.get_n_1X(&term) {
+        let (n_1X, _, n_11) = match self.get_n_1X(&term, &class) {
             Ok(value) => value,
             Err(error) => panic!("Something happened when calculating N_1X! Error: {}", error),
         };
-        let (n_X1_hamilton, n_X1_jay, n_X1_madison, _, _) = match self.get_n_X1(&term) {
+        let (n_X1, _, _) = match self.get_n_X1(&term, &class) {
             Ok(value) => value,
             Err(error) => panic!("Something happened when calculating N_X1! Error: {}", error),
         };
 
-        let (n_00_hamilton, n_00_jay, n_00_madison) = n_00;
-        let (n_01_hamilton, n_01_jay, n_01_madison) = n_01;
-        let (n_10_hamilton, n_10_jay, n_10_madison) = n_10;
-        let (n_11_hamilton, n_11_jay, n_11_madison) = n_11;
-        
-        // Debug Purposes
-        //
-        // let n_0X = (n_0X_hamilton, n_0X_jay, n_0X_madison);
-        // let n_X0 = (n_X0_hamilton, n_X0_jay, n_X0_madison);
-        // let n_1X = (n_1X_hamilton, n_1X_jay, n_1X_madison);
-        // let n_X1 = (n_X1_hamilton, n_X1_jay, n_X1_madison);
-        // 
-        // println!("N: {:?}", n);
-        // println!("N00: {:?}", n_00);
-        // println!("N01: {:?}", n_01);
-        // println!("N10: {:?}", n_10);
-        // println!("N11: {:?}", n_11);
-        // println!("N0X: {:?}", n_0X);
-        // println!("NX0: {:?}", n_X0);
-        // println!("N1X: {:?}", n_1X);
-        // println!("NX1: {:?}", n_X1);
-        //
-        /////////////////
+        let first_term_calculation = (n_11 as f64 / n as f64) * ((n * n_11) as f64 / (n_1X * n_X1) as f64).log2();
+        let second_term_calculation = (n_10 as f64 / n as f64) * ((n * n_10) as f64 / (n_1X * n_X0) as f64).log2();
+        let third_term_calculation = (n_01 as f64 / n as f64) * ((n * n_01) as f64 / (n_0X * n_X1) as f64).log2();
+        let fourth_term_calculation = (n_00 as f64 / n as f64) * ((n * n_00) as f64 / (n_0X * n_X0) as f64).log2();
 
-        let first_term_hamilton_calculation = (n_11_hamilton as f64 / n as f64) * ((n * n_11_hamilton) as f64 / (n_1X_hamilton * n_X1_hamilton) as f64).log2();
-        let second_term_hamilton_calculation = (n_10_hamilton as f64 / n as f64) * ((n * n_10_hamilton) as f64 / (n_1X_hamilton * n_X0_hamilton) as f64).log2();
-        let third_term_hamilton_calculation = (n_01_hamilton as f64 / n as f64) * ((n * n_01_hamilton) as f64 / (n_0X_hamilton * n_X1_hamilton) as f64).log2();
-        let fourth_term_hamilton_calculation = (n_00_hamilton as f64 / n as f64) * ((n * n_00_hamilton) as f64 / (n_0X_hamilton * n_X0_hamilton) as f64).log2();
-
-        let first_term_hamilton = match first_term_hamilton_calculation.is_nan() {
+        let first_term = match first_term_calculation.is_nan() {
             true => 0.0,
-            false => first_term_hamilton_calculation,
+            false => first_term_calculation,
         };
-        let second_term_hamilton = match second_term_hamilton_calculation.is_nan() {
+        let second_term = match second_term_calculation.is_nan() {
             true => 0.0,
-            false => second_term_hamilton_calculation,
+            false => second_term_calculation,
         };
-        let third_term_hamilton = match third_term_hamilton_calculation.is_nan() {
+        let third_term = match third_term_calculation.is_nan() {
             true => 0.0,
-            false => third_term_hamilton_calculation,
+            false => third_term_calculation,
         };
-        let fourth_term_hamilton = match fourth_term_hamilton_calculation.is_nan() {
+        let fourth_term = match fourth_term_calculation.is_nan() {
             true => 0.0,
-            false => fourth_term_hamilton_calculation,
+            false => fourth_term_calculation,
         };
 
-        let first_term_jay_calculation = (n_11_jay as f64 / n as f64) * ((n * n_11_jay) as f64 / (n_1X_jay * n_X1_jay) as f64).log2();
-        let second_term_jay_calculation = (n_10_jay as f64 / n as f64) * ((n * n_10_jay) as f64 / (n_1X_jay * n_X0_jay) as f64).log2();
-        let third_term_jay_calculation = (n_01_jay as f64 / n as f64) * ((n * n_01_jay) as f64 / (n_0X_jay * n_X1_jay) as f64).log2();
-        let fourth_term_jay_calculation = (n_00_jay as f64 / n as f64) * ((n * n_00_jay) as f64 / (n_0X_jay * n_X0_jay) as f64).log2();
-
-        let first_term_jay = match first_term_jay_calculation.is_nan() {
-            true => 0.0,
-            false => first_term_jay_calculation,
-        };
-        let second_term_jay = match second_term_jay_calculation.is_nan() {
-            true => 0.0,
-            false => second_term_jay_calculation,
-        };
-        let third_term_jay = match third_term_jay_calculation.is_nan() {
-            true => 0.0,
-            false => third_term_jay_calculation,
-        };
-        let fourth_term_jay = match fourth_term_jay_calculation.is_nan() {
-            true => 0.0,
-            false => fourth_term_jay_calculation,
-        };
-
-        let first_term_madison_calculation = (n_11_madison as f64 / n as f64) * ((n * n_11_madison) as f64 / (n_1X_madison * n_X1_madison) as f64).log2();
-        let second_term_madison_calculation = (n_10_madison as f64 / n as f64) * ((n * n_10_madison) as f64 / (n_1X_madison * n_X0_madison) as f64).log2();
-        let third_term_madison_calculation = (n_01_madison as f64 / n as f64) * ((n * n_01_madison) as f64 / (n_0X_madison * n_X1_madison) as f64).log2();
-        let fourth_term_madison_calculation = (n_00_madison as f64 / n as f64) * ((n * n_00_madison) as f64 / (n_0X_madison * n_X0_madison) as f64).log2();
-
-        let first_term_madison = match first_term_madison_calculation.is_nan() {
-            true => 0.0,
-            false => first_term_madison_calculation,
-        };
-        let second_term_madison = match second_term_madison_calculation.is_nan() {
-            true => 0.0,
-            false => second_term_madison_calculation,
-        };
-        let third_term_madison = match third_term_madison_calculation.is_nan() {
-            true => 0.0,
-            false => third_term_madison_calculation,
-        };
-        let fourth_term_madison = match fourth_term_madison_calculation.is_nan() {
-            true => 0.0,
-            false => fourth_term_madison_calculation,
-        };
-
-        let score_hamilton = first_term_hamilton + second_term_hamilton + third_term_hamilton + fourth_term_hamilton;
-        let score_jay = first_term_jay + second_term_jay + third_term_jay + fourth_term_jay;
-        let score_madison = first_term_madison + second_term_madison + third_term_madison + fourth_term_madison;
-
-        let score = (score_hamilton, score_jay, score_madison);
+        let score = first_term + second_term + third_term + fourth_term;
 
         Ok(score)
     }
