@@ -61,7 +61,7 @@ impl<'a> BayesianClassifier<'a> {
         }
     }
 
-    pub fn build_discriminating_vocab_set(&self, k: u32) -> Vec<TermClassScore> {
+    pub fn build_discriminating_vocab_set(&self, k: u32) -> Vec<String> {
         let all_vocabulary = self.get_all_vocab();
         println!("Length of all vocabulary: {}", all_vocabulary.len());
 
@@ -101,12 +101,14 @@ impl<'a> BayesianClassifier<'a> {
         }
         println!("Time taken to build discriminating vocab: {} seconds. Total number of things in priority_queue: {}", time.elapsed().as_secs(), priority_queue.len());
         let mut discriminating_vocab = Vec::new();
-        for i in 0..k {
-            match priority_queue.pop() {
-                Some(from_priority_queue) => {
-                    discriminating_vocab.push(from_priority_queue);
+        let mut counter = 0;
+        while let Some(from_priority_queue) = priority_queue.pop() {
+            if !discriminating_vocab.contains(&from_priority_queue.term) {
+                discriminating_vocab.push(from_priority_queue.term);
+                counter += 1;
+                if counter == k {
+                    break;
                 }
-                None => panic!("Removing from priority queue, but nothing is in the priority queue..."),
             }
         }
 
@@ -162,7 +164,7 @@ impl<'a> BayesianClassifier<'a> {
 
         let n_01_hamilton = jay_doc_freq_for_term + madison_doc_freq_for_term;
         let n_01_jay = hamilton_doc_freq_for_term + madison_doc_freq_for_term;
-        let n_01_madison = madison_doc_freq_for_term + jay_doc_freq_for_term;
+        let n_01_madison = hamilton_doc_freq_for_term + jay_doc_freq_for_term;
 
         let n_01 = (n_01_hamilton, n_01_jay, n_01_madison);
 
@@ -331,7 +333,7 @@ impl<'a> BayesianClassifier<'a> {
         // let n_X0 = (n_X0_hamilton, n_X0_jay, n_X0_madison);
         // let n_1X = (n_1X_hamilton, n_1X_jay, n_1X_madison);
         // let n_X1 = (n_X1_hamilton, n_X1_jay, n_X1_madison);
-        //
+        // 
         // println!("N: {:?}", n);
         // println!("N00: {:?}", n_00);
         // println!("N01: {:?}", n_01);
@@ -344,20 +346,71 @@ impl<'a> BayesianClassifier<'a> {
         //
         /////////////////
 
-        let first_term_hamilton = (n_11_hamilton as f64 / n as f64) * ((n * n_11_hamilton) as f64 / (n_1X_hamilton * n_X1_hamilton) as f64).log2();
-        let second_term_hamilton = (n_10_hamilton as f64 / n as f64) * ((n * n_10_hamilton) as f64 / (n_1X_hamilton * n_X0_hamilton) as f64).log2();
-        let third_term_hamilton = (n_01_hamilton as f64 / n as f64) * ((n * n_01_hamilton) as f64 / (n_0X_hamilton * n_X1_hamilton) as f64).log2();
-        let fourth_term_hamilton = (n_00_hamilton as f64 / n as f64) * ((n * n_00_hamilton) as f64 / (n_0X_hamilton * n_X0_hamilton) as f64).log2();
+        let first_term_hamilton_calculation = (n_11_hamilton as f64 / n as f64) * ((n * n_11_hamilton) as f64 / (n_1X_hamilton * n_X1_hamilton) as f64).log2();
+        let second_term_hamilton_calculation = (n_10_hamilton as f64 / n as f64) * ((n * n_10_hamilton) as f64 / (n_1X_hamilton * n_X0_hamilton) as f64).log2();
+        let third_term_hamilton_calculation = (n_01_hamilton as f64 / n as f64) * ((n * n_01_hamilton) as f64 / (n_0X_hamilton * n_X1_hamilton) as f64).log2();
+        let fourth_term_hamilton_calculation = (n_00_hamilton as f64 / n as f64) * ((n * n_00_hamilton) as f64 / (n_0X_hamilton * n_X0_hamilton) as f64).log2();
 
-        let first_term_jay = (n_11_jay as f64 / n as f64) * ((n * n_11_jay) as f64 / (n_1X_jay * n_X1_jay) as f64).log2();
-        let second_term_jay = (n_10_jay as f64 / n as f64) * ((n * n_10_jay) as f64 / (n_1X_jay * n_X0_jay) as f64).log2();
-        let third_term_jay = (n_01_jay as f64 / n as f64) * ((n * n_01_jay) as f64 / (n_0X_jay * n_X1_jay) as f64).log2();
-        let fourth_term_jay = (n_00_jay as f64 / n as f64) * ((n * n_00_jay) as f64 / (n_0X_jay * n_X0_jay) as f64).log2();
+        let first_term_hamilton = match first_term_hamilton_calculation.is_nan() {
+            true => 0.0,
+            false => first_term_hamilton_calculation,
+        };
+        let second_term_hamilton = match second_term_hamilton_calculation.is_nan() {
+            true => 0.0,
+            false => second_term_hamilton_calculation,
+        };
+        let third_term_hamilton = match third_term_hamilton_calculation.is_nan() {
+            true => 0.0,
+            false => third_term_hamilton_calculation,
+        };
+        let fourth_term_hamilton = match fourth_term_hamilton_calculation.is_nan() {
+            true => 0.0,
+            false => fourth_term_hamilton_calculation,
+        };
 
-        let first_term_madison = (n_11_madison as f64 / n as f64) * ((n * n_11_madison) as f64 / (n_1X_madison * n_X1_madison) as f64).log2();
-        let second_term_madison = (n_10_madison as f64 / n as f64) * ((n * n_10_madison) as f64 / (n_1X_madison * n_X0_madison) as f64).log2();
-        let third_term_madison = (n_01_madison as f64 / n as f64) * ((n * n_01_madison) as f64 / (n_0X_madison * n_X1_madison) as f64).log2();
-        let fourth_term_madison = (n_00_madison as f64 / n as f64) * ((n * n_00_madison) as f64 / (n_0X_madison * n_X0_madison) as f64).log2();
+        let first_term_jay_calculation = (n_11_jay as f64 / n as f64) * ((n * n_11_jay) as f64 / (n_1X_jay * n_X1_jay) as f64).log2();
+        let second_term_jay_calculation = (n_10_jay as f64 / n as f64) * ((n * n_10_jay) as f64 / (n_1X_jay * n_X0_jay) as f64).log2();
+        let third_term_jay_calculation = (n_01_jay as f64 / n as f64) * ((n * n_01_jay) as f64 / (n_0X_jay * n_X1_jay) as f64).log2();
+        let fourth_term_jay_calculation = (n_00_jay as f64 / n as f64) * ((n * n_00_jay) as f64 / (n_0X_jay * n_X0_jay) as f64).log2();
+
+        let first_term_jay = match first_term_jay_calculation.is_nan() {
+            true => 0.0,
+            false => first_term_jay_calculation,
+        };
+        let second_term_jay = match second_term_jay_calculation.is_nan() {
+            true => 0.0,
+            false => second_term_jay_calculation,
+        };
+        let third_term_jay = match third_term_jay_calculation.is_nan() {
+            true => 0.0,
+            false => third_term_jay_calculation,
+        };
+        let fourth_term_jay = match fourth_term_jay_calculation.is_nan() {
+            true => 0.0,
+            false => fourth_term_jay_calculation,
+        };
+
+        let first_term_madison_calculation = (n_11_madison as f64 / n as f64) * ((n * n_11_madison) as f64 / (n_1X_madison * n_X1_madison) as f64).log2();
+        let second_term_madison_calculation = (n_10_madison as f64 / n as f64) * ((n * n_10_madison) as f64 / (n_1X_madison * n_X0_madison) as f64).log2();
+        let third_term_madison_calculation = (n_01_madison as f64 / n as f64) * ((n * n_01_madison) as f64 / (n_0X_madison * n_X1_madison) as f64).log2();
+        let fourth_term_madison_calculation = (n_00_madison as f64 / n as f64) * ((n * n_00_madison) as f64 / (n_0X_madison * n_X0_madison) as f64).log2();
+
+        let first_term_madison = match first_term_madison_calculation.is_nan() {
+            true => 0.0,
+            false => first_term_madison_calculation,
+        };
+        let second_term_madison = match second_term_madison_calculation.is_nan() {
+            true => 0.0,
+            false => second_term_madison_calculation,
+        };
+        let third_term_madison = match third_term_madison_calculation.is_nan() {
+            true => 0.0,
+            false => third_term_madison_calculation,
+        };
+        let fourth_term_madison = match fourth_term_madison_calculation.is_nan() {
+            true => 0.0,
+            false => fourth_term_madison_calculation,
+        };
 
         let score_hamilton = first_term_hamilton + second_term_hamilton + third_term_hamilton + fourth_term_hamilton;
         let score_jay = first_term_jay + second_term_jay + third_term_jay + fourth_term_jay;

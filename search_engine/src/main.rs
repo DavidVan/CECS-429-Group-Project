@@ -248,8 +248,10 @@ fn main() {
         let bayesian_classifier = BayesianClassifier::new(&hamilton_index, &jay_index, &madison_index);
         // Remove later
         let discriminating_vocab = bayesian_classifier.build_discriminating_vocab_set(100);
+        let mut counter = 1;
         for x in &discriminating_vocab {
-            println!("Discriminating Vocab: {:?}", x);
+            println!("Discriminating Vocab {}: {}", counter, x);
+            counter += 1;
         }
         ///////////////
         let rocchio_classifier = RocchioClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
