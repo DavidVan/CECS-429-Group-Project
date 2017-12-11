@@ -204,78 +204,90 @@ impl<'a> BayesianClassifier<'a> {
         Ok(n_11)
     }
 
-    fn get_n_0X(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // N0X, N00 + N01
-        let (n_00_hamilton, n_00_jay, n_00_madison) = match self.get_n_00(term) {
+    fn get_n_0X(&self, term: &str) -> Result<(u32, u32, u32, (u32, u32, u32), (u32, u32, u32)), &'static str> { // N0X, N00 + N01
+        let n_00 = match self.get_n_00(term) {
             Ok(n_00) => n_00,
             Err(_) => panic!("Something happened when calculating N00!"),
         };
-        let (n_01_hamilton, n_01_jay, n_01_madison) = match self.get_n_01(term) {
+        let n_01 = match self.get_n_01(term) {
             Ok(n_01) => n_01,
             Err(_) => panic!("Something happened when calculating N01!"),
         };
+
+        let (n_00_hamilton, n_00_jay, n_00_madison) = n_00;
+        let (n_01_hamilton, n_01_jay, n_01_madison) = n_01;
 
         let n_0X_hamilton = n_00_hamilton + n_01_hamilton;
         let n_0X_jay = n_00_jay + n_01_jay;
         let n_0X_madison = n_00_madison + n_01_madison;
 
-        let n_0X = (n_0X_hamilton, n_0X_jay, n_0X_madison);
+        let n_0X = (n_0X_hamilton, n_0X_jay, n_0X_madison, n_00, n_01);
 
         Ok(n_0X)
     }
 
-    fn get_n_X0(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // NX0, N00 + N10
-        let (n_00_hamilton, n_00_jay, n_00_madison) = match self.get_n_00(term) {
+    fn get_n_X0(&self, term: &str) -> Result<(u32, u32, u32, (u32, u32, u32), (u32, u32, u32)), &'static str> { // NX0, N00 + N10
+        let n_00 = match self.get_n_00(term) {
             Ok(n_00) => n_00,
             Err(_) => panic!("Something happened when calculating N00!"),
         };
-        let (n_10_hamilton, n_10_jay, n_10_madison) = match self.get_n_10(term) {
+        let n_10 = match self.get_n_10(term) {
             Ok(n_10) => n_10,
             Err(_) => panic!("Something happened when calculating N10!"),
         };
+
+        let (n_00_hamilton, n_00_jay, n_00_madison) = n_00;
+        let (n_10_hamilton, n_10_jay, n_10_madison) = n_10;
 
         let n_X0_hamilton = n_00_hamilton + n_10_hamilton;
         let n_X0_jay = n_00_jay + n_10_jay;
         let n_X0_madison = n_00_madison + n_10_madison;
 
-        let n_X0 = (n_X0_hamilton, n_X0_jay, n_X0_madison);
+        let n_X0 = (n_X0_hamilton, n_X0_jay, n_X0_madison, n_00, n_10);
 
         Ok(n_X0)
     }
 
-    fn get_n_1X(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // N1X, N10 + N11
-        let (n_10_hamilton, n_10_jay, n_10_madison) = match self.get_n_10(term) {
+    fn get_n_1X(&self, term: &str) -> Result<(u32, u32, u32, (u32, u32, u32), (u32, u32, u32)), &'static str> { // N1X, N10 + N11
+        let n_10 = match self.get_n_10(term) {
             Ok(n_10) => n_10,
             Err(_) => panic!("Something happened when calculating N10!"),
         };
-        let (n_11_hamilton, n_11_jay, n_11_madison) = match self.get_n_11(term) {
+        let n_11 = match self.get_n_11(term) {
             Ok(n_11) => n_11,
             Err(_) => panic!("Something happened when calculating N11!"),
         };
+
+        let (n_10_hamilton, n_10_jay, n_10_madison) = n_10;
+        let (n_11_hamilton, n_11_jay, n_11_madison) = n_11;
 
         let n_1X_hamilton = n_10_hamilton + n_11_hamilton;
         let n_1X_jay = n_10_jay + n_11_jay;
         let n_1X_madison = n_10_madison + n_11_madison;
 
-        let n_1X = (n_1X_hamilton, n_1X_jay, n_1X_madison);
+        let n_1X = (n_1X_hamilton, n_1X_jay, n_1X_madison, n_10, n_11);
 
         Ok(n_1X)
     }
 
-    fn get_n_X1(&self, term: &str) -> Result<(u32, u32, u32), &'static str> { // NX1, N01 + N11
-        let (n_01_hamilton, n_01_jay, n_01_madison) = match self.get_n_01(term) {
+    fn get_n_X1(&self, term: &str) -> Result<(u32, u32, u32, (u32, u32, u32), (u32, u32, u32)), &'static str> { // NX1, N01 + N11
+        let n_01 = match self.get_n_01(term) {
             Ok(n_01) => n_01,
             Err(_) => panic!("Something happened when calculating N01!"),
         };
-        let (n_11_hamilton, n_11_jay, n_11_madison) = match self.get_n_11(term) {
+        let n_11 = match self.get_n_11(term) {
             Ok(n_11) => n_11,
             Err(_) => panic!("Something happened when calculating N11!"),
         };
+
+        let (n_01_hamilton, n_01_jay, n_01_madison) = n_01;
+        let (n_11_hamilton, n_11_jay, n_11_madison) = n_11;
 
         let n_X1_hamilton = n_01_hamilton + n_11_hamilton;
         let n_X1_jay = n_01_jay + n_11_jay;
         let n_X1_madison = n_01_madison + n_11_madison;
 
-        let n_X1 = (n_X1_hamilton, n_X1_jay, n_X1_madison);
+        let n_X1 = (n_X1_hamilton, n_X1_jay, n_X1_madison, n_01, n_11);
 
         Ok(n_X1)
     }
@@ -283,38 +295,27 @@ impl<'a> BayesianClassifier<'a> {
     fn calculate_mutual_information_score(&self, term: String) -> Result<(f64, f64, f64), &'static str> {
         let n = self.get_all_vocab().len() as u32;
 
-        let (n_00_hamilton, n_00_jay, n_00_madison) = match self.get_n_00(&term) {
-            Ok(value) => value,
-            Err(error) => panic!("Something happened when calculating N_00! Error: {}", error),
-        };
-        let (n_01_hamilton, n_01_jay, n_01_madison) = match self.get_n_01(&term) {
-            Ok(value) => value,
-            Err(error) => panic!("Something happened when calculating N_01! Error: {}", error),
-        };
-        let (n_10_hamilton, n_10_jay, n_10_madison) = match self.get_n_10(&term) {
-            Ok(value) => value,
-            Err(error) => panic!("Something happened when calculating N_10! Error: {}", error),
-        };
-        let (n_11_hamilton, n_11_jay, n_11_madison) = match self.get_n_11(&term) {
-            Ok(value) => value,
-            Err(error) => panic!("Something happened when calculating N_11! Error: {}", error),
-        };
-        let (n_0X_hamilton, n_0X_jay, n_0X_madison) = match self.get_n_0X(&term) {
+        let (n_0X_hamilton, n_0X_jay, n_0X_madison, n_00, n_01) = match self.get_n_0X(&term) {
             Ok(value) => value,
             Err(error) => panic!("Something happened when calculating N_0X! Error: {}", error),
         };
-        let (n_X0_hamilton, n_X0_jay, n_X0_madison) = match self.get_n_X0(&term) {
+        let (n_X0_hamilton, n_X0_jay, n_X0_madison, _, n_10) = match self.get_n_X0(&term) {
             Ok(value) => value,
             Err(error) => panic!("Something happened when calculating N_X0! Error: {}", error),
         };
-        let (n_1X_hamilton, n_1X_jay, n_1X_madison) = match self.get_n_1X(&term) {
+        let (n_1X_hamilton, n_1X_jay, n_1X_madison, _, n_11) = match self.get_n_1X(&term) {
             Ok(value) => value,
             Err(error) => panic!("Something happened when calculating N_1X! Error: {}", error),
         };
-        let (n_X1_hamilton, n_X1_jay, n_X1_madison) = match self.get_n_X1(&term) {
+        let (n_X1_hamilton, n_X1_jay, n_X1_madison, _, _) = match self.get_n_X1(&term) {
             Ok(value) => value,
             Err(error) => panic!("Something happened when calculating N_X1! Error: {}", error),
         };
+
+        let (n_00_hamilton, n_00_jay, n_00_madison) = n_00;
+        let (n_01_hamilton, n_01_jay, n_01_madison) = n_01;
+        let (n_10_hamilton, n_10_jay, n_10_madison) = n_10;
+        let (n_11_hamilton, n_11_jay, n_11_madison) = n_11;
 
         let first_term_hamilton = (n_11_hamilton as f64 / n as f64) * ((n * n_11_hamilton) as f64 / (n_1X_hamilton * n_X1_hamilton) as f64).log2();
         let second_term_hamilton = (n_10_hamilton as f64 / n as f64) * ((n * n_10_hamilton) as f64 / (n_1X_hamilton * n_X0_hamilton) as f64).log2();
