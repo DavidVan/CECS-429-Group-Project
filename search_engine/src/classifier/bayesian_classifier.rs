@@ -23,6 +23,7 @@ pub struct TermClassScore {
 impl TermClassScore {
     fn new(score: f64, term: String, class: DocumentClass) -> Option<TermClassScore> {
         if score.is_nan() {
+            println!("Looks like there was a NaN! Term is: {}. Class is: {:?}.", term, class);
             None
         }
         else {
@@ -62,6 +63,7 @@ impl<'a> BayesianClassifier<'a> {
 
     pub fn build_discriminating_vocab_set(&self, k: u32) -> Vec<TermClassScore> {
         let all_vocabulary = self.get_all_vocab();
+        println!("Length of all vocabulary: {}", all_vocabulary.len());
 
         let mut priority_queue: BinaryHeap<TermClassScore> = BinaryHeap::new();
         let time = Instant::now();
@@ -71,24 +73,27 @@ impl<'a> BayesianClassifier<'a> {
                     let (score_hamilton, score_jay, score_madison) = score;
                     match TermClassScore::new(score_hamilton, term.clone(), DocumentClass::Hamilton) {
                         Some(score) => {
-                            println!("Adding to priority queue: {:?}", score);
                             priority_queue.push(score);
                         },
-                        None => continue
+                        None => {
+                            // Do nothing.
+                        },
                     };
                     match TermClassScore::new(score_jay, term.clone(), DocumentClass::Jay) {
                         Some(score) => {
-                            println!("Adding to priority queue: {:?}", score);
                             priority_queue.push(score);
                         },
-                        None => continue
+                        None => {
+                            // Do nothing.
+                        },
                     };
                     match TermClassScore::new(score_madison, term.clone(), DocumentClass::Madison) {
                         Some(score) => {
-                            println!("Adding to priority queue: {:?}", score);
                             priority_queue.push(score);
                         },
-                        None => continue
+                        None => {
+                            // Do nothing.
+                        },
                     };
                 },
                 Err(error) => panic!("There was an error calculating the score for term {}. The error is: {}", term, error),
@@ -321,22 +326,22 @@ impl<'a> BayesianClassifier<'a> {
         let (n_11_hamilton, n_11_jay, n_11_madison) = n_11;
         
         // Debug Purposes
-        
-        let n_0X = (n_0X_hamilton, n_0X_jay, n_0X_madison);
-        let n_X0 = (n_X0_hamilton, n_X0_jay, n_X0_madison);
-        let n_1X = (n_1X_hamilton, n_1X_jay, n_1X_madison);
-        let n_X1 = (n_X1_hamilton, n_X1_jay, n_X1_madison);
-
-        println!("N: {:?}", n);
-        println!("N00: {:?}", n_00);
-        println!("N01: {:?}", n_01);
-        println!("N10: {:?}", n_10);
-        println!("N11: {:?}", n_11);
-        println!("N0X: {:?}", n_0X);
-        println!("NX0: {:?}", n_X0);
-        println!("N1X: {:?}", n_1X);
-        println!("NX1: {:?}", n_X1);
-
+        //
+        // let n_0X = (n_0X_hamilton, n_0X_jay, n_0X_madison);
+        // let n_X0 = (n_X0_hamilton, n_X0_jay, n_X0_madison);
+        // let n_1X = (n_1X_hamilton, n_1X_jay, n_1X_madison);
+        // let n_X1 = (n_X1_hamilton, n_X1_jay, n_X1_madison);
+        //
+        // println!("N: {:?}", n);
+        // println!("N00: {:?}", n_00);
+        // println!("N01: {:?}", n_01);
+        // println!("N10: {:?}", n_10);
+        // println!("N11: {:?}", n_11);
+        // println!("N0X: {:?}", n_0X);
+        // println!("NX0: {:?}", n_X0);
+        // println!("N1X: {:?}", n_1X);
+        // println!("NX1: {:?}", n_X1);
+        //
         /////////////////
 
         let first_term_hamilton = (n_11_hamilton as f64 / n as f64) * ((n * n_11_hamilton) as f64 / (n_1X_hamilton * n_X1_hamilton) as f64).log2();
