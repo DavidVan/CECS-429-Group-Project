@@ -6,10 +6,10 @@ fn test_castle() {
     let mut k_gram_index = KGramIndex::new();
 
     // Term that will be tested
-    let castle = "castle";
+    let castle = vec!["castle"];
 
     // Builds index according to term
-    k_gram_index.check_term(castle);
+    k_gram_index.check_terms(castle);
 
     // Expected values in test cases
     let test_cases = [

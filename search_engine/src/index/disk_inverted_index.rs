@@ -29,6 +29,8 @@ pub trait IndexReader {
     fn get_vocab(&self) -> HashSet<String>;
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
+    fn get_term_frequency(&self, term: &str) -> u32;
+    fn get_total_term_frequency(&self) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
     fn read_vocab_table(index_name: &str) -> Vec<u64>;
     fn get_term_count(&self) -> u32;
@@ -178,6 +180,53 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         let mut doc_freq_buffer = [0; 4];
         (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error Seeking from Buffer");
         (&doc_freq_buffer[..]).read_u32::<BigEndian>().expect("Error Seeking from Buffer") // Return the document frequency
+    }
+
+    fn get_term_frequency(&self, term: &str) -> u32 {
+        let mut postings = &self.postings;
+        let postings_position = self.binary_search_vocabulary(term);
+
+        if postings_position == -1 {
+            return 0; 
+        }
+        
+        postings.seek(SeekFrom::Start(postings_position as u64)).expect("(189)");
+        let mut doc_freq_buffer = [0; 4]; // Four bytes of 0.
+        postings.read_exact(&mut doc_freq_buffer).expect("191");
+        let document_frequency = (&doc_freq_buffer[..]).read_u32::<BigEndian>().expect("192");
+        let mut doc_id = 0;
+        let mut term_frequency_accumulator = 0;
+        for _ in 0..document_frequency {
+            let (doc_id_vbe, doc_id_offset) = variable_byte::decode(postings).expect("196");
+            postings.seek(SeekFrom::Current(-(5 - doc_id_offset as i64))).expect("197");
+
+            doc_id += doc_id_vbe;
+
+            postings.seek(SeekFrom::Current(32));
+
+            let (term_frequency_vbe, term_freq_offset) = variable_byte::decode(postings).unwrap();
+            postings.seek(SeekFrom::Current(-(5 - term_freq_offset as i64)));
+
+            term_frequency_accumulator += term_frequency_vbe;
+
+            for _ in 0..term_frequency_vbe {
+                let (postings_pos_vbe, postings_pos_offset) = variable_byte::decode(postings).unwrap();
+                postings.seek(SeekFrom::Current(-(5 - postings_pos_offset as i64)));
+            }
+        }
+        term_frequency_accumulator
+    }
+
+    fn get_total_term_frequency(&self) -> u32 {
+        let vocabulary = self.get_vocab();
+
+        let mut total_term_frequency = 0;
+        for term in vocabulary {
+            total_term_frequency += self.get_term_frequency(&term); 
+        }
+
+        total_term_frequency
+
     }
 
     fn get_postings_no_positions(&self, term: &str) -> Result<Vec<(u32, u32, f64, f64, f64, f64)>, &'static str> {
