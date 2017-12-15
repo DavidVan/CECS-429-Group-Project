@@ -298,7 +298,7 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         let mut j = self.vocab_table.len() / 2 - 1;
         while i <= j {
             let m = (i + j) / 2;
-            let vocab_list_position = self.vocab_table.get(m * 2).unwrap();
+            let vocab_list_position = self.vocab_table.get(m * 2).expect("Could not find vocabulary");
             let mut term_length = 0;
             if m == self.vocab_table.len() / 2 - 1 {
                 term_length = vocab_list.metadata().unwrap().len() as u64 - self.vocab_table[m * 2];
@@ -307,17 +307,17 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
                 term_length = self.vocab_table.get((m + 1) * 2).unwrap() - vocab_list_position;
             }
 
-            vocab_list.seek(SeekFrom::Start(*vocab_list_position as u64)).unwrap();
+            vocab_list.seek(SeekFrom::Start(*vocab_list_position as u64)).expect("Failed to seek in file");
 
             let mut buffer = vec![0; term_length as usize];
             vocab_list.read_exact(&mut buffer).expect("Error reading from file");
 
-            let file_term = String::from_utf8(buffer).unwrap();
+            let file_term = String::from_utf8(buffer).expect("Error getting string from buffer");
 
             let compare_value = term.cmp(&file_term);
 
             match compare_value {
-                Ordering::Equal => return *(self.vocab_table.get(m * 2 + 1)).unwrap() as i64,
+                Ordering::Equal => return *(self.vocab_table.get(m * 2 + 1)).expect("Error comparing value") as i64,
                 Ordering::Less => j = m - 1,
                 Ordering::Greater => i = m + 1
             }

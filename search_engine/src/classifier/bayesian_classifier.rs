@@ -68,6 +68,7 @@ impl<'a> BayesianClassifier<'a> {
 
         let hamilton_vocabulary = self.index_hamilton.get_vocab();
         for term in &hamilton_vocabulary {
+            println!("Hamilton: {}", term);
             match self.calculate_mutual_information_score(term.clone(), DocumentClass::Hamilton) {
                 Ok(score) => {
                     match TermClassScore::new(score, term.clone(), DocumentClass::Hamilton) {
@@ -86,6 +87,7 @@ impl<'a> BayesianClassifier<'a> {
         for term in &jay_vocabulary {
             match self.calculate_mutual_information_score(term.clone(), DocumentClass::Jay) {
                 Ok(score) => {
+                    println!("Jay: {}", term);
                     match TermClassScore::new(score, term.clone(), DocumentClass::Jay) {
                         Some(score) => {
                             priority_queue.push(score);
@@ -100,6 +102,7 @@ impl<'a> BayesianClassifier<'a> {
         }
         let madison_vocabulary = self.index_madison.get_vocab();
         for term in &madison_vocabulary {
+            println!("Madison: {}", term);
             match self.calculate_mutual_information_score(term.clone(), DocumentClass::Madison) {
                 Ok(score) => {
                     match TermClassScore::new(score, term.clone(), DocumentClass::Madison) {
@@ -460,9 +463,6 @@ impl<'a> Classifier<'a> for BayesianClassifier<'a> {
                 return "Jay";
             }
         }
-
-        "hello"
-
     }
     fn get_all_vocab(&self) -> HashSet<String> {
         let vocabulary_hamilton = self.index_hamilton.get_vocab();

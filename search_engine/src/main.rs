@@ -16,6 +16,7 @@ use search_engine::classifier::bayesian_classifier::BayesianClassifier;
 use search_engine::classifier::rocchio_classifier::RocchioClassifier;
 use search_engine::classifier::classifier::Classifier;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::fs::read_dir;
 use std::fs::remove_file;
@@ -247,12 +248,6 @@ fn main() {
 
         let bayesian_classifier = BayesianClassifier::new(&hamilton_index, &jay_index, &madison_index);
         // Remove later
-        let discriminating_vocab = bayesian_classifier.build_discriminating_vocab_set(100);
-        let mut counter = 1;
-        for x in &discriminating_vocab {
-            println!("Discriminating Vocab {}: {}", counter, x);
-            counter += 1;
-        }
         ///////////////
         let rocchio_classifier = RocchioClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
 
@@ -279,21 +274,32 @@ fn main() {
         }
 
         loop {
-            print!("Input Document to Classify: ");
+            println!("Classifier: {}", classifier);
+            print!("Input Command: ");
             input = user_input::read_input_line();
             println!();
 
             if !input.starts_with(":") {
-                classify_document(classifier, &bayesian_classifier, &rocchio_classifier, &input, &file_id_map);
+                print_help();
             } else {
                 if input == ":q" || input == ":quit" {
                    return (); 
                 } else if input.starts_with(":o ") || input.starts_with(":open ") {
                     open_file(&index_path, &input);
-                } else if input == ":c rocchio" || input == ":classifier rocchio" {
+                } else if input == ":c r" || input == ":c rocchio" || input == ":classifier rocchio" {
                     classifier = "rocchio"; 
-                } else if input == ":c bayesian" || input == ":classifier bayesian" {
+                } else if input == ":c b" || input == ":c bayesian" || input == ":classifier bayesian" {
                     classifier = "bayesian"; 
+                } else if input == ":c all" || input == ":classify all" {
+                    classify_all(classifier, &bayesian_classifier, &rocchio_classifier, &file_id_map); 
+                } else if input.starts_with(":c ") || input.starts_with(":classify ") {
+                    classify_document(classifier, &bayesian_classifier, &rocchio_classifier, &input, &file_id_map);
+                } else if input.starts_with(":d ") || input.starts_with(":discriminating_vocab ") {
+                    print_discriminating_vocab(&bayesian_classifier, &input);
+                } else if input.starts_with(":centroid_vectors ") {
+                    print_centroid_vectors(&rocchio_classifier, &input);
+                } else if input == ":v" || input == ":vocab" {
+                    print_all_vocab(classifier, &bayesian_classifier, &rocchio_classifier);
                 }
             }
         }
@@ -426,6 +432,11 @@ fn open_file(
     }
 }
 
+fn classify_all(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier, file_id_map: &HashMap<String, u32>) {
+    for (file,_) in file_id_map {
+        classify_document(classifier, &bayesian_classifier, &rocchio_classifier, file, &file_id_map);
+    }
+}
 fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier, file_name: &str, file_id_map: &HashMap<String, u32>) {
     let doc_id = file_id_map.get(file_name).expect("Doc id not found");
     let classification : String; 
@@ -434,7 +445,7 @@ fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier,
     } else {
         classification = bayesian_classifier.classify(*doc_id).to_string();
     }
-    println!("This document was writtend by {}", classification);
+    println!("{} was written by {}", file_name, classification);
 }
 
 /*
@@ -447,13 +458,60 @@ fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier,
 fn print_vocab(
     index: &DiskInvertedIndex) {
 
-    let vocab_dict = index.get_vocab();
+    let vocab_set = index.get_vocab();
 
-    for term in &vocab_dict {
-        println!("{}", term); 
+    // for term in &vocab_dict {
+        // println!("{}", term);
+    // }
+    //
+    let mut vocab_list : Vec<String> = Vec::new();
+    for vocab in vocab_set {
+        vocab_list.push(vocab); 
+    }
+
+    vocab_list.sort();
+    
+    
+    for (i,term) in vocab_list.iter().enumerate() {
+        if i == 30 {
+            break; 
+        }
+        println!("{}. {}", i + 1, term); 
     }
     
-    println!("Vocabulary Size : {}", vocab_dict.len());
+    println!("Vocabulary Size : {}", vocab_list.len());
+}
+
+fn print_all_vocab(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier) {
+    let mut vocab_set : HashSet<String> = HashSet::new();
+    if classifier == "rocchio" {
+        vocab_set = rocchio_classifier.get_all_vocab(); 
+    } else if classifier == "bayesian" {
+        vocab_set = bayesian_classifier.get_all_vocab(); 
+    }
+
+    let mut vocab_list : Vec<String> = Vec::new();
+    for vocab in vocab_set {
+        vocab_list.push(vocab); 
+    }
+
+    vocab_list.sort();
+
+    let vocab_len = vocab_list.len();
+
+    // for term in vocab_list {
+        // println!("{}", term);
+    // }
+    //
+    for (i,term) in vocab_list.iter().enumerate() {
+        if i == 30 {
+            break; 
+        }
+        println!("{}. {}", i + 1, term); 
+    }
+
+    println!("Vocabulary Size: {} Terms", vocab_len);
+
 }
 
 fn print_kgram(
@@ -467,6 +525,25 @@ fn print_kgram(
         println!("{}", gram);
     }
     println!("Total kgrams: {}", kgrams.len());
+}
+
+fn print_discriminating_vocab(bayesian_classifier: &BayesianClassifier, input: &str) {
+
+    let mut tokens = input.split_whitespace();
+    let count_string = tokens.nth(1).expect("Error retrieving number");
+    let count = count_string.parse::<u32>().expect("Not an unsigned integer");
+
+
+    let discriminating_vocab = bayesian_classifier.build_discriminating_vocab_set(count);
+    let mut counter = 1;
+    for x in &discriminating_vocab {
+        println!("Discriminating Vocab {}: {}", counter, x);
+        counter += 1;
+    }
+}
+
+fn print_centroid_vectors(rocchio_classifier: &RocchioClassifier, input: &str) {
+    let count = input.parse::<u32>().expect("Not an unsigned integer");
 }
 
 /*

@@ -241,9 +241,14 @@ pub fn normalize_token(term: String) -> Vec<String> {
         for i in sub_words {
             normalized_strings.push(i.to_string());
         }
-        normalized_strings.push(reduced_string.replace(hyphen, empty_string));
+        let new_reduced_string = reduced_string.replace(hyphen, empty_string);
+        if new_reduced_string != empty_string {
+            normalized_strings.push(new_reduced_string);
+        }
     } else {
-        normalized_strings.push(reduced_string);
+        if reduced_string != empty_string {
+            normalized_strings.push(reduced_string);
+        }
     }
     //lowercase the remaining word(s)
     for word in normalized_strings.iter_mut() {
@@ -259,6 +264,19 @@ pub fn stem_terms(mut strings_to_stem: Vec <String> ) -> Vec <String>{
     for word in strings_to_stem.iter_mut() {
         *word = stemmer.stem(word);
     }
+
+    // let mut strings_to_remove : Vec <usize> = Vec::new();
+    // for (i, word) in strings_to_stem.iter_mut().enumerate() {
+        // if word.trim() == "" {
+            // strings_to_remove.push(i);
+        // } else {
+            // *word = stemmer.stem(word);
+        // }
+    // }
+//
+    // for index in strings_to_remove {
+        // strings_to_stem.remove(index);
+    // }
 
     return strings_to_stem;
 }
