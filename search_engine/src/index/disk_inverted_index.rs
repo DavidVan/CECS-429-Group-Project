@@ -29,6 +29,7 @@ pub trait IndexReader {
     fn get_vocab(&self) -> HashSet<String>;
     fn contains_term(&self, term: &str) -> bool;
     fn get_document_frequency(&self, term: &str) -> u32;
+    fn get_terms_for_document(&self, doc_id: u32) -> HashSet<String>;
     fn get_term_frequency(&self, term: &str) -> u32;
     fn get_total_term_frequency(&self) -> u32;
     fn binary_search_vocabulary(&self, term: &str) -> i64;
@@ -180,6 +181,22 @@ impl<'a> IndexReader for DiskInvertedIndex<'a> {
         let mut doc_freq_buffer = [0; 4];
         (&self.postings).read_exact(&mut doc_freq_buffer).expect("Error Seeking from Buffer");
         (&doc_freq_buffer[..]).read_u32::<BigEndian>().expect("Error Seeking from Buffer") // Return the document frequency
+    }
+
+    fn get_terms_for_document(&self, doc_id: u32) -> HashSet<String> {
+        let terms = self.get_vocab();
+        let mut results = HashSet::new();
+        // results.push((doc_id, term_frequency_vbe, term_score, tf_idf_term_score, okapi_term_score, wacky_term_score, positions));
+        for term in &terms {
+            let postings = self.get_postings_no_positions(term).unwrap();
+            for posting in postings {
+                let (doc_id_term, _, _, _, _, _) = posting;
+                if doc_id == doc_id_term {
+                    results.insert(term.clone());
+                }
+            }
+        }
+        results
     }
 
     fn get_term_frequency(&self, term: &str) -> u32 {

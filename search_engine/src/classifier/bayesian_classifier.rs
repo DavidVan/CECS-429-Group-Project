@@ -47,14 +47,16 @@ impl Ord for TermClassScore {
 }
 
 pub struct BayesianClassifier<'a> {
+    index_disputed: &'a DiskInvertedIndex<'a>,
     index_hamilton: &'a DiskInvertedIndex<'a>,
     index_jay: &'a DiskInvertedIndex<'a>,
     index_madison: &'a DiskInvertedIndex<'a>,
 }
 
 impl<'a> BayesianClassifier<'a> {
-    pub fn new(index_hamilton: &'a DiskInvertedIndex, index_jay: &'a DiskInvertedIndex, index_madison: &'a DiskInvertedIndex) -> BayesianClassifier<'a> {
+    pub fn new(index_disputed: &'a DiskInvertedIndex, index_hamilton: &'a DiskInvertedIndex, index_jay: &'a DiskInvertedIndex, index_madison: &'a DiskInvertedIndex) -> BayesianClassifier<'a> {
         BayesianClassifier {
+            index_disputed: index_disputed,
             index_hamilton: index_hamilton,
             index_jay: index_jay,
             index_madison: index_madison,
@@ -400,19 +402,41 @@ impl<'a> BayesianClassifier<'a> {
         Ok(score)
     }
 
-    fn calculate_probability_term_given_class(&self, term: &str, classifier: &DiskInvertedIndex, discriminating_vocab_len: u32) -> f64 {
-        let term_frequency = classifier.get_term_frequency(term);
-        let total_term_frequency = classifier.get_total_term_frequency();
+    fn calculate_probability_term_given_class(&self, doc_id: u32, index_for_class: &DiskInvertedIndex, discriminating_vocab: &Vec<String>) -> f64 {
+        let terms_for_doc = self.index_disputed.get_terms_for_document(doc_id);
+        let mut discriminating_vocab_hashset = HashSet::new();
+        for term in discriminating_vocab {
+            discriminating_vocab_hashset.insert(term.clone());
+        }
 
+        let doc_terms_intersected_discriminating_terms: HashSet<_> = terms_for_doc.intersection(&discriminating_vocab_hashset).collect();
 
-        (term_frequency + 1) as f64/(total_term_frequency + discriminating_vocab_len as u32 ) as f64
+        let discriminating_vocab_len = discriminating_vocab.len() as u32;
+        
+        let mut discriminating_terms_score = 0;
+        let mut probability = 0.0;
+        
+        for discriminating_term in discriminating_vocab {
+            discriminating_terms_score += index_for_class.get_term_frequency(discriminating_term);
+        }
+
+        for term in doc_terms_intersected_discriminating_terms {
+            println!("Term: {}", term);
+            println!("Term Freq: {}", index_for_class.get_term_frequency(&term) + 1);
+            probability += ((index_for_class.get_term_frequency(&term) + 1) as f64/(discriminating_terms_score + discriminating_vocab_len) as f64).log2();
+            println!("Probability from now: {}", probability);
+        }
+
+        println!("Discriminating Terms Score: {}", discriminating_terms_score);
+        println!("Probability: {}", probability);
+        probability
     }
 
 }
 
 impl<'a> Classifier<'a> for BayesianClassifier<'a> {
     fn classify(&self, doc_id: u32) -> &'a str {
-        let discriminating_vocab = self.build_discriminating_vocab_set(100);
+        let discriminating_vocab = self.build_discriminating_vocab_set(50);
 
         let discriminating_vocab_len = discriminating_vocab.len() as u32;
         
@@ -422,30 +446,30 @@ impl<'a> Classifier<'a> for BayesianClassifier<'a> {
         
         let total_num_docs = self.get_total_num_documents().unwrap();
 
-        let p_c_hamilton : f64 = (num_docs_hamilton) as f64/(total_num_docs) as f64;
-        let p_c_madison : f64 = (num_docs_madison) as f64/(total_num_docs) as f64;
-        let p_c_jay : f64 = (num_docs_jay) as f64/(total_num_docs) as f64;
+        let p_c_hamilton : f64 = num_docs_hamilton as f64/total_num_docs as f64;
+        let p_c_madison : f64 = num_docs_madison as f64/total_num_docs as f64;
+        let p_c_jay : f64 = num_docs_jay as f64/total_num_docs as f64;
 
         let mut hamilton_prob : f64 = 0.0;
         let mut madison_prob : f64 = 0.0;
         let mut jay_prob : f64 = 0.0;
 
-        let mut accumulated_term_hamilton_prob : f64 = 0.0;
-        let mut accumulated_term_madison_prob : f64 = 0.0;
-        let mut accumulated_term_jay_prob : f64 = 0.0;
+        let mut p_t_c_hamilton : f64 = 0.0;
+        let mut p_t_c_madison : f64 = 0.0;
+        let mut p_t_c_jay : f64 = 0.0;
 
-        for term in discriminating_vocab {
-             accumulated_term_hamilton_prob += self.calculate_probability_term_given_class(&term, self.index_hamilton, discriminating_vocab_len).log2();
-            accumulated_term_madison_prob += self.calculate_probability_term_given_class(&term, self.index_madison, discriminating_vocab_len).log2();
-            accumulated_term_jay_prob += self.calculate_probability_term_given_class(&term, self.index_jay, discriminating_vocab_len).log2();
-        }
+        p_t_c_hamilton = self.calculate_probability_term_given_class(doc_id, self.index_hamilton, &discriminating_vocab);
+        p_t_c_madison = self.calculate_probability_term_given_class(doc_id, self.index_madison, &discriminating_vocab);
+        p_t_c_jay = self.calculate_probability_term_given_class(doc_id, self.index_jay, &discriminating_vocab);
 
-        hamilton_prob = (p_c_hamilton).log2() + accumulated_term_hamilton_prob;
-        madison_prob = (p_c_madison).log2() + accumulated_term_madison_prob;
-        jay_prob = (p_c_jay).log2() + accumulated_term_jay_prob;
+        hamilton_prob = (p_c_hamilton).log2() + p_t_c_hamilton;
+        madison_prob = (p_c_madison).log2() + p_t_c_madison;
+        jay_prob = (p_c_jay).log2() + p_t_c_jay;
 
         println!("Hamilton Probability: {}", hamilton_prob);
         println!("Madison Probability: {}", madison_prob);
+        
+        
         println!("Jay Probability: {}", jay_prob);
         if hamilton_prob > madison_prob {
             if hamilton_prob > jay_prob {
