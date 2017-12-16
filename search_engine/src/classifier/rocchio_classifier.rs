@@ -8,6 +8,9 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::prelude::*;
 use classifier::classifier::Classifier;
+use classifier::classifier::DocumentClass;
+use classifier::classifier::Scalar;
+use classifier::classifier::TermComponentScore;
 
 pub struct RocchioClassifier<'a> {
     index_disputed: &'a DiskInvertedIndex<'a>,
@@ -26,7 +29,7 @@ impl<'a> RocchioClassifier<'a> {
         }
     }
 
-    fn calculate_centroid(&self, index: &DiskInvertedIndex) -> Vec<f64> {
+    fn calculate_centroid_for_document(&self, index: &DiskInvertedIndex) -> Vec<TermComponentScore> {
         let doc_ids = self.retrieve_doc_ids(index);
         let number_of_documents_in_class = doc_ids.len();
         let mut sum_of_docs = self.calculate_normalized_vector_for_document(*doc_ids.get(0).expect("Error retrieving doc ID"), index);
@@ -36,25 +39,85 @@ impl<'a> RocchioClassifier<'a> {
             sum_of_docs = add_vector_components(self.calculate_normalized_vector_for_document(doc, index), sum_of_docs);
         }
         // println!("Sum of Docs: {:?}", sum_of_docs);
-        return sum_of_docs.iter().map(|&x| x/(number_of_documents_in_class as f64)).collect::<Vec<_>>();
+        let num_docs_in_class_scalar : Scalar = Scalar::new(number_of_documents_in_class as f64);
+        sum_of_docs / num_docs_in_class_scalar
     }
 
-    fn calculate_normalized_vector_for_document(&self,doc_id: u32, index: &DiskInvertedIndex) -> Vec<f64> {
+    fn calculate_normalized_vector_for_document(&self,doc_id: u32, index: &DiskInvertedIndex) -> Vec<TermComponentScore> {
         let document_weight = index.get_document_weights(doc_id).unwrap().1;
 
-        let vocab = self.get_all_vocab();
-        let mut document_vector: Vec<f64> = Vec::new();
-        for term in vocab {
+        let vocab_set = self.index_disputed.get_vocab();
+
+        let mut vocab_list : Vec<String> =  Vec::new();
+
+        for vocab in vocab_set {
+            vocab_list.push(vocab);
+        }
+
+        vocab_list.sort();
+
+        let mut document_vector: Vec<TermComponentScore> = Vec::new();
+        for term in vocab_list {
             let res = index.get_postings_no_positions(&term);
             let term_exists = res.is_ok();
             if !term_exists {
-                document_vector.push(0f64);
+                let new_tcs = TermComponentScore::new(0f64, term).expect("Error creating TermComponentScore");
+                document_vector.push(new_tcs);
                 continue;
             }
             let posting = res.unwrap();
             for (id, _, term_score, _, _, _) in posting {
                 if id == doc_id {
-                    document_vector.push(term_score/document_weight);
+                    let new_tcs = TermComponentScore::new((term_score)/(document_weight), term).expect("Error creating TermComponentScore");
+                    document_vector.push(new_tcs);
+                    break;
+                }
+            }
+        }
+
+        return document_vector;
+    }
+
+    fn calculate_centroid_for_index(&self, index: &DiskInvertedIndex) -> Vec<TermComponentScore> {
+        let doc_ids = self.retrieve_doc_ids(index);
+        let number_of_documents_in_class = doc_ids.len();
+        let mut sum_of_docs = self.calculate_normalized_vector_for_index(*doc_ids.get(0).expect("Error retrieving doc ID"), index);
+        
+        for i in 1..(number_of_documents_in_class - 1) {
+            let doc = *doc_ids.get(i).expect("Error Retrieving doc ID");
+            sum_of_docs = add_vector_components(self.calculate_normalized_vector_for_index(doc, index), sum_of_docs);
+        }
+        // println!("Sum of Docs: {:?}", sum_of_docs);
+        let num_docs_in_class_scalar : Scalar = Scalar::new(number_of_documents_in_class as f64);
+        sum_of_docs / num_docs_in_class_scalar
+    }
+
+    fn calculate_normalized_vector_for_index(&self,doc_id: u32, index: &DiskInvertedIndex) -> Vec<TermComponentScore> {
+        let document_weight = index.get_document_weights(doc_id).unwrap().1;
+
+        let vocab_set = index.get_vocab();
+        let mut vocab_list : Vec<String> =  Vec::new();
+
+        for vocab in vocab_set {
+            vocab_list.push(vocab);
+        }
+
+        vocab_list.sort();
+
+        let mut document_vector: Vec<TermComponentScore> = Vec::new();
+        for term in vocab_list {
+            let res = index.get_postings_no_positions(&term);
+            let term_exists = res.is_ok();
+            if !term_exists {
+                let new_tcs = TermComponentScore::new(0f64, term).expect("Error creating TermComponentScore");
+                document_vector.push(new_tcs);
+                continue;
+            }
+            let posting = res.unwrap();
+            for (id, _, term_score, _, _, _) in posting {
+                if id == doc_id {
+                    let new_tcs = TermComponentScore::new((term_score)/(document_weight), term).expect("Error creating TermComponentScore");
+                    document_vector.push(new_tcs);
                     break;
                 }
             }
@@ -84,24 +147,68 @@ impl<'a> RocchioClassifier<'a> {
         }
         return ids;
     }
+
+    pub fn get_hamilton_centroid(&self) -> Vec<TermComponentScore> {
+        let mut term_centroid : Vec<TermComponentScore> = Vec::new();
+        let components = self.calculate_centroid_for_index(self.index_hamilton);
+
+        let components_clone = components.clone();
+        for (i, component) in components_clone.iter().enumerate() {
+            if i == 30 {
+                break; 
+            }
+            println!("{}. Term: {}, Score: {}", i + 1, component.term, component.score); 
+        }
+        components
+
+    }
+
+    pub fn get_madison_centroid(&self) -> Vec<TermComponentScore> {
+        let components = self.calculate_centroid_for_index(self.index_madison);
+        let components_clone = components.clone();
+        for (i, component) in components_clone.iter().enumerate() {
+            if i == 30 {
+                break; 
+            }
+            println!("{}. Term: {}, Score: {}", i + 1, component.term, component.score); 
+        }
+        components
+    }
+
+    pub fn get_jay_centroid(&self) -> Vec<TermComponentScore> {
+        let components = self.calculate_centroid_for_index(self.index_jay);
+        let components_clone = components.clone();
+        for (i, component) in components_clone.iter().enumerate() {
+            if i == 30 {
+                break; 
+            }
+            println!("{}. Term: {}, Score: {}", i + 1, component.term, component.score); 
+        }
+        components
+    }
 }
 
-fn add_vector_components(vec_1: Vec<f64>, vec_2: Vec<f64>) -> Vec<f64> {
+fn add_vector_components(vec_1: Vec<TermComponentScore>, vec_2: Vec<TermComponentScore>) -> Vec<TermComponentScore> {
 
     let mut res = Vec::new();
     // println!("Vec1: {:?}", vec_1);
     // println!("Vec2: {:?}", vec_2);
     for (x,y) in vec_1.iter().zip(vec_2.iter()) {
-        res.push(x+y);
+        let x_copy = x.clone();
+        let y_copy = y.clone();
+
+        let answer = x_copy + y_copy;
+        
+        res.push(answer);
     }
 
     return res;
 }
 
-fn calculate_euclidian_distance(vec_1: &Vec<f64>, vec_2: &Vec<f64>) ->f64 {
+fn calculate_euclidian_distance(vec_1: &Vec<TermComponentScore>, vec_2: &Vec<TermComponentScore>) ->f64 {
     let mut distance = 0f64;
     for (x,y) in vec_1.iter().zip(vec_2.iter()) {
-       distance += (y-x).powi(2);
+       distance += (y.score - x.score).powi(2);
     }
     return distance.sqrt();
 }
@@ -109,25 +216,33 @@ fn calculate_euclidian_distance(vec_1: &Vec<f64>, vec_2: &Vec<f64>) ->f64 {
 impl<'a> Classifier<'a> for RocchioClassifier<'a> {
     fn classify(&self, doc_id: u32) -> &'a str {
         
-        let hamilton_centroid = self.calculate_centroid(self.index_hamilton);
-        let jay_centroid = self.calculate_centroid(self.index_jay);
-        let madison_centroid = self.calculate_centroid(self.index_madison);
+        let hamilton_centroid = self.calculate_centroid_for_document(self.index_hamilton);
+        let jay_centroid = self.calculate_centroid_for_document(self.index_jay);
+        let madison_centroid = self.calculate_centroid_for_document(self.index_madison);
 
         // println!("Hamilton Centroid: {:?}\n", hamilton_centroid);
         // println!("Jay Centroid: {:?}\n", jay_centroid);
         // println!("Madison Centroid: {:?}\n", madison_centroid);
 
-        let x = self.calculate_normalized_vector_for_document(doc_id, self.index_disputed);
+        let components = self.calculate_normalized_vector_for_document(doc_id, self.index_disputed);
 
-        // println!("Normalized Vector {:?}\n", x);
+        let components_clone = components.clone();
+        for (i, component) in components_clone.iter().enumerate() {
+            if i == 30 {
+                break; 
+            }
+            println!("{}. Term: {}, Score: {}", i + 1, component.term, component.score); 
+        }
 
-        let distance_disputed_hamilton = calculate_euclidian_distance(&x,&hamilton_centroid);
-        let distance_disputed_jay = calculate_euclidian_distance(&x,&jay_centroid);
-        let distance_disputed_madison = calculate_euclidian_distance(&x,&madison_centroid);
+        // println!("Normalized Vector {:?}\n", components);
 
-        println!("Hamilton Euclidian Distance: {:?}\n", distance_disputed_hamilton);
-        println!("Jay Euclidian Distance: {:?}\n", distance_disputed_jay);
-        println!("Madison Euclidian Distance: {:?}\n", distance_disputed_madison);
+        let distance_disputed_hamilton = calculate_euclidian_distance(&components,&hamilton_centroid);
+        let distance_disputed_jay = calculate_euclidian_distance(&components,&jay_centroid);
+        let distance_disputed_madison = calculate_euclidian_distance(&components,&madison_centroid);
+
+        // println!("Hamilton Euclidian Distance: {:?}\n", distance_disputed_hamilton);
+        // println!("Jay Euclidian Distance: {:?}\n", distance_disputed_jay);
+        // println!("Madison Euclidian Distance: {:?}\n", distance_disputed_madison);
 
         let min = distance_disputed_hamilton.min(distance_disputed_jay.min(distance_disputed_madison));
         if min == distance_disputed_hamilton {
@@ -141,7 +256,7 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
         }
         
     }
-    fn get_all_vocab(&self) -> HashSet<String> {
+    fn get_all_vocab(&self) -> Vec<String> {
 
         let vocabulary_hamilton = self.index_hamilton.get_vocab();
         let vocabulary_jay = self.index_jay.get_vocab();
@@ -154,12 +269,19 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
         }
 
         let second_union: HashSet<_> = first_union_final.union(&vocabulary_jay).collect();
-        let mut second_union_final: HashSet<String> = HashSet::new();
+        let mut final_union: HashSet<String> = HashSet::new();
         for vocab in second_union {
-            second_union_final.insert(vocab.clone());
+            final_union.insert(vocab.clone());
         }
 
-        second_union_final
+        let mut vocab_list : Vec<String> = Vec::new();
+
+        for vocab in final_union {
+            vocab_list.push(vocab); 
+        }
+        vocab_list.sort();
+        
+        vocab_list
     }
 }
     

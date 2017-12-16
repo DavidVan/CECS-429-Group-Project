@@ -1,63 +1,11 @@
-use std::fmt;
 use std::time::{Duration, Instant};
-use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::collections::BinaryHeap;
 use index::disk_inverted_index::DiskInvertedIndex;
 use index::disk_inverted_index::IndexReader;
 use classifier::classifier::Classifier;
-
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
-pub enum DocumentClass {
-    Hamilton,
-    Jay,
-    Madison,
-}
-
-#[derive(Debug, PartialOrd)]
-pub struct TermClassScore {
-    score: f64,
-    term: String,
-    class: DocumentClass,
-}
-
-impl TermClassScore {
-    fn new(score: f64, term: String, class: DocumentClass) -> Option<TermClassScore> {
-        if score.is_nan() {
-            println!("Looks like there was a NaN! Term is: {}. Class is: {:?}.", term, class);
-            None
-        }
-        else {
-            Some(TermClassScore {
-                score: score,
-                term: term,
-                class: class,
-           })
-        }
-    }
-}
-
-impl fmt::Display for TermClassScore {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Term: {}, Score: {}", self.term, self.score)
-    }
-}
-
-impl Eq for TermClassScore {
-
-}
-
-impl Ord for TermClassScore {
-    fn cmp(&self, other: &TermClassScore) -> Ordering {
-        self.score.partial_cmp(&other.score).unwrap()
-    }
-}
-
-impl PartialEq for TermClassScore {
-    fn eq(&self, other: &TermClassScore) ->bool {
-        self.term == other.term 
-    }
-}
+use classifier::classifier::DocumentClass;
+use classifier::classifier::TermClassScore;
 
 pub struct BayesianClassifier<'a> {
     index_disputed: &'a DiskInvertedIndex<'a>,
@@ -452,7 +400,11 @@ impl<'a> BayesianClassifier<'a> {
 
 impl<'a> Classifier<'a> for BayesianClassifier<'a> {
     fn classify(&self, doc_id: u32) -> &'a str {
-        let discriminating_vocab = self.build_discriminating_vocab_set(10);
+        let k = 50;
+
+        println!("Using k={}", k);
+
+        let discriminating_vocab = self.build_discriminating_vocab_set(k);
 
         let discriminating_vocab_len = discriminating_vocab.len() as u32;
         
@@ -466,9 +418,9 @@ impl<'a> Classifier<'a> for BayesianClassifier<'a> {
         let p_c_madison : f64 = num_docs_madison as f64/total_num_docs as f64;
         let p_c_jay : f64 = num_docs_jay as f64/total_num_docs as f64;
 
-        let mut hamilton_prob : f64 = 0.0;
-        let mut madison_prob : f64 = 0.0;
-        let mut jay_prob : f64 = 0.0;
+        let mut hamilton_score : f64 = 0.0;
+        let mut madison_score : f64 = 0.0;
+        let mut jay_score : f64 = 0.0;
 
         let mut p_t_c_hamilton : f64 = 0.0;
         let mut p_t_c_madison : f64 = 0.0;
@@ -478,29 +430,29 @@ impl<'a> Classifier<'a> for BayesianClassifier<'a> {
         p_t_c_madison = self.calculate_probability_term_given_class(doc_id, self.index_madison, &discriminating_vocab);
         p_t_c_jay = self.calculate_probability_term_given_class(doc_id, self.index_jay, &discriminating_vocab);
 
-        hamilton_prob = (p_c_hamilton).log2() + p_t_c_hamilton;
-        madison_prob = (p_c_madison).log2() + p_t_c_madison;
-        jay_prob = (p_c_jay).log2() + p_t_c_jay;
+        hamilton_score = (p_c_hamilton).log2() + p_t_c_hamilton;
+        madison_score = (p_c_madison).log2() + p_t_c_madison;
+        jay_score = (p_c_jay).log2() + p_t_c_jay;
 
-        println!("Hamilton Probability: {}", hamilton_prob);
-        println!("Madison Probability: {}", madison_prob);
-        println!("Jay Probability: {}\n", jay_prob);
+        println!("Hamilton Classification Score: {}", hamilton_score);
+        println!("Madison Classification Score: {}", madison_score);
+        println!("Jay Classification Score: {}\n", jay_score);
 
-        if hamilton_prob > madison_prob {
-            if hamilton_prob > jay_prob {
+        if hamilton_score > madison_score {
+            if hamilton_score > jay_score {
                 return "Hamilton" ;
             } else {
                 return "Jay" ;
             }
         } else {
-            if madison_prob > jay_prob {
+            if madison_score > jay_score {
                 return "Madison" ;
             }  else {
                 return "Jay";
             }
         }
     }
-    fn get_all_vocab(&self) -> HashSet<String> {
+    fn get_all_vocab(&self) -> Vec<String> {
         let vocabulary_hamilton = self.index_hamilton.get_vocab();
         let vocabulary_jay = self.index_jay.get_vocab();
         let vocabulary_madison = self.index_madison.get_vocab();
@@ -512,12 +464,19 @@ impl<'a> Classifier<'a> for BayesianClassifier<'a> {
         }
 
         let second_union: HashSet<_> = first_union_final.union(&vocabulary_madison).collect();
-        let mut second_union_final: HashSet<String> = HashSet::new();
+        let mut final_union: HashSet<String> = HashSet::new();
         for vocab in second_union {
-            second_union_final.insert(vocab.clone());
+            final_union.insert(vocab.clone());
         }
+
+        let mut vocab_list : Vec<String> = Vec::new();
+
+        for vocab in final_union {
+            vocab_list.push(vocab); 
+        }
+        vocab_list.sort();
         
-        second_union_final 
+        vocab_list
     }
 
 }
