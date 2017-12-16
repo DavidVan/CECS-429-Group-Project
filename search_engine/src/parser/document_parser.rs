@@ -152,12 +152,6 @@ pub fn build_index(
 
     }
 
-    let vocabulary = index.get_dictionary();
-    for i in 0..10 {
-        let term = vocabulary.get(i).expect("failed");
-        println!("{}", term);
-    }
-
     let avg_doc_length = avg_doc_weight_accumulator as f64 / doc_weights.len() as f64;
 
     // Build DiskInvertedIndex

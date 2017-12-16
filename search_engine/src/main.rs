@@ -16,7 +16,6 @@ use search_engine::classifier::bayesian_classifier::BayesianClassifier;
 use search_engine::classifier::rocchio_classifier::RocchioClassifier;
 use search_engine::classifier::classifier::Classifier;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::fs::File;
 use std::fs::read_dir;
 use std::fs::remove_file;
@@ -297,6 +296,8 @@ fn main() {
                 } else if input.starts_with(":centroid_vectors ") {
                     print_centroid_vectors(&rocchio_classifier);
                 } else if input == ":v" || input == ":vocab" {
+                    print_vocab(&disputed_index);
+                } else if input == ":va" || input == ":vocab all" {
                     print_all_vocab(classifier, &bayesian_classifier, &rocchio_classifier);
                 }
             }
@@ -559,6 +560,7 @@ fn print_help(){
     println!(":q || :quit - Quits the Program");
     println!(":index DIRECTORY - Changes directory to specified directory and build index under that directory");
     println!(":stem TERM - Normalizes and applies the stemmer on a specified term");
+    println!(":v || :vocab - Print vocabulary in current index");
     println!(":enable kgram || :enable k - Enables K Gram Index when indexing");
     println!(":disable kgram || :disable k - Disables K Gram Index when indexing");
     println!(":mode b || :mode boolean - Use Boolean Retrieval Method");
@@ -567,5 +569,12 @@ fn print_help(){
     println!(":scheme t || :scheme tfidf - Use 'tf-idf' Weight Scheme in Ranked Retrieval");
     println!(":scheme o || :scheme okapi - Use Okapi BM25 Weight Scheme in Ranked Retrieval");
     println!(":scheme w || :scheme wacky - Use Wacky Weight Scheme in Ranked Retrieval");
+    println!(":classifier rocchio - Use Rocchio Classifier");
+    println!(":classifier bayesian - Use Bayesian Classifier");
+    println!(":classify FILE_NAME - Use classifier to classify specified document");
+    println!(":classify all - Classify all documents in directory");
+    println!(":centroid_vectors - Print First 30 components of normalized centroid vectors from each classifier");
+    println!(":discriminating_vocab NUM - Print the Top Number of discriminating terms");
+    println!(":vocab all - Retrieve vocabulary of entire corpus (Disputed, Hamilton, Jay, Madison");
     println!();
 }

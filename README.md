@@ -69,4 +69,18 @@ Retrieval
 **:scheme w** or **:scheme wacky** - Set Weighting Scheme to Wacky in Ranked
 Retrieval
 
+**:classifier rocchio** - Use Rocchio Classifier
+
+**:classifier bayesian** - Use Bayesian Classifier
+
+**:classify** *file* ** - Use classifier to classify specified document
+
+**:classify all** - Classify all documents in directory
+
+**:centroid_vectors** - Print First 30 components of normalized centroid vectors from each classifier
+
+**:discriminating_vocab** *NUM* - Print the Top Number of discriminating terms
+
+**:vocab all** - Retrieve vocabulary of entire corpus (Disputed, Hamilton, Jay, Madison
+
 **:h** or **:help** - Displays list of commands
