@@ -46,7 +46,11 @@ impl<'a> RocchioClassifier<'a> {
     fn calculate_normalized_vector_for_document(&self,doc_id: u32, index: &DiskInvertedIndex) -> Vec<TermComponentScore> {
         let document_weight = index.get_document_weights(doc_id).unwrap().1;
 
-        let vocab_set = self.index_disputed.get_vocab();
+        // Used for getting terms for disputed index only
+        // let vocab_set = self.index_disputed.get_vocab();
+        
+        // Used for getting terms in entire corpus
+        let vocab_set = self.get_all_vocab();
 
         let mut vocab_list : Vec<String> =  Vec::new();
 

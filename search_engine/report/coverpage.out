@@ -9,6 +9,7 @@
 \BOOKMARK [1][-]{section.3}{Rocchio Classification}{}% 9
 \BOOKMARK [2][-]{subsection.3.1}{The first 30 components of the normalized centroid vectors for the three classes}{section.3}% 10
 \BOOKMARK [2][-]{subsection.3.2}{For the Document, paper\13752.txt}{section.3}% 11
-\BOOKMARK [3][-]{subsubsection.3.2.1}{The first 30 components of the normalized vector for the document}{subsection.3.2}% 12
-\BOOKMARK [3][-]{subsubsection.3.2.2}{The exact Euclidians distance between the normalized vector for the document and each of the 3 class centroids}{subsection.3.2}% 13
-\BOOKMARK [2][-]{subsection.3.3}{The classification decision for all disputed documents}{section.3}% 14
+\BOOKMARK [3][-]{subsubsection.3.2.1}{The first 30 components of the normalized vector for the document \204 using terms in disputed index only}{subsection.3.2}% 12
+\BOOKMARK [3][-]{subsubsection.3.2.2}{The first 30 components of the normalized vector for the document \204 using terms in entire corpus}{subsection.3.2}% 13
+\BOOKMARK [3][-]{subsubsection.3.2.3}{The exact Euclidians distance between the normalized vector for the document and each of the 3 class centroids}{subsection.3.2}% 14
+\BOOKMARK [2][-]{subsection.3.3}{The classification decision for all disputed documents}{section.3}% 15

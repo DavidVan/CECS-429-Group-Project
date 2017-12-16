@@ -2,8 +2,8 @@ This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Arch Linux) (prelo
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**coverpage.tex
-(./coverpage.tex
+**report/coverpage.tex
+(./report/coverpage.tex
 LaTeX2e <2017-04-15>
 Babel <3.15> and hyphenation patterns for 84 language(s) loaded.
 (/usr/share/texmf-dist/tex/latex/base/article.cls
@@ -786,7 +786,8 @@ Package: geometry 2010/09/12 v5.6 Page Geometry
 \Gm@layouthoffset=\dimen126
 \Gm@layoutvoffset=\dimen127
 \Gm@dimlist=\toks23
-) (./coverpage.aux)
+)
+No file coverpage.aux.
 \openout1 = `coverpage.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
@@ -805,7 +806,6 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 29.
 LaTeX Font Info:    ... okay on input line 29.
 LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 29.
 LaTeX Font Info:    Try loading font information for TS1+cmr on input line 29.
-
 (/usr/share/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
@@ -824,8 +824,6 @@ Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 29.
 LaTeX Info: Redefining \pageref on input line 29.
 LaTeX Info: Redefining \nameref on input line 29.
-
-(./coverpage.out) (./coverpage.out)
 \@outlinefile=\write3
 \openout3 = `coverpage.out'.
 
@@ -868,52 +866,58 @@ LaTeX Info: Redefining \nameref on input line 29.
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 40.
- (./milestone3.txt)pdfTeX warning (ext4): destination with the same identifier 
-(name{page.1}) has been already used, duplicate ignored
+
+! Package Listings Error: File `milestone3(.txt)' not found.
+
+Type X to quit or <RETURN> to proceed,
+or enter new name. (Default extension: txt)
+
+Enter file name: 
+! Interruption.
+<to be read again> 
+                   }
+l.40 ...firstline=14, lastline=56]{milestone3.txt}
+                                                  ^^M
+? q
+OK, entering \batchmode...
+! Undefined control sequence.
+\\lst@inputlisting ...}}\reserved@a }\lst@doendpe 
+                                                  \@newlistfalse \ignorespaces 
+l.40 ...firstline=14, lastline=56]{milestone3.txt}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
+been already used, duplicate ignored
 <to be read again> 
                    \relax 
 l.42     \newpage
-                  [1] (./milestone3.txt) (./milestone3.txt) (./milestone3.txt)
-[2] (./milestone3.txt [3]) [4] (./milestone3.txt [5]) [6] (./milestone3.txt)
-(./milestone3_copy.txt [7]) (./milestone3.txt) [8] (./milestone3.txt)
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 97.
- [9]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 97.
+                  [1]
 
-(./coverpage.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 97.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 97.
+! Package Listings Error: File `milestone3(.txt)' not found.
 
+Type X to quit or <RETURN> to proceed,
+or enter new name. (Default extension: txt)
 
-Package rerunfilecheck Warning: File `coverpage.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
+ Enter file name: 
+! Emergency stop.
+<read *> 
+         
+l.48 ...firstline=62, lastline=72]{milestone3.txt}
+                                                  ^^M
+*** (cannot \read from terminal in nonstop modes)
 
-Package rerunfilecheck Info: Checksums for `coverpage.out':
-(rerunfilecheck)             Before: 307075B91E998B95B9495B252E5D05DE;1536
-(rerunfilecheck)             After:  F132C0BAADA124DB0975238E78D2790C;1735.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 97.
- ) 
+ 
 Here is how much of TeX's memory you used:
- 9505 strings out of 492985
- 130808 string characters out of 6138637
- 450951 words of memory out of 5000000
- 12607 multiletter control sequences out of 15000+600000
- 13526 words of font info for 46 fonts, out of 8000000 for 9000
+ 8816 strings out of 492985
+ 122587 string characters out of 6138637
+ 193851 words of memory out of 5000000
+ 12326 multiletter control sequences out of 15000+600000
+ 11366 words of font info for 39 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 34i,6n,32p,258b,1784s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texmf-dist/fonts/enc/dvips/mnsymbol/MnSymbolA.enc}{/usr/share/tex
-mf-dist/fonts/enc/dvips/mnsymbol/MnSymbolC.enc}</usr/share/texmf-dist/fonts/typ
-e1/public/mnsymbol/MnSymbol10.pfb></usr/share/texmf-dist/fonts/type1/public/ams
-fonts/cm/cmbx12.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10
-.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/shar
-e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
-Output written on coverpage.pdf (10 pages, 102156 bytes).
-PDF statistics:
- 566 PDF objects out of 1000 (max. 8388607)
- 543 compressed objects within 6 object streams
- 378 named destinations out of 1000 (max. 500000)
- 113 words of extra memory for PDF output out of 10000 (max. 10000000)
-
+ 34i,6n,32p,265b,342s stack positions out of 5000i,500n,10000p,200000b,80000s
+!  ==> Fatal error occurred, no output PDF file produced!
