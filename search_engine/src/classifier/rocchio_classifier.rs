@@ -28,12 +28,15 @@ impl<'a> RocchioClassifier<'a> {
 
     fn calculate_centroid(&self, index: &DiskInvertedIndex) -> Vec<f64> {
         let doc_ids = self.retrieve_doc_ids(index);
-        let number_of_documents_in_class = doc_ids.len() as f64;
-        let mut sum_of_docs = Vec::new();
-        for doc in doc_ids {
-            sum_of_docs = add_vector_components(self.calculate_normalized_vector_for_document(doc, index),sum_of_docs);
+        let number_of_documents_in_class = doc_ids.len();
+        let mut sum_of_docs = self.calculate_normalized_vector_for_document(*doc_ids.get(0).expect("Error retrieving doc ID"), index);
+        
+        for i in 1..(number_of_documents_in_class - 1) {
+            let doc = *doc_ids.get(i).expect("Error Retrieving doc ID");
+            sum_of_docs = add_vector_components(self.calculate_normalized_vector_for_document(doc, index), sum_of_docs);
         }
-        return sum_of_docs.iter().map(|&x| x/number_of_documents_in_class).collect::<Vec<_>>();
+        // println!("Sum of Docs: {:?}", sum_of_docs);
+        return sum_of_docs.iter().map(|&x| x/(number_of_documents_in_class as f64)).collect::<Vec<_>>();
     }
 
     fn calculate_normalized_vector_for_document(&self,doc_id: u32, index: &DiskInvertedIndex) -> Vec<f64> {
@@ -55,7 +58,6 @@ impl<'a> RocchioClassifier<'a> {
                     break;
                 }
             }
-            
         }
 
         return document_vector;
@@ -87,6 +89,8 @@ impl<'a> RocchioClassifier<'a> {
 fn add_vector_components(vec_1: Vec<f64>, vec_2: Vec<f64>) -> Vec<f64> {
 
     let mut res = Vec::new();
+    // println!("Vec1: {:?}", vec_1);
+    // println!("Vec2: {:?}", vec_2);
     for (x,y) in vec_1.iter().zip(vec_2.iter()) {
         res.push(x+y);
     }
@@ -109,20 +113,28 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
         let jay_centroid = self.calculate_centroid(self.index_jay);
         let madison_centroid = self.calculate_centroid(self.index_madison);
 
+        // println!("Hamilton Centroid: {:?}\n", hamilton_centroid);
+        // println!("Jay Centroid: {:?}\n", jay_centroid);
+        // println!("Madison Centroid: {:?}\n", madison_centroid);
+
         let x = self.calculate_normalized_vector_for_document(doc_id, self.index_disputed);
+
+        // println!("Normalized Vector {:?}\n", x);
 
         let distance_disputed_hamilton = calculate_euclidian_distance(&x,&hamilton_centroid);
         let distance_disputed_jay = calculate_euclidian_distance(&x,&jay_centroid);
         let distance_disputed_madison = calculate_euclidian_distance(&x,&madison_centroid);
 
+        println!("Hamilton Euclidian Distance: {:?}\n", distance_disputed_hamilton);
+        println!("Jay Euclidian Distance: {:?}\n", distance_disputed_jay);
+        println!("Madison Euclidian Distance: {:?}\n", distance_disputed_madison);
+
         let min = distance_disputed_hamilton.min(distance_disputed_jay.min(distance_disputed_madison));
-        if min == distance_disputed_hamilton{
+        if min == distance_disputed_hamilton {
             return "Hamilton";
-        }
-        else if min == distance_disputed_jay {
+        } else if min == distance_disputed_jay {
             return "Jay";
-        }
-        else if min == distance_disputed_madison {
+        } else if min == distance_disputed_madison {
             return "Madison";
         } else {
             return "Error";
@@ -131,12 +143,11 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
     }
     fn get_all_vocab(&self) -> HashSet<String> {
 
-        let vocabulary_disputed = self.index_disputed.get_vocab();
         let vocabulary_hamilton = self.index_hamilton.get_vocab();
         let vocabulary_jay = self.index_jay.get_vocab();
         let vocabulary_madison = self.index_madison.get_vocab();
 
-        let first_union: HashSet<_> = vocabulary_disputed.union(&vocabulary_hamilton).collect();
+        let first_union: HashSet<_> = vocabulary_hamilton.union(&vocabulary_madison).collect();
         let mut first_union_final: HashSet<String> = HashSet::new();
         for vocab in first_union {
             first_union_final.insert(vocab.clone());
@@ -148,13 +159,7 @@ impl<'a> Classifier<'a> for RocchioClassifier<'a> {
             second_union_final.insert(vocab.clone());
         }
 
-        let third_union: HashSet<_> = second_union_final.union(&vocabulary_madison).collect();
-        let mut third_union_final: HashSet<String> = HashSet::new();
-        for vocab in third_union {
-            third_union_final.insert(vocab.clone());
-        }
-
-        third_union_final
+        second_union_final
     }
 }
     

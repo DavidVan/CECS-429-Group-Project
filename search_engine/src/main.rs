@@ -437,7 +437,7 @@ fn classify_all(classifier: &str, bayesian_classifier: &BayesianClassifier, rocc
 }
 fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier, input: &str, file_id_map: &HashMap<String, u32>) {
     let mut tokens = input.split_whitespace();
-    let file_name = tokens.nth(1).expect("Error spliting on whitespace");
+    let file_name = tokens.nth(0).expect("Error splitting on whitespace");
     let doc_id = file_id_map.get(file_name).expect("Doc id not found");
     let classification : String; 
     if classifier == "rocchio" {
