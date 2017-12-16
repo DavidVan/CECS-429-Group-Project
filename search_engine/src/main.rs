@@ -246,9 +246,7 @@ fn main() {
         // println!("Building Madison disk index from {}", madison_path);
         let madison_index = DiskInvertedIndex::new(&madison_path);
 
-        let bayesian_classifier = BayesianClassifier::new(&hamilton_index, &jay_index, &madison_index);
-        // Remove later
-        ///////////////
+        let bayesian_classifier = BayesianClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
         let rocchio_classifier = RocchioClassifier::new(&disputed_index, &hamilton_index, &jay_index, &madison_index);
 
         let id_file_filename = format!("{}/{}", index_path.display(), "id_file.bin");
@@ -437,7 +435,9 @@ fn classify_all(classifier: &str, bayesian_classifier: &BayesianClassifier, rocc
         classify_document(classifier, &bayesian_classifier, &rocchio_classifier, file, &file_id_map);
     }
 }
-fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier, file_name: &str, file_id_map: &HashMap<String, u32>) {
+fn classify_document(classifier: &str, bayesian_classifier: &BayesianClassifier, rocchio_classifier: &RocchioClassifier, input: &str, file_id_map: &HashMap<String, u32>) {
+    let mut tokens = input.split_whitespace();
+    let file_name = tokens.nth(1).expect("Error spliting on whitespace");
     let doc_id = file_id_map.get(file_name).expect("Doc id not found");
     let classification : String; 
     if classifier == "rocchio" {
