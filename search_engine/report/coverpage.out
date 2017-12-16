@@ -1,0 +1,14 @@
+\BOOKMARK [1][-]{section.1}{Terms}{}% 1
+\BOOKMARK [2][-]{subsection.1.1}{ The first 30 terms in the vocabulary of the ENTIRE CORPUS, including disputed documents, sorted in alphabetical order.}{section.1}% 2
+\BOOKMARK [1][-]{section.2}{Bayesian Classifier}{}% 3
+\BOOKMARK [2][-]{subsection.2.1}{The top 10 discriminating terms and their I \(C,T\) score.}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.2}{For the document, paper\13749.txt}{section.2}% 5
+\BOOKMARK [3][-]{subsubsection.2.2.1}{The exact Bayesian classification score for each of the three classes on this paper, using 10 discriminating terms}{subsection.2.2}% 6
+\BOOKMARK [3][-]{subsubsection.2.2.2}{The same data, except using 50 discriminating terms}{subsection.2.2}% 7
+\BOOKMARK [2][-]{subsection.2.3}{The classification decision for all disputed documents using 50 discriminating terms}{section.2}% 8
+\BOOKMARK [1][-]{section.3}{Rocchio Classification}{}% 9
+\BOOKMARK [2][-]{subsection.3.1}{The first 30 components of the normalized centroid vectors for the three classes}{section.3}% 10
+\BOOKMARK [2][-]{subsection.3.2}{For the Document, paper\13752.txt}{section.3}% 11
+\BOOKMARK [3][-]{subsubsection.3.2.1}{The first 30 components of the normalized vector for the document}{subsection.3.2}% 12
+\BOOKMARK [3][-]{subsubsection.3.2.2}{The exact Euclidians distance between the normalized vector for the document and each of the 3 class centroids}{subsection.3.2}% 13
+\BOOKMARK [2][-]{subsection.3.3}{The classification decision for all disputed documents}{section.3}% 14

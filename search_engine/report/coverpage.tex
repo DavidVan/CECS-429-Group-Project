@@ -1,0 +1,93 @@
+\documentclass[12pt, letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{MnSymbol}
+\usepackage[margin=0.75in]{geometry}
+
+\lstdefinestyle{mystyle}{ 
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,
+    keepspaces=true,
+    postbreak=\raisebox{0ex}[0ex][0ex]
+    {\ensuremath{\rcurvearrowse\space}},
+    breakautoindent=true,
+    breakindent=108pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+}
+
+\title{CECS 429/529 --- Sec. 01 \protect\\  --- \protect\\ Milestone
+3: \protect\\ The Federalist Papers \protect\\ ---}
+\author{Harold Agnote \\ \\ Braulio Flores \\ \\ David Van \\ \\}
+\date{December 15, 2017}
+
+\begin{document}
+    \begin{titlepage}
+        \maketitle
+    \end{titlepage}
+
+    \section{Terms}
+
+    \lstset{style=mystyle}
+   
+    \subsection{ The first 30 terms in the vocabulary of the ENTIRE CORPUS, including
+    disputed documents, sorted in alphabetical order.}
+    \lstinputlisting[firstline=14, lastline=56]{milestone3.txt}
+
+    \newpage
+
+    \section{Bayesian Classifier}
+    \subsection{The top 10 discriminating terms and their I (C,T) score.}
+    
+
+    \lstinputlisting[firstline=62, lastline=72]{milestone3.txt}
+
+    \subsection{For the document, paper\_49.txt}
+    \subsubsection{The exact Bayesian classification score for each of the
+    three classes on this paper, using 10 discriminating terms}
+
+    \lstinputlisting[firstline=78, lastline=87]{milestone3.txt}
+
+    \subsubsection{The same data, except using 50 discriminating terms}
+    \lstinputlisting[firstline=92, lastline=101]{milestone3.txt}
+
+    \newpage
+
+    \subsection{The classification decision for all disputed documents using
+    50 discriminating terms}
+    \lstinputlisting[firstline=105, lastline=185]{milestone3.txt}
+
+    \newpage
+
+    \section{Rocchio Classification}
+
+    \subsection{The first 30 components of the normalized centroid vectors
+    for the three classes}
+    \lstinputlisting[firstline=192, lastline=289]{milestone3.txt}
+
+    \newpage
+
+    \subsection{For the Document, paper\_52.txt}
+
+    \subsubsection{The first 30 components of the normalized vector for the
+    document}
+    \lstinputlisting[firstline=296, lastline=328]{milestone3.txt}
+
+    \subsubsection{The exact Euclidians distance between the normalized vector
+    for the document and each of the 3 class centroids}
+    \lstinputlisting[firstline=333, lastline=343]{milestone3.txt}
+
+    \newpage
+
+    \subsection{The classification decision for all disputed documents}
+    \lstinputlisting[firstline=347]{milestone3.txt}
+
+
+
+
+\end{document}
